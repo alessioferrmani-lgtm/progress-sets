@@ -66,8 +66,9 @@ export async function fetchTemplates(): Promise<
     countMap.set(r.template_id, (countMap.get(r.template_id) ?? 0) + 1);
   });
   const lastMap = new Map<string, string>();
-  (sessRows ?? []).forEach((r: { template_id: string; started_at: string }) => {
-    if (!lastMap.has(r.template_id)) lastMap.set(r.template_id, r.started_at);
+  (sessRows ?? []).forEach((r) => {
+    if (r.template_id && !lastMap.has(r.template_id))
+      lastMap.set(r.template_id, r.started_at);
   });
 
   return (templates ?? []).map((t) => ({
