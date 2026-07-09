@@ -14,7 +14,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWorkoutsIndexRouteImport } from './routes/_authenticated/workouts/index'
 import { Route as AuthenticatedWorkoutsNewRouteImport } from './routes/_authenticated/workouts/new'
+import { Route as AuthenticatedWorkoutsTemplateIdRunRouteImport } from './routes/_authenticated/workouts/$templateId/run'
 import { Route as AuthenticatedWorkoutsTemplateIdEditRouteImport } from './routes/_authenticated/workouts/$templateId/edit'
+import { Route as AuthenticatedSessionsSessionIdSummaryRouteImport } from './routes/_authenticated/sessions/$sessionId/summary'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -42,10 +44,22 @@ const AuthenticatedWorkoutsNewRoute =
     path: '/workouts/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWorkoutsTemplateIdRunRoute =
+  AuthenticatedWorkoutsTemplateIdRunRouteImport.update({
+    id: '/workouts/$templateId/run',
+    path: '/workouts/$templateId/run',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedWorkoutsTemplateIdEditRoute =
   AuthenticatedWorkoutsTemplateIdEditRouteImport.update({
     id: '/workouts/$templateId/edit',
     path: '/workouts/$templateId/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSessionsSessionIdSummaryRoute =
+  AuthenticatedSessionsSessionIdSummaryRouteImport.update({
+    id: '/sessions/$sessionId/summary',
+    path: '/sessions/$sessionId/summary',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -54,14 +68,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/workouts/': typeof AuthenticatedWorkoutsIndexRoute
+  '/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
+  '/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/workouts': typeof AuthenticatedWorkoutsIndexRoute
+  '/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
+  '/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,7 +88,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/_authenticated/workouts/': typeof AuthenticatedWorkoutsIndexRoute
+  '/_authenticated/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/_authenticated/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
+  '/_authenticated/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,14 +99,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/workouts/new'
     | '/workouts/'
+    | '/sessions/$sessionId/summary'
     | '/workouts/$templateId/edit'
+    | '/workouts/$templateId/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/workouts/new'
     | '/workouts'
+    | '/sessions/$sessionId/summary'
     | '/workouts/$templateId/edit'
+    | '/workouts/$templateId/run'
   id:
     | '__root__'
     | '/'
@@ -94,7 +118,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/workouts/new'
     | '/_authenticated/workouts/'
+    | '/_authenticated/sessions/$sessionId/summary'
     | '/_authenticated/workouts/$templateId/edit'
+    | '/_authenticated/workouts/$templateId/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,11 +166,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkoutsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/workouts/$templateId/run': {
+      id: '/_authenticated/workouts/$templateId/run'
+      path: '/workouts/$templateId/run'
+      fullPath: '/workouts/$templateId/run'
+      preLoaderRoute: typeof AuthenticatedWorkoutsTemplateIdRunRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/workouts/$templateId/edit': {
       id: '/_authenticated/workouts/$templateId/edit'
       path: '/workouts/$templateId/edit'
       fullPath: '/workouts/$templateId/edit'
       preLoaderRoute: typeof AuthenticatedWorkoutsTemplateIdEditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sessions/$sessionId/summary': {
+      id: '/_authenticated/sessions/$sessionId/summary'
+      path: '/sessions/$sessionId/summary'
+      fullPath: '/sessions/$sessionId/summary'
+      preLoaderRoute: typeof AuthenticatedSessionsSessionIdSummaryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -153,14 +193,20 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedWorkoutsNewRoute: typeof AuthenticatedWorkoutsNewRoute
   AuthenticatedWorkoutsIndexRoute: typeof AuthenticatedWorkoutsIndexRoute
+  AuthenticatedSessionsSessionIdSummaryRoute: typeof AuthenticatedSessionsSessionIdSummaryRoute
   AuthenticatedWorkoutsTemplateIdEditRoute: typeof AuthenticatedWorkoutsTemplateIdEditRoute
+  AuthenticatedWorkoutsTemplateIdRunRoute: typeof AuthenticatedWorkoutsTemplateIdRunRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWorkoutsNewRoute: AuthenticatedWorkoutsNewRoute,
   AuthenticatedWorkoutsIndexRoute: AuthenticatedWorkoutsIndexRoute,
+  AuthenticatedSessionsSessionIdSummaryRoute:
+    AuthenticatedSessionsSessionIdSummaryRoute,
   AuthenticatedWorkoutsTemplateIdEditRoute:
     AuthenticatedWorkoutsTemplateIdEditRoute,
+  AuthenticatedWorkoutsTemplateIdRunRoute:
+    AuthenticatedWorkoutsTemplateIdRunRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
