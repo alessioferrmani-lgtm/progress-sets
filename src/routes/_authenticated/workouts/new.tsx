@@ -248,7 +248,7 @@ export function TemplateEditor({
       <button
         onClick={save}
         disabled={saving}
-        className="mt-6 w-full rounded-2xl bg-accent py-3 text-base font-semibold text-accent-foreground active:opacity-80 disabled:opacity-50"
+        className="ios-btn-primary mt-6 w-full"
       >
         {saving ? "Salvataggio…" : "Salva scheda"}
       </button>

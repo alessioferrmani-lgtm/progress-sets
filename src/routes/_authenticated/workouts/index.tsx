@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTemplates } from "@/lib/workout-queries";
-import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Plus, LogOut } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -20,18 +19,11 @@ function WorkoutsIndex() {
     <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
       <div className="flex items-center justify-between py-2">
         <h1 className="text-3xl font-bold text-label">Schede</h1>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label-secondary active:opacity-70"
-          aria-label="Esci"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
       </div>
 
       <Link
         to="/workouts/new"
-        className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-accent py-3 text-base font-semibold text-accent-foreground shadow-sm active:opacity-80"
+        className="ios-btn-primary mt-3 w-full"
       >
         <Plus className="h-5 w-5" /> Nuova scheda
       </Link>

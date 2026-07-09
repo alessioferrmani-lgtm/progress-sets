@@ -28,11 +28,11 @@ function AuthPage() {
           : await supabase.auth.signUp({
               email,
               password,
-              options: { emailRedirectTo: `${window.location.origin}/workouts` },
+              options: { emailRedirectTo: `${window.location.origin}/home` },
             });
       if (error) throw error;
       toast.success(mode === "signin" ? "Bentornato!" : "Account creato");
-      navigate({ to: next && next.startsWith("/") ? next : "/workouts" });
+      navigate({ to: next && next.startsWith("/") ? next : "/home" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Errore");
     } finally {
@@ -68,7 +68,7 @@ function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-accent py-3 text-base font-semibold text-accent-foreground active:opacity-70 disabled:opacity-50"
+            className="ios-btn-primary w-full"
           >
             {loading ? "..." : mode === "signin" ? "Accedi" : "Registrati"}
           </button>
