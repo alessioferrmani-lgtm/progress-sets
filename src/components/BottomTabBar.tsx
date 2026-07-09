@@ -1,11 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Dumbbell, User } from "lucide-react";
-import type { ComponentType } from "react";
+import type { LucideIcon } from "lucide-react";
 
 type Tab = {
   to: "/home" | "/workouts" | "/profile";
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: LucideIcon;
 };
 
 const TABS: Tab[] = [
