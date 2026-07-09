@@ -200,7 +200,7 @@ export function TemplateEditor({
                 value={r.target_sets}
                 onChange={(v) =>
                   setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, target_sets: v } : x)),
+                    rr.map((x, i) => (i === idx ? { ...x, target_sets: v ?? 0 } : x)),
                   )
                 }
               />
@@ -209,7 +209,7 @@ export function TemplateEditor({
                 value={r.target_reps}
                 onChange={(v) =>
                   setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, target_reps: v } : x)),
+                    rr.map((x, i) => (i === idx ? { ...x, target_reps: v ?? 0 } : x)),
                   )
                 }
               />
@@ -230,7 +230,7 @@ export function TemplateEditor({
                 value={r.rest_seconds}
                 onChange={(v) =>
                   setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v } : x)),
+                    rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v ?? 0 } : x)),
                   )
                 }
               />
