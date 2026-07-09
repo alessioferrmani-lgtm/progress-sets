@@ -136,8 +136,8 @@ function SummaryPage() {
       </div>
 
       <button
-        onClick={() => navigate({ to: "/workouts" })}
-        className="mt-6 w-full rounded-2xl bg-accent py-3 text-base font-semibold text-accent-foreground active:opacity-80"
+        onClick={() => navigate({ to: "/home" })}
+        className="ios-btn-primary mt-6 w-full"
       >
         Fine allenamento
       </button>

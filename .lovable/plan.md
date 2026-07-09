@@ -1,84 +1,68 @@
-## Obiettivo
-Modulo PWA fitness con flusso di esecuzione scheda identico a Hevy: precompilazione da sessione precedente, tap-per-confermare, timer di recupero globale non bloccante, riepilogo con PR.
+# Piano: Design System iOS + Dashboard personalizzata
 
-## Backend (Lovable Cloud / Supabase)
-Abilito Lovable Cloud e creo lo schema:
+## Parte 1 — Design System coerente (tutte le schermate)
 
-- `exercises` — id, name, created_at
-- `workout_templates` — id, user_id, name, created_at
-- `template_exercises` — id, template_id, exercise_id, order_index, target_sets, target_reps, target_weight_kg, rest_seconds
-- `workout_sessions` — id, user_id, template_id, started_at, ended_at
-- `logged_sets` — id, session_id, exercise_id, set_number, weight_kg, reps, completed_at, rest_taken_sec
+### Token (src/styles.css)
+Aggiorno le variabili CSS con i valori esatti richiesti (hex non oklch, così i colori sono identici alle spec Apple):
 
-RLS per user_id + policy owner-only. Grants per `authenticated`. Auth email/password (login minimo, no conferma email per velocità).
+Light:
+- `--background: #F2F2F7`, `--surface: #FFFFFF`
+- `--label: #000000`, `--label-secondary: rgba(60,60,67,0.6)`, `--label-tertiary: rgba(60,60,67,0.3)`
+- `--separator: rgba(60,60,67,0.16)`
+- `--accent: #007AFF`, `--accent-soft: rgba(0,122,255,0.12)`
+- `--success: #34C759`, `--warning: #FF9500`, `--danger: #FF3B30`
 
-Seed di ~15 esercizi comuni (Panca piana, Squat, Stacco, Lat machine, ecc.).
+Dark (via `prefers-color-scheme`, già gestito da ThemeManager):
+- `--background: #000000`, `--surface: #1C1C1E`, `--surface-2: #2C2C2E`
+- `--label: #FFFFFF`, `--label-secondary: rgba(235,235,245,0.6)`
+- `--separator: rgba(84,84,88,0.6)`
+- `--accent: #0A84FF`
 
-## Struttura route (TanStack)
-- `/auth` — login/signup
-- `/_authenticated/` — layout protetto
-  - `/workouts` — Schermata 1: lista schede
-  - `/workouts/new` — editor scheda (nome + esercizi + serie/reps/recupero)
-  - `/workouts/$templateId/edit`
-  - `/workouts/$templateId/run` — Schermata 2: esecuzione
-  - `/workouts/session/$sessionId/summary` — Schermata 3: riepilogo
+### Utility + componenti condivisi
+- `ios-card` (radius 14px, padding 16-20, shadow leggera)
+- `ios-list` + `ios-list-row` per liste grouped con separatore 0.5px `inset-inline-start: 16px`
+- `ios-btn-primary` (pillola, `active:scale-[0.97]`, transition 200ms ease-out)
+- `ios-tabbar` con `backdrop-filter: saturate(180%) blur(20px)` e superficie translucida
+- Transizione globale 200ms ease-out su interattivi
 
-## Schermata 2 — dettagli implementativi
-Layout:
-- Header con nome scheda + timer sessione + bottone chiudi
-- Tab orizzontali scrollabili con nome esercizio corrente (swipe per cambiare)
-- Card esercizio: titolo + note recupero target
-- Tabella serie: `SERIE | PRECEDENTE | KG | REP | ✓`
-  - PRECEDENTE letto da ultima `logged_sets` per (user, exercise, set_number)
-  - KG/REP input `inputMode="decimal"` precompilati con valore precedente
-  - Stepper +/- accanto (tap lungo = held? no, semplici bottoni)
-  - Tap su ✓ → INSERT `logged_sets`, riga verde, avvia timer, focus riga successiva
+### Applicazione
+Refactor delle schermate esistenti per usare i nuovi token/utility:
+- `workouts/index.tsx`, `workouts/new.tsx`, `workouts/$templateId/run.tsx`, `sessions/$sessionId/summary.tsx`, `auth.tsx`
+- Rimozione bordi spessi, ombre pesanti, corner squadrati
+- `RestTimerBar` allineata al nuovo stile blur
+- Icone lineari da `lucide-react` (già disponibile) al posto di emoji
 
-## Timer globale (critico)
-Store Zustand `useRestTimer`:
-- state: `{ endsAt, duration, running, exerciseId }`
-- `start(seconds)`, `addSeconds(n)`, `skip()`, `tick()`
-- Un `useEffect` root che fa `requestAnimationFrame` loop per aggiornare `now`; countdown derivato = `endsAt - now`
-- Persistenza in `sessionStorage` per sopravvivere a nav
-- Componente `<RestTimerBar />` montato nel layout `_authenticated`, visibile solo quando running; posizione `fixed bottom-20`, sopra tab bar, con barra di progresso lineare che si svuota (`width: ${remaining/duration*100}%`) con `transition: width 1s linear`
-- Bottoni `-15s`, `+15s`, `Salta`
-- A 0: `navigator.vibrate([200,100,200])` + beep WebAudio + auto-hide
+### Tab bar inferiore
+Nuovo componente `BottomTabBar` fisso in fondo con 3 voci: Home (dashboard), Allenamenti (schede), Profilo. Renderizzato nel layout `_authenticated`. Sostituisce/affianca `RestTimerBar` che rimane appena sopra la tab.
 
-`rest_taken_sec` = `now - previousSet.completed_at` calcolato al salvataggio della serie successiva.
+## Parte 2 — Dashboard personalizzata `/home`
 
-## Schermata 3 — riepilogo
-- Durata = `ended_at - started_at`
-- N. serie completate (count logged_sets della sessione)
-- PR: per ogni esercizio della sessione, confronta max(weight_kg) con max storico precedente; mostra badge "Nuovo record"
-- Bottone "Fine" → UPDATE `ended_at`, redirect a `/workouts`
+Nuova route `src/routes/_authenticated/home.tsx` (impostata come rotta di default: `/` autenticato → redirect a `/home`).
 
-## Design system iOS-like
-Modifico `src/styles.css`:
-- Background `#F2F2F7` light / `#000` dark
-- Card `bg-white` (light) / `#1C1C1E` (dark), radius 14px, ombra sottile
-- Font: `-apple-system, BlinkMacSystemFont, "SF Pro"...`
-- Tab bar fissa in basso con `backdrop-blur-xl bg-white/70`
-- Auto dark via `@media (prefers-color-scheme: dark)` che aggiunge `.dark` a `<html>` (o CSS media diretto)
-- Tokens semantici: `--surface`, `--surface-2`, `--separator`, `--label`, `--label-secondary`, `--fill-tertiary`, `--accent` (blu iOS `#007AFF`), `--success` (verde `#34C759`)
-- Semantic per riga completata: `--row-completed` verde tenue
+Ogni sezione è un componente indipendente che usa `useQuery` proprio → caricamento progressivo con skeleton individuali.
 
-## Componenti principali
-- `src/lib/rest-timer-store.ts` (Zustand)
-- `src/components/RestTimerBar.tsx`
-- `src/components/BottomTabBar.tsx`
-- `src/components/workout/SetRow.tsx`
-- `src/components/workout/ExerciseTabs.tsx`
-- `src/routes/_authenticated/workouts/index.tsx` (lista)
-- `src/routes/_authenticated/workouts/new.tsx` + `$templateId.edit.tsx` (editor)
-- `src/routes/_authenticated/workouts/$templateId.run.tsx` (esecuzione)
-- `src/routes/_authenticated/workouts/session.$sessionId.summary.tsx`
+### Sezioni
+1. **HeaderGreeting** — "Ciao {nome/email}", data odierna in italiano (`Intl.DateTimeFormat("it-IT")`).
+2. **StreakCard** — Query su `workout_sessions` ultime 12 settimane; calcola settimane consecutive con ≥1 sessione. Se settimana corrente vuota → CTA "Inizia la tua settimana" (link a `/workouts`). Icona `Flame` da lucide.
+3. **WeeklyVolumeChart** — Recharts (già in dipendenze o da installare). Toggle segmentato "Durata / Volume / Ripetizioni". Aggrega `logged_sets` + `workout_sessions` ultimi 90gg per settimana ISO. Totale settimana corrente in grande sopra il grafico.
+4. **MuscleMap** — Silhouette SVG frontale + posteriore semplificate. Mappa `exercise.name` → gruppo muscolare tramite tabella statica (es. "Panca" → petto, "Squat" → quadricipiti). Gruppi allenati negli ultimi 7gg in `--accent`, altri in `--fill`. Sotto: 7 pallini per i giorni della settimana corrente (L-D), evidenziati quelli con sessione.
+5. **RecentPRs** — Query aggrega MAX(weight_kg) per exercise_id + data del PR. Mostra ultimi 5 PR dell'ultimo mese con delta rispetto al record precedente. Fallback: top-3 esercizi più allenati con record assoluto.
+6. **RecentSessions** — Ultime 5 sessioni con `ended_at NOT NULL`, con durata, volume totale (sum weight×reps), n. serie. Tap → link a summary esistente.
+7. **MonthCalendar** — `<details>` collassabile "Vedi calendario completo". Griglia 7 colonne del mese corrente, pallino blu sui giorni con sessione, sotto nome scheda breve.
 
-Query fetch via `createServerFn` con `requireSupabaseAuth`; mutations con `useMutation`.
+### Query centralizzata
+Nuovo `src/lib/dashboard-queries.ts` con funzioni pure che ricevono `userId` e ritornano DTO plain. Ogni componente ha il suo `useQuery` key stabile.
 
-## Fuori scope (v1)
-- Editor drag-drop per riordinare esercizi (uso frecce su/giù)
-- Grafici storici
-- Social/condivisione
-- Video esercizi
+### Stati vuoti
+Ogni sezione ha un empty state amichevole (icona + testo + eventuale CTA), mai card vuota silenziosa.
 
-Confermi e procedo?
+## Dettagli tecnici
+- Nessuna modifica DB: le query aggiuntive usano tabelle e RLS già esistenti.
+- `recharts` da installare se non presente (verifico prima).
+- SVG silhouette custom inline in `src/components/MuscleMap.tsx` con `<path>` per gruppo, `data-active` toggle.
+- Routing: aggiungo `home.tsx` sotto `_authenticated/` e faccio redirect da `/workouts` root a `/home` non è necessario; aggiorno solo il link default post-login e la tab bar.
+
+## Non incluso
+- Modifiche allo schema DB
+- Nuovi esercizi/mapping muscolare esaustivo (userò un dizionario base estendibile)
+- Modifiche al flusso di esecuzione allenamento (solo restyling visivo)
