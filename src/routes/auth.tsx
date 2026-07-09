@@ -22,8 +22,14 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const fn = mode === "signin" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
-      const { error } = await fn({ email, password });
+      const { error } =
+        mode === "signin"
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await supabase.auth.signUp({
+              email,
+              password,
+              options: { emailRedirectTo: `${window.location.origin}/workouts` },
+            });
       if (error) throw error;
       toast.success(mode === "signin" ? "Bentornato!" : "Account creato");
       navigate({ to: next && next.startsWith("/") ? next : "/workouts" });
