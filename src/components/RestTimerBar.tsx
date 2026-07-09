@@ -11,9 +11,9 @@ export function RestTimerBar() {
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-2">
-      <div className="ios-blur mx-auto max-w-md overflow-hidden rounded-2xl border border-separator shadow-lg">
-        <div className="relative h-1.5 bg-fill-secondary">
+    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-50 px-3">
+      <div className="ios-blur mx-auto max-w-md overflow-hidden rounded-2xl shadow-lg">
+        <div className="relative h-1 bg-fill-secondary">
           <div
             className="absolute inset-y-0 left-0 bg-accent transition-[width] duration-500 ease-linear"
             style={{ width: `${pct}%` }}
@@ -31,7 +31,7 @@ export function RestTimerBar() {
           <button
             type="button"
             onClick={() => addSeconds(-15)}
-            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:opacity-70"
+            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
           >
             <Minus className="h-4 w-4" />
             15s
@@ -39,7 +39,7 @@ export function RestTimerBar() {
           <button
             type="button"
             onClick={() => addSeconds(15)}
-            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:opacity-70"
+            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
           >
             <Plus className="h-4 w-4" />
             15s
@@ -47,7 +47,7 @@ export function RestTimerBar() {
           <button
             type="button"
             onClick={skip}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground active:opacity-70"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground active:scale-[0.97]"
             aria-label="Salta"
           >
             <X className="h-4 w-4" />

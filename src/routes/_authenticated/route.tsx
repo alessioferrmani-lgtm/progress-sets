@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { RestTimerBar } from "@/components/RestTimerBar";
+import { BottomTabBar } from "@/components/BottomTabBar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -23,9 +24,10 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthedLayout() {
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]">
       <Outlet />
       <RestTimerBar />
+      <BottomTabBar />
     </div>
   );
 }
