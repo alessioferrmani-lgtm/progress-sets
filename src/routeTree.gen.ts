@@ -14,11 +14,17 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedAthleticsRouteRouteImport } from './routes/_authenticated/athletics/route'
 import { Route as AuthenticatedWorkoutsIndexRouteImport } from './routes/_authenticated/workouts/index'
+import { Route as AuthenticatedAthleticsIndexRouteImport } from './routes/_authenticated/athletics/index'
 import { Route as AuthenticatedWorkoutsNewRouteImport } from './routes/_authenticated/workouts/new'
+import { Route as AuthenticatedAthleticsTestsRouteImport } from './routes/_authenticated/athletics/tests'
+import { Route as AuthenticatedAthleticsRacesRouteImport } from './routes/_authenticated/athletics/races'
 import { Route as AuthenticatedWorkoutsTemplateIdRunRouteImport } from './routes/_authenticated/workouts/$templateId/run'
 import { Route as AuthenticatedWorkoutsTemplateIdEditRouteImport } from './routes/_authenticated/workouts/$templateId/edit'
 import { Route as AuthenticatedSessionsSessionIdSummaryRouteImport } from './routes/_authenticated/sessions/$sessionId/summary'
+import { Route as AuthenticatedAthleticsTestsTypeIdRouteImport } from './routes/_authenticated/athletics/tests/$typeId'
+import { Route as AuthenticatedAthleticsRacesNewRouteImport } from './routes/_authenticated/athletics/races/new'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -44,17 +50,41 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAthleticsRouteRoute =
+  AuthenticatedAthleticsRouteRouteImport.update({
+    id: '/athletics',
+    path: '/athletics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedWorkoutsIndexRoute =
   AuthenticatedWorkoutsIndexRouteImport.update({
     id: '/workouts/',
     path: '/workouts/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAthleticsIndexRoute =
+  AuthenticatedAthleticsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAthleticsRouteRoute,
+  } as any)
 const AuthenticatedWorkoutsNewRoute =
   AuthenticatedWorkoutsNewRouteImport.update({
     id: '/workouts/new',
     path: '/workouts/new',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAthleticsTestsRoute =
+  AuthenticatedAthleticsTestsRouteImport.update({
+    id: '/tests',
+    path: '/tests',
+    getParentRoute: () => AuthenticatedAthleticsRouteRoute,
+  } as any)
+const AuthenticatedAthleticsRacesRoute =
+  AuthenticatedAthleticsRacesRouteImport.update({
+    id: '/races',
+    path: '/races',
+    getParentRoute: () => AuthenticatedAthleticsRouteRoute,
   } as any)
 const AuthenticatedWorkoutsTemplateIdRunRoute =
   AuthenticatedWorkoutsTemplateIdRunRouteImport.update({
@@ -74,14 +104,32 @@ const AuthenticatedSessionsSessionIdSummaryRoute =
     path: '/sessions/$sessionId/summary',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAthleticsTestsTypeIdRoute =
+  AuthenticatedAthleticsTestsTypeIdRouteImport.update({
+    id: '/$typeId',
+    path: '/$typeId',
+    getParentRoute: () => AuthenticatedAthleticsTestsRoute,
+  } as any)
+const AuthenticatedAthleticsRacesNewRoute =
+  AuthenticatedAthleticsRacesNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAthleticsRacesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/athletics': typeof AuthenticatedAthleticsRouteRouteWithChildren
   '/home': typeof AuthenticatedHomeRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
+  '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
+  '/athletics/': typeof AuthenticatedAthleticsIndexRoute
   '/workouts/': typeof AuthenticatedWorkoutsIndexRoute
+  '/athletics/races/new': typeof AuthenticatedAthleticsRacesNewRoute
+  '/athletics/tests/$typeId': typeof AuthenticatedAthleticsTestsTypeIdRoute
   '/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
   '/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
@@ -91,8 +139,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
+  '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
+  '/athletics': typeof AuthenticatedAthleticsIndexRoute
   '/workouts': typeof AuthenticatedWorkoutsIndexRoute
+  '/athletics/races/new': typeof AuthenticatedAthleticsRacesNewRoute
+  '/athletics/tests/$typeId': typeof AuthenticatedAthleticsTestsTypeIdRoute
   '/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
   '/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
@@ -102,10 +155,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/athletics': typeof AuthenticatedAthleticsRouteRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
+  '/_authenticated/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/_authenticated/workouts/new': typeof AuthenticatedWorkoutsNewRoute
+  '/_authenticated/athletics/': typeof AuthenticatedAthleticsIndexRoute
   '/_authenticated/workouts/': typeof AuthenticatedWorkoutsIndexRoute
+  '/_authenticated/athletics/races/new': typeof AuthenticatedAthleticsRacesNewRoute
+  '/_authenticated/athletics/tests/$typeId': typeof AuthenticatedAthleticsTestsTypeIdRoute
   '/_authenticated/sessions/$sessionId/summary': typeof AuthenticatedSessionsSessionIdSummaryRoute
   '/_authenticated/workouts/$templateId/edit': typeof AuthenticatedWorkoutsTemplateIdEditRoute
   '/_authenticated/workouts/$templateId/run': typeof AuthenticatedWorkoutsTemplateIdRunRoute
@@ -115,10 +174,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/athletics'
     | '/home'
     | '/profile'
+    | '/athletics/races'
+    | '/athletics/tests'
     | '/workouts/new'
+    | '/athletics/'
     | '/workouts/'
+    | '/athletics/races/new'
+    | '/athletics/tests/$typeId'
     | '/sessions/$sessionId/summary'
     | '/workouts/$templateId/edit'
     | '/workouts/$templateId/run'
@@ -128,8 +193,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/profile'
+    | '/athletics/races'
+    | '/athletics/tests'
     | '/workouts/new'
+    | '/athletics'
     | '/workouts'
+    | '/athletics/races/new'
+    | '/athletics/tests/$typeId'
     | '/sessions/$sessionId/summary'
     | '/workouts/$templateId/edit'
     | '/workouts/$templateId/run'
@@ -138,10 +208,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/athletics'
     | '/_authenticated/home'
     | '/_authenticated/profile'
+    | '/_authenticated/athletics/races'
+    | '/_authenticated/athletics/tests'
     | '/_authenticated/workouts/new'
+    | '/_authenticated/athletics/'
     | '/_authenticated/workouts/'
+    | '/_authenticated/athletics/races/new'
+    | '/_authenticated/athletics/tests/$typeId'
     | '/_authenticated/sessions/$sessionId/summary'
     | '/_authenticated/workouts/$templateId/edit'
     | '/_authenticated/workouts/$templateId/run'
@@ -190,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/athletics': {
+      id: '/_authenticated/athletics'
+      path: '/athletics'
+      fullPath: '/athletics'
+      preLoaderRoute: typeof AuthenticatedAthleticsRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/workouts/': {
       id: '/_authenticated/workouts/'
       path: '/workouts'
@@ -197,12 +280,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkoutsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/athletics/': {
+      id: '/_authenticated/athletics/'
+      path: '/'
+      fullPath: '/athletics/'
+      preLoaderRoute: typeof AuthenticatedAthleticsIndexRouteImport
+      parentRoute: typeof AuthenticatedAthleticsRouteRoute
+    }
     '/_authenticated/workouts/new': {
       id: '/_authenticated/workouts/new'
       path: '/workouts/new'
       fullPath: '/workouts/new'
       preLoaderRoute: typeof AuthenticatedWorkoutsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/athletics/tests': {
+      id: '/_authenticated/athletics/tests'
+      path: '/tests'
+      fullPath: '/athletics/tests'
+      preLoaderRoute: typeof AuthenticatedAthleticsTestsRouteImport
+      parentRoute: typeof AuthenticatedAthleticsRouteRoute
+    }
+    '/_authenticated/athletics/races': {
+      id: '/_authenticated/athletics/races'
+      path: '/races'
+      fullPath: '/athletics/races'
+      preLoaderRoute: typeof AuthenticatedAthleticsRacesRouteImport
+      parentRoute: typeof AuthenticatedAthleticsRouteRoute
     }
     '/_authenticated/workouts/$templateId/run': {
       id: '/_authenticated/workouts/$templateId/run'
@@ -225,10 +329,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsSessionIdSummaryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/athletics/tests/$typeId': {
+      id: '/_authenticated/athletics/tests/$typeId'
+      path: '/$typeId'
+      fullPath: '/athletics/tests/$typeId'
+      preLoaderRoute: typeof AuthenticatedAthleticsTestsTypeIdRouteImport
+      parentRoute: typeof AuthenticatedAthleticsTestsRoute
+    }
+    '/_authenticated/athletics/races/new': {
+      id: '/_authenticated/athletics/races/new'
+      path: '/new'
+      fullPath: '/athletics/races/new'
+      preLoaderRoute: typeof AuthenticatedAthleticsRacesNewRouteImport
+      parentRoute: typeof AuthenticatedAthleticsRacesRoute
+    }
   }
 }
 
+interface AuthenticatedAthleticsRacesRouteChildren {
+  AuthenticatedAthleticsRacesNewRoute: typeof AuthenticatedAthleticsRacesNewRoute
+}
+
+const AuthenticatedAthleticsRacesRouteChildren: AuthenticatedAthleticsRacesRouteChildren =
+  {
+    AuthenticatedAthleticsRacesNewRoute: AuthenticatedAthleticsRacesNewRoute,
+  }
+
+const AuthenticatedAthleticsRacesRouteWithChildren =
+  AuthenticatedAthleticsRacesRoute._addFileChildren(
+    AuthenticatedAthleticsRacesRouteChildren,
+  )
+
+interface AuthenticatedAthleticsTestsRouteChildren {
+  AuthenticatedAthleticsTestsTypeIdRoute: typeof AuthenticatedAthleticsTestsTypeIdRoute
+}
+
+const AuthenticatedAthleticsTestsRouteChildren: AuthenticatedAthleticsTestsRouteChildren =
+  {
+    AuthenticatedAthleticsTestsTypeIdRoute:
+      AuthenticatedAthleticsTestsTypeIdRoute,
+  }
+
+const AuthenticatedAthleticsTestsRouteWithChildren =
+  AuthenticatedAthleticsTestsRoute._addFileChildren(
+    AuthenticatedAthleticsTestsRouteChildren,
+  )
+
+interface AuthenticatedAthleticsRouteRouteChildren {
+  AuthenticatedAthleticsRacesRoute: typeof AuthenticatedAthleticsRacesRouteWithChildren
+  AuthenticatedAthleticsTestsRoute: typeof AuthenticatedAthleticsTestsRouteWithChildren
+  AuthenticatedAthleticsIndexRoute: typeof AuthenticatedAthleticsIndexRoute
+}
+
+const AuthenticatedAthleticsRouteRouteChildren: AuthenticatedAthleticsRouteRouteChildren =
+  {
+    AuthenticatedAthleticsRacesRoute:
+      AuthenticatedAthleticsRacesRouteWithChildren,
+    AuthenticatedAthleticsTestsRoute:
+      AuthenticatedAthleticsTestsRouteWithChildren,
+    AuthenticatedAthleticsIndexRoute: AuthenticatedAthleticsIndexRoute,
+  }
+
+const AuthenticatedAthleticsRouteRouteWithChildren =
+  AuthenticatedAthleticsRouteRoute._addFileChildren(
+    AuthenticatedAthleticsRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAthleticsRouteRoute: typeof AuthenticatedAthleticsRouteRouteWithChildren
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedWorkoutsNewRoute: typeof AuthenticatedWorkoutsNewRoute
@@ -239,6 +407,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAthleticsRouteRoute:
+    AuthenticatedAthleticsRouteRouteWithChildren,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedWorkoutsNewRoute: AuthenticatedWorkoutsNewRoute,

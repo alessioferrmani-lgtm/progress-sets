@@ -13,6 +13,10 @@ import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyProfile } from "@/lib/profile-queries";
+import { isProfileComplete } from "@/lib/calories";
+import { fetchAllTests } from "@/lib/athletics-queries";
+import { fetchRaces } from "@/lib/athletics-queries";
 import {
   Flame,
   Trophy,
@@ -20,6 +24,7 @@ import {
   ArrowRight,
   Calendar as CalendarIcon,
   History,
+  UserCog,
 } from "lucide-react";
 import {
   startOfISOWeek,
