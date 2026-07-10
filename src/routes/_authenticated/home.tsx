@@ -87,6 +87,16 @@ function HomePage() {
       </header>
 
       <div className="space-y-4">
+        <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
+
+        <CaloriesCard
+          profileComplete={isProfileComplete(profileQ.data ?? null)}
+          sessions={sessionsQ.data}
+          tests={testsQ.data}
+          races={racesQ.data}
+          loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
+        />
+
         <StreakSection sessions={sessionsQ.data} loading={sessionsQ.isLoading} />
 
         <VolumeSection
