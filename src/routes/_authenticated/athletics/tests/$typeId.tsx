@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -138,7 +141,7 @@ function TestTypePage() {
   );
 
   if (!type) {
-    return <div className="p-6 text-center text-label-tertiary">Caricamento…</div>;
+    return <div className="p-6 text-center text-label-tertiary">Caricamentoâ€¦</div>;
   }
 
   return (
@@ -152,28 +155,28 @@ function TestTypePage() {
       <h2 className="text-2xl font-bold text-label">{type.name}</h2>
       <p className="text-xs text-label-secondary">
         {isTime
-          ? `A tempo · ${type.distance_m ?? "?"}m`
-          : `A distanza · ${type.duration_sec ?? "?"}s`}
+          ? `A tempo Â· ${type.distance_m ?? "?"}m`
+          : `A distanza Â· ${type.duration_sec ?? "?"}s`}
       </p>
 
       {/* Best / season / delta */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         <StatCell
           label="PR assoluto"
-          value={bestAll != null ? (isTime ? formatTime(bestAll) : formatDistance(bestAll)) : "—"}
+          value={bestAll != null ? (isTime ? formatTime(bestAll) : formatDistance(bestAll)) : "â€”"}
         />
         <StatCell
           label="Stagione"
-          value={bestSeason != null ? (isTime ? formatTime(bestSeason) : formatDistance(bestSeason)) : "—"}
+          value={bestSeason != null ? (isTime ? formatTime(bestSeason) : formatDistance(bestSeason)) : "â€”"}
         />
         <StatCell
-          label="Δ ultima"
+          label="Î” ultima"
           value={
             delta == null
-              ? "—"
+              ? "â€”"
               : (isTime ? delta > 0 : delta < 0)
-                ? `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} ↓`
-                : `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} ↑`
+                ? `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} â†“`
+                : `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} â†‘`
           }
           tone={delta == null ? "n" : (isTime ? delta < 0 : delta > 0) ? "up" : "down"}
         />
@@ -230,7 +233,7 @@ function TestTypePage() {
             />
           </FormField>
           {isTime ? (
-            <FormField label="Tempo (mm:ss.cc o s)">
+            <FormField label="Tempo (secondi, es. 42.18)">
               <input
                 inputMode="decimal"
                 placeholder="12.85"
@@ -266,7 +269,7 @@ function TestTypePage() {
               onChange={(e) => setWeather(e.target.value)}
               className="bg-transparent text-right text-base text-label outline-none"
             >
-              <option value="">—</option>
+              <option value="">â€”</option>
               <option>Sole</option>
               <option>Vento</option>
               <option>Pioggia</option>
@@ -322,12 +325,12 @@ function TestTypePage() {
                       ? formatTime(r.time_sec ?? 0)
                       : r.distance_covered_m
                         ? formatDistance(r.distance_covered_m)
-                        : "—"}
+                        : "â€”"}
                   </div>
                   <div className="mt-0.5 text-xs text-label-secondary">
                     {format(new Date(r.date), "d MMM yyyy", { locale: it })}
-                    {r.avg_hr ? ` · ${r.avg_hr} bpm` : ""}
-                    {r.weather ? ` · ${r.weather}` : ""}
+                    {r.avg_hr ? ` Â· ${r.avg_hr} bpm` : ""}
+                    {r.weather ? ` Â· ${r.weather}` : ""}
                   </div>
                 </div>
                 {r.calories_burned != null && (
@@ -375,17 +378,11 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-/** Accepts "12.85", "1:23", "1:23.4". */
+/** The app stores test times as decimal seconds (for example 42.18). */
 function parseTime(input: string): number | null {
   const s = input.trim();
-  if (!s) return null;
-  if (s.includes(":")) {
-    const [m, rest] = s.split(":");
-    const min = Number(m);
-    const sec = Number(rest);
-    if (Number.isNaN(min) || Number.isNaN(sec)) return null;
-    return min * 60 + sec;
-  }
+  if (!s || s.includes(":")) return null;
   const n = Number(s);
-  return Number.isNaN(n) ? null : n;
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
+
