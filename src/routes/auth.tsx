@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,10 +105,9 @@ function AuthPage() {
         >
           {mode === "signin"
             ? "Non hai un account? Registrati"
-            : "Hai giÃ  un account? Accedi"}
+            : "Hai già un account? Accedi"}
         </button>
       </div>
     </div>
   );
 }
-
