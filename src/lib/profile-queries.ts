@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { supabase } from "@/integrations/supabase/client";
 import type { UserProfileForCalc } from "./calories";
 
@@ -36,4 +33,3 @@ export async function upsertMyProfile(
   if (error) throw error;
   return data as Profile;
 }
-
