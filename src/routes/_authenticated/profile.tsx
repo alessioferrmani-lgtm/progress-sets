@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -12,7 +15,7 @@ import {
   type ActivityLevel,
   type Sex,
 } from "@/lib/calories";
-import { ChevronRight, LogOut, Mail, Check } from "lucide-react";
+import { ChevronRight, LogOut, Mail, Check, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -37,6 +40,7 @@ function ProfilePage() {
   const [dob, setDob] = useState("");
   const [sex, setSex] = useState<Sex | "">("");
   const [activity, setActivity] = useState<ActivityLevel | "">("");
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     if (!profile) return;
@@ -45,11 +49,13 @@ function ProfilePage() {
     setDob(profile.date_of_birth ?? "");
     setSex((profile.sex ?? "") as Sex | "");
     setActivity((profile.activity_level ?? "") as ActivityLevel | "");
+    setDisplayName(profile.display_name ?? "");
   }, [profile]);
 
   const save = useMutation({
     mutationFn: () =>
       upsertMyProfile({
+        display_name: displayName.trim() || null,
         height_cm: height ? Number(height) : null,
         weight_kg: weight ? Number(weight) : null,
         date_of_birth: dob || null,
@@ -79,12 +85,29 @@ function ProfilePage() {
           {initial}
         </div>
         <div className="min-w-0">
-          <div className="truncate text-base font-semibold text-label">{email}</div>
+          <div className="truncate text-base font-semibold text-label">{profile?.display_name || email}</div>
           <div className="text-xs text-label-secondary">
             {complete ? "Profilo completo" : "Profilo incompleto"}
           </div>
         </div>
       </div>
+
+      {/* Physical data */}
+      <section className="mt-6">
+        <h2 className="flex items-center gap-1 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
+          <Settings className="h-3 w-3" /> Impostazioni
+        </h2>
+        <div className="ios-card">
+          <Field label="Nome">
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Come vuoi essere chiamato"
+              className="w-48 bg-transparent text-right text-base text-label outline-none"
+            />
+          </Field>
+        </div>
+      </section>
 
       {/* Physical data */}
       <section className="mt-6">
@@ -99,7 +122,7 @@ function ProfilePage() {
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               className="w-24 bg-transparent text-right text-base text-label outline-none"
-              placeholder="—"
+              placeholder="â€”"
             />
           </Field>
           <Field label="Peso (kg)">
@@ -110,7 +133,7 @@ function ProfilePage() {
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className="w-24 bg-transparent text-right text-base text-label outline-none"
-              placeholder="—"
+              placeholder="â€”"
             />
           </Field>
           <Field label="Data di nascita">
@@ -123,7 +146,7 @@ function ProfilePage() {
           </Field>
           {age !== null && (
             <div className="flex items-center justify-between px-4 py-2.5">
-              <span className="text-sm text-label-secondary">Età</span>
+              <span className="text-sm text-label-secondary">EtÃ </span>
               <span className="text-sm font-medium text-label">{age} anni</span>
             </div>
           )}
@@ -133,19 +156,19 @@ function ProfilePage() {
               onChange={(e) => setSex(e.target.value as Sex | "")}
               className="bg-transparent text-right text-base text-label outline-none"
             >
-              <option value="">—</option>
+              <option value="">â€”</option>
               {(Object.keys(SEX_LABELS) as Sex[]).map((k) => (
                 <option key={k} value={k}>{SEX_LABELS[k]}</option>
               ))}
             </select>
           </Field>
-          <Field label="Livello attività">
+          <Field label="Livello attivitÃ ">
             <select
               value={activity}
               onChange={(e) => setActivity(e.target.value as ActivityLevel | "")}
               className="bg-transparent text-right text-base text-label outline-none"
             >
-              <option value="">—</option>
+              <option value="">â€”</option>
               {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((k) => (
                 <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>
               ))}
@@ -163,7 +186,7 @@ function ProfilePage() {
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97] disabled:opacity-50"
         >
           <Check className="h-4 w-4" />
-          {save.isPending ? "Salvataggio…" : "Salva dati"}
+          {save.isPending ? "Salvataggioâ€¦" : "Salva dati"}
         </button>
       </section>
 
@@ -210,3 +233,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
