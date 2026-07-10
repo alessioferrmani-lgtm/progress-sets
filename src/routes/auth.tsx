@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +43,20 @@ function AuthPage() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/home` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Impossibile accedere con Google");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="ios-card w-full max-w-sm p-6">
@@ -72,6 +89,17 @@ function AuthPage() {
           >
             {loading ? "..." : mode === "signin" ? "Accedi" : "Registrati"}
           </button>
+          <div className="flex items-center gap-3 py-1 text-xs text-label-tertiary">
+            <span className="h-px flex-1 bg-separator" /> oppure <span className="h-px flex-1 bg-separator" />
+          </div>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={signInWithGoogle}
+            className="w-full rounded-xl border border-separator bg-background px-4 py-3 text-base font-medium text-label active:opacity-70 disabled:opacity-50"
+          >
+            Accedi con Google
+          </button>
         </form>
         <button
           type="button"
@@ -80,9 +108,10 @@ function AuthPage() {
         >
           {mode === "signin"
             ? "Non hai un account? Registrati"
-            : "Hai già un account? Accedi"}
+            : "Hai giÃ  un account? Accedi"}
         </button>
       </div>
     </div>
   );
 }
+
