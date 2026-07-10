@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -200,7 +197,7 @@ export function TemplateEditor({
               <button
                 onClick={() => move(idx, 1)}
                 className="rounded-full bg-fill p-1.5 text-label-secondary"
-                aria-label="GiÃ¹"
+                aria-label="Giù"
               >
                 <ChevronDown className="h-4 w-4" />
               </button>
@@ -268,7 +265,7 @@ export function TemplateEditor({
         disabled={saving}
         className="ios-btn-primary mt-6 w-full"
       >
-        {saving ? "Salvataggioâ€¦" : "Salva scheda"}
+        {saving ? "Salvataggio…" : "Salva scheda"}
       </button>
     </div>
   );
@@ -351,9 +348,9 @@ function WorkoutImport() {
     {!templates ? <>
       <p className="mt-1 text-sm text-label-secondary">Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato prima del salvataggio.</p>
       <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows={12} placeholder="Es. Push: panca 4x8 rec 2 min..." className="ios-card mt-4 w-full resize-none bg-background p-4 text-sm text-label outline-none" />
-      <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">{loading ? "Analisi in corsoâ€¦" : "Analizza scheda"}</button>
+      <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">{loading ? "Analisi in corso…" : "Analizza scheda"}</button>
     </> : <>
-      <p className="mt-1 text-sm text-label-secondary">Controlla e modifica ogni valore. Nulla viene salvato finchÃ© non premi il pulsante qui sotto.</p>
+      <p className="mt-1 text-sm text-label-secondary">Controlla e modifica ogni valore. Nulla viene salvato finché non premi il pulsante qui sotto.</p>
       <div className="mt-4 space-y-4">{templates.map((template, ti) => <div key={ti} className="ios-card p-3">
         <input value={template.name} onChange={(e) => setTemplates((all) => all?.map((t, i) => i === ti ? { ...t, name: e.target.value } : t) ?? null)} className="w-full bg-transparent text-base font-semibold text-label outline-none" />
         {template.exercises.map((exercise, ei) => <div key={ei} className="mt-3 rounded-xl bg-fill p-2">
@@ -366,7 +363,7 @@ function WorkoutImport() {
         </div>)}
       </div>)}</div>
       <button onClick={() => setTemplates(null)} className="mt-4 w-full text-sm text-accent">Analizza di nuovo</button>
-      <button onClick={save} disabled={saving} className="ios-btn-primary mt-3 w-full">{saving ? "Salvataggioâ€¦" : "Salva scheda"}</button>
+      <button onClick={save} disabled={saving} className="ios-btn-primary mt-3 w-full">{saving ? "Salvataggio…" : "Salva scheda"}</button>
     </>}
   </div>;
 }
@@ -403,4 +400,3 @@ function NumField({
     </label>
   );
 }
-
