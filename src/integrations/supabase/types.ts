@@ -80,6 +80,126 @@ export type Database = {
           },
         ]
       }
+      performance_log: {
+        Row: {
+          created_at: string
+          date: string
+          distance_m: number
+          id: string
+          source: Database["public"]["Enums"]["performance_source"]
+          source_id: string
+          time_sec: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          distance_m: number
+          id?: string
+          source: Database["public"]["Enums"]["performance_source"]
+          source_id: string
+          time_sec: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          distance_m?: number
+          id?: string
+          source?: Database["public"]["Enums"]["performance_source"]
+          source_id?: string
+          time_sec?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activity_level:
+            | Database["public"]["Enums"]["activity_level_enum"]
+            | null
+          created_at: string
+          date_of_birth: string | null
+          height_cm: number | null
+          sex: Database["public"]["Enums"]["sex_enum"] | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          activity_level?:
+            | Database["public"]["Enums"]["activity_level_enum"]
+            | null
+          created_at?: string
+          date_of_birth?: string | null
+          height_cm?: number | null
+          sex?: Database["public"]["Enums"]["sex_enum"] | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          activity_level?:
+            | Database["public"]["Enums"]["activity_level_enum"]
+            | null
+          created_at?: string
+          date_of_birth?: string | null
+          height_cm?: number | null
+          sex?: Database["public"]["Enums"]["sex_enum"] | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      races: {
+        Row: {
+          avg_hr: number | null
+          calories_burned: number | null
+          category: string | null
+          created_at: string
+          date: string
+          distance_m: number
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          placement: number | null
+          time_sec: number
+          user_id: string
+        }
+        Insert: {
+          avg_hr?: number | null
+          calories_burned?: number | null
+          category?: string | null
+          created_at?: string
+          date: string
+          distance_m: number
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          placement?: number | null
+          time_sec: number
+          user_id: string
+        }
+        Update: {
+          avg_hr?: number | null
+          calories_burned?: number | null
+          category?: string | null
+          created_at?: string
+          date?: string
+          distance_m?: number
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          placement?: number | null
+          time_sec?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       template_exercises: {
         Row: {
           created_at: string
@@ -131,24 +251,140 @@ export type Database = {
           },
         ]
       }
+      test_types: {
+        Row: {
+          created_at: string
+          distance_m: number | null
+          duration_sec: number | null
+          id: string
+          is_custom: boolean
+          name: string
+          result_type: Database["public"]["Enums"]["test_result_type"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          distance_m?: number | null
+          duration_sec?: number | null
+          id?: string
+          is_custom?: boolean
+          name: string
+          result_type: Database["public"]["Enums"]["test_result_type"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          distance_m?: number | null
+          duration_sec?: number | null
+          id?: string
+          is_custom?: boolean
+          name?: string
+          result_type?: Database["public"]["Enums"]["test_result_type"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      tests: {
+        Row: {
+          avg_hr: number | null
+          calories_burned: number | null
+          created_at: string
+          date: string
+          distance_covered_m: number | null
+          id: string
+          notes: string | null
+          observations: string | null
+          test_type_id: string
+          time_sec: number | null
+          user_id: string
+          weather: string | null
+        }
+        Insert: {
+          avg_hr?: number | null
+          calories_burned?: number | null
+          created_at?: string
+          date?: string
+          distance_covered_m?: number | null
+          id?: string
+          notes?: string | null
+          observations?: string | null
+          test_type_id: string
+          time_sec?: number | null
+          user_id: string
+          weather?: string | null
+        }
+        Update: {
+          avg_hr?: number | null
+          calories_burned?: number | null
+          created_at?: string
+          date?: string
+          distance_covered_m?: number | null
+          id?: string
+          notes?: string | null
+          observations?: string | null
+          test_type_id?: string
+          time_sec?: number | null
+          user_id?: string
+          weather?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_test_type_id_fkey"
+            columns: ["test_type_id"]
+            isOneToOne: false
+            referencedRelation: "test_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weight_logs: {
+        Row: {
+          id: string
+          logged_at: string
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          id?: string
+          logged_at?: string
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          id?: string
+          logged_at?: string
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
+          avg_hr: number | null
+          calories_burned: number | null
           ended_at: string | null
           id: string
+          rpe: number | null
           started_at: string
           template_id: string | null
           user_id: string
         }
         Insert: {
+          avg_hr?: number | null
+          calories_burned?: number | null
           ended_at?: string | null
           id?: string
+          rpe?: number | null
           started_at?: string
           template_id?: string | null
           user_id: string
         }
         Update: {
+          avg_hr?: number | null
+          calories_burned?: number | null
           ended_at?: string | null
           id?: string
+          rpe?: number | null
           started_at?: string
           template_id?: string | null
           user_id?: string
@@ -195,7 +431,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      activity_level_enum:
+        | "sedentary"
+        | "light"
+        | "moderate"
+        | "high"
+        | "athlete"
+      performance_source: "TRAINING_REP" | "TEST" | "RACE"
+      sex_enum: "M" | "F" | "O"
+      test_result_type: "TIME" | "DISTANCE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -322,6 +566,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      activity_level_enum: [
+        "sedentary",
+        "light",
+        "moderate",
+        "high",
+        "athlete",
+      ],
+      performance_source: ["TRAINING_REP", "TEST", "RACE"],
+      sex_enum: ["M", "F", "O"],
+      test_result_type: ["TIME", "DISTANCE"],
+    },
   },
 } as const
