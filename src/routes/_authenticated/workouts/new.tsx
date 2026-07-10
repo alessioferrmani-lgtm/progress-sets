@@ -1,14 +1,30 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { fetchExercises, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, FileText, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/workouts/new")({
-  component: () => <TemplateEditor mode="new" />,
+  component: WorkoutNewPage,
 });
+
+function WorkoutNewPage() {
+  const [mode, setMode] = useState<"manual" | "import">("manual");
+  return (
+    <div>
+      <div className="mx-auto flex max-w-md gap-2 px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
+        <button onClick={() => setMode("manual")} className={"flex-1 rounded-xl py-2 text-sm font-semibold " + (mode === "manual" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")}><Wrench className="mr-1 inline h-4 w-4" /> Builder manuale</button>
+        <button onClick={() => setMode("import")} className={"flex-1 rounded-xl py-2 text-sm font-semibold " + (mode === "import" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")}><FileText className="mr-1 inline h-4 w-4" /> Incolla scheda</button>
+      </div>
+      {mode === "manual" ? <TemplateEditor mode="new" embedded /> : <WorkoutImport />}
+    </div>
+  );
+}
 
 type Row = {
   key: string;
@@ -22,9 +38,11 @@ type Row = {
 export function TemplateEditor({
   mode,
   templateId,
+  embedded = false,
 }: {
   mode: "new" | "edit";
   templateId?: string;
+  embedded?: boolean;
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -182,7 +200,7 @@ export function TemplateEditor({
               <button
                 onClick={() => move(idx, 1)}
                 className="rounded-full bg-fill p-1.5 text-label-secondary"
-                aria-label="Giù"
+                aria-label="GiÃ¹"
               >
                 <ChevronDown className="h-4 w-4" />
               </button>
@@ -250,10 +268,111 @@ export function TemplateEditor({
         disabled={saving}
         className="ios-btn-primary mt-6 w-full"
       >
-        {saving ? "Salvataggio…" : "Salva scheda"}
+        {saving ? "Salvataggioâ€¦" : "Salva scheda"}
       </button>
     </div>
   );
+}
+
+type ImportedExercise = { name: string; sets: number; reps: number; rest_sec: number };
+type ImportedTemplate = { name: string; exercises: ImportedExercise[] };
+
+function WorkoutImport() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [rawText, setRawText] = useState("");
+  const [templates, setTemplates] = useState<ImportedTemplate[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const analyze = async () => {
+    if (!rawText.trim()) return toast.error("Incolla prima la tua scheda");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-workout", { body: { text: rawText } });
+      if (error) throw error;
+      const result = data as { templates?: unknown };
+      if (!Array.isArray(result.templates) || result.templates.length === 0) throw new Error("Risposta non valida");
+      const clean = result.templates.map((template) => {
+        const t = template as Partial<ImportedTemplate>;
+        if (!t.name || !Array.isArray(t.exercises) || !t.exercises.length) throw new Error("Risposta non valida");
+        return { name: String(t.name), exercises: t.exercises.map((exercise) => {
+          const e = exercise as Partial<ImportedExercise>;
+          if (!e.name) throw new Error("Risposta non valida");
+          return { name: String(e.name), sets: Math.max(1, Number(e.sets) || 3), reps: Math.max(1, Number(e.reps) || 10), rest_sec: Math.max(0, Number(e.rest_sec) || 90) };
+        }) };
+      });
+      setTemplates(clean);
+    } catch {
+      toast.error("Non sono riuscito a interpretare la scheda. Riprova oppure usa il builder manuale.");
+    } finally { setLoading(false); }
+  };
+
+  const updateExercise = (ti: number, ei: number, patch: Partial<ImportedExercise>) =>
+    setTemplates((all) => all?.map((t, i) => i === ti ? { ...t, exercises: t.exercises.map((e, j) => j === ei ? { ...e, ...patch } : e) } : t) ?? null);
+
+  const save = async () => {
+    if (!templates?.length) return;
+    setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Sessione scaduta");
+      for (const template of templates) {
+        if (!template.name.trim() || !template.exercises.length) throw new Error("Ogni giorno deve avere un nome e almeno un esercizio");
+        const { data: created, error: templateError } = await supabase.from("workout_templates").insert({ name: template.name.trim(), user_id: userId }).select("id").single();
+        if (templateError) throw templateError;
+        const rows = [] as Array<Record<string, unknown>>;
+        for (let index = 0; index < template.exercises.length; index++) {
+          const exercise = template.exercises[index];
+          const { data: existing, error: lookupError } = await supabase.from("exercises").select("id").ilike("name", exercise.name.trim()).limit(1).maybeSingle();
+          if (lookupError) throw lookupError;
+          let exerciseId = existing?.id;
+          if (!exerciseId) {
+            const { data: custom, error: customError } = await supabase.from("exercises").insert({ name: exercise.name.trim(), user_id: userId } as never).select("id").single();
+            if (customError) throw customError;
+            exerciseId = custom.id;
+          }
+          rows.push({ template_id: created.id, user_id: userId, exercise_id: exerciseId, order_index: index, target_sets: exercise.sets, target_reps: exercise.reps, rest_seconds: exercise.rest_sec });
+        }
+        const { error: rowsError } = await supabase.from("template_exercises").insert(rows as never);
+        if (rowsError) throw rowsError;
+      }
+      toast.success("Scheda salvata");
+      qc.invalidateQueries({ queryKey: ["templates"] });
+      qc.invalidateQueries({ queryKey: ["exercises"] });
+      navigate({ to: "/workouts" });
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile salvare la scheda"); }
+    finally { setSaving(false); }
+  };
+
+  return <div className="mx-auto max-w-md px-4 pb-8 pt-4">
+    <h1 className="text-xl font-bold text-label">Incolla scheda scritta</h1>
+    {!templates ? <>
+      <p className="mt-1 text-sm text-label-secondary">Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato prima del salvataggio.</p>
+      <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows={12} placeholder="Es. Push: panca 4x8 rec 2 min..." className="ios-card mt-4 w-full resize-none bg-background p-4 text-sm text-label outline-none" />
+      <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">{loading ? "Analisi in corsoâ€¦" : "Analizza scheda"}</button>
+    </> : <>
+      <p className="mt-1 text-sm text-label-secondary">Controlla e modifica ogni valore. Nulla viene salvato finchÃ© non premi il pulsante qui sotto.</p>
+      <div className="mt-4 space-y-4">{templates.map((template, ti) => <div key={ti} className="ios-card p-3">
+        <input value={template.name} onChange={(e) => setTemplates((all) => all?.map((t, i) => i === ti ? { ...t, name: e.target.value } : t) ?? null)} className="w-full bg-transparent text-base font-semibold text-label outline-none" />
+        {template.exercises.map((exercise, ei) => <div key={ei} className="mt-3 rounded-xl bg-fill p-2">
+          <input value={exercise.name} onChange={(e) => updateExercise(ti, ei, { name: e.target.value })} className="w-full bg-transparent text-sm font-medium text-label outline-none" />
+          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+            <ImportNumber label="Serie" value={exercise.sets} onChange={(sets) => updateExercise(ti, ei, { sets })} />
+            <ImportNumber label="Reps" value={exercise.reps} onChange={(reps) => updateExercise(ti, ei, { reps })} />
+            <ImportNumber label="Rec (s)" value={exercise.rest_sec} onChange={(rest_sec) => updateExercise(ti, ei, { rest_sec })} />
+          </div>
+        </div>)}
+      </div>)}</div>
+      <button onClick={() => setTemplates(null)} className="mt-4 w-full text-sm text-accent">Analizza di nuovo</button>
+      <button onClick={save} disabled={saving} className="ios-btn-primary mt-3 w-full">{saving ? "Salvataggioâ€¦" : "Salva scheda"}</button>
+    </>}
+  </div>;
+}
+
+function ImportNumber({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
+  return <label className="flex flex-col gap-1"><span className="text-[10px] text-label-tertiary">{label}</span><input type="number" min="0" value={value} onChange={(e) => onChange(Number(e.target.value) || 0)} className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none" /></label>;
 }
 
 function NumField({
@@ -284,3 +403,4 @@ function NumField({
     </label>
   );
 }
+
