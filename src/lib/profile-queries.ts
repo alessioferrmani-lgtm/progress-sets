@@ -1,7 +1,10 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { supabase } from "@/integrations/supabase/client";
 import type { UserProfileForCalc } from "./calories";
 
-export type Profile = UserProfileForCalc & { user_id: string };
+export type Profile = UserProfileForCalc & { user_id: string; display_name: string | null };
 
 export async function fetchMyProfile(): Promise<Profile | null> {
   const { data: u } = await supabase.auth.getUser();
@@ -9,7 +12,7 @@ export async function fetchMyProfile(): Promise<Profile | null> {
   if (!uid) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("user_id,weight_kg,height_cm,date_of_birth,sex,activity_level")
+    .select("user_id,display_name,weight_kg,height_cm,date_of_birth,sex,activity_level")
     .eq("user_id", uid)
     .maybeSingle();
   if (error) throw error;
@@ -28,8 +31,9 @@ export async function upsertMyProfile(
       { user_id: uid, ...patch },
       { onConflict: "user_id" },
     )
-    .select("user_id,weight_kg,height_cm,date_of_birth,sex,activity_level")
+    .select("user_id,display_name,weight_kg,height_cm,date_of_birth,sex,activity_level")
     .single();
   if (error) throw error;
   return data as Profile;
 }
+
