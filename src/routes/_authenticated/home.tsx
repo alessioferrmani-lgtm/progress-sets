@@ -60,6 +60,18 @@ function HomePage() {
     queryKey: ["dash", "prs", user.id],
     queryFn: () => fetchAllTimePRs(),
   });
+  const profileQ = useQuery({
+    queryKey: ["profile", user.id],
+    queryFn: fetchMyProfile,
+  });
+  const testsQ = useQuery({
+    queryKey: ["dash", "tests", user.id],
+    queryFn: fetchAllTests,
+  });
+  const racesQ = useQuery({
+    queryKey: ["dash", "races", user.id],
+    queryFn: fetchRaces,
+  });
 
   const today = new Date();
   const dateLabel = format(today, "EEEE d MMMM", { locale: it });
