@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.6 seconds
-Output:
 -- Security hardening, automatic profiles, and user-owned workout details.
 -- This migration is deliberately idempotent where possible so it is safe on
 -- the existing Lovable/Supabase project.
@@ -70,4 +67,3 @@ CREATE TRIGGER on_auth_user_created_profile
 INSERT INTO public.profiles (user_id)
 SELECT id FROM auth.users
 ON CONFLICT (user_id) DO NOTHING;
-
