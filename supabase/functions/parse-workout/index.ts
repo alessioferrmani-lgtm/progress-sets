@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { corsHeaders } from "../_shared/cors.ts";
 
 const systemPrompt = `Converti questa scheda di allenamento scritta in linguaggio naturale in una struttura JSON.
@@ -25,7 +22,7 @@ Schema di output:
 
 Regole:
 
-* se la scheda contiene piÃ¹ giorni crea un template separato;
+* se la scheda contiene più giorni crea un template separato;
 * interpreta abbreviazioni comuni;
 * "3x10" = 3 serie da 10;
 * "4x8-10" = usa 8;
@@ -42,13 +39,13 @@ Deno.serve(async (req) => {
     const { text } = await req.json();
     if (typeof text !== "string" || !text.trim()) throw new Error("Inserisci una scheda da analizzare.");
     const key = Deno.env.get("OPENAI_API_KEY");
-    if (!key) throw new Error("Il servizio AI non Ã¨ ancora configurato.");
+    if (!key) throw new Error("Il servizio AI non è ancora configurato.");
     const ai = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: "gpt-4o-mini", temperature: 0, response_format: { type: "json_object" }, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: text }] }),
     });
-    if (!ai.ok) throw new Error("Il servizio AI non Ã¨ disponibile.");
+    if (!ai.ok) throw new Error("Il servizio AI non è disponibile.");
     const payload = await ai.json();
     const parsed = JSON.parse(payload.choices?.[0]?.message?.content ?? "");
     if (!Array.isArray(parsed.templates)) throw new Error("Risposta AI non valida.");
@@ -57,4 +54,3 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Errore" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
-
