@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 export type Json =
   | string
   | number
@@ -586,4 +583,3 @@ export const Constants = {
     },
   },
 } as const
-
