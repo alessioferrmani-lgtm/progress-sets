@@ -1,68 +1,75 @@
-# Piano: Design System iOS + Dashboard personalizzata
+# Piano: Atletica + Profilo Fisico + Motore Calorie
 
-## Parte 1 — Design System coerente (tutte le schermate)
+Tre interventi coordinati che condividono lo stesso motore di calcolo calorie.
 
-### Token (src/styles.css)
-Aggiorno le variabili CSS con i valori esatti richiesti (hex non oklch, così i colori sono identici alle spec Apple):
+## PARTE 1 — Database (una sola migrazione)
 
-Light:
-- `--background: #F2F2F7`, `--surface: #FFFFFF`
-- `--label: #000000`, `--label-secondary: rgba(60,60,67,0.6)`, `--label-tertiary: rgba(60,60,67,0.3)`
-- `--separator: rgba(60,60,67,0.16)`
-- `--accent: #007AFF`, `--accent-soft: rgba(0,122,255,0.12)`
-- `--success: #34C759`, `--warning: #FF9500`, `--danger: #FF3B30`
+Nuove tabelle in `public` (tutte con RLS `auth.uid() = user_id` + GRANT su `authenticated` / `service_role`):
 
-Dark (via `prefers-color-scheme`, già gestito da ThemeManager):
-- `--background: #000000`, `--surface: #1C1C1E`, `--surface-2: #2C2C2E`
-- `--label: #FFFFFF`, `--label-secondary: rgba(235,235,245,0.6)`
-- `--separator: rgba(84,84,88,0.6)`
-- `--accent: #0A84FF`
+- **profiles** — `user_id (PK, FK auth.users)`, `height_cm`, `weight_kg`, `date_of_birth`, `sex` (enum M/F/O), `activity_level` (enum), `updated_at`. Trigger che, quando cambia `weight_kg`, inserisce riga in `weight_logs`.
+- **weight_logs** — `user_id`, `weight_kg`, `logged_at`.
+- **test_types** — `name` (unique), `result_type` (enum TIME/DISTANCE), `distance_m`, `duration_sec`, `is_custom`, `user_id` (nullable: NULL = preset globale, leggibile da tutti gli auth; !=NULL = custom dell'utente). Seed dei 7 test preset via migration.
+- **tests** — `user_id`, `test_type_id`, `date`, `time_sec`, `distance_covered_m`, `avg_hr`, `weather`, `notes`, `observations`, `calories_burned`, `created_at`.
+- **races** — `user_id`, `name`, `date`, `location`, `distance_m`, `time_sec`, `placement`, `category`, `avg_hr`, `notes`, `calories_burned`, `created_at`.
+- **performance_log** — `user_id`, `source` (enum TRAINING_REP/TEST/RACE), `source_id`, `distance_m`, `time_sec`, `date`, `created_at`. Popolata via trigger da `tests` (quando time_sec presente) e `races`.
+- Aggiungo `avg_hr` e `rpe` (nullable) e `calories_burned` (nullable) a `workout_sessions`.
 
-### Utility + componenti condivisi
-- `ios-card` (radius 14px, padding 16-20, shadow leggera)
-- `ios-list` + `ios-list-row` per liste grouped con separatore 0.5px `inset-inline-start: 16px`
-- `ios-btn-primary` (pillola, `active:scale-[0.97]`, transition 200ms ease-out)
-- `ios-tabbar` con `backdrop-filter: saturate(180%) blur(20px)` e superficie translucida
-- Transizione globale 200ms ease-out su interattivi
+## PARTE 2 — Motore calorie condiviso
 
-### Applicazione
-Refactor delle schermate esistenti per usare i nuovi token/utility:
-- `workouts/index.tsx`, `workouts/new.tsx`, `workouts/$templateId/run.tsx`, `sessions/$sessionId/summary.tsx`, `auth.tsx`
-- Rimozione bordi spessi, ombre pesanti, corner squadrati
-- `RestTimerBar` allineata al nuovo stile blur
-- Icone lineari da `lucide-react` (già disponibile) al posto di emoji
+File unico `src/lib/calories.ts` con funzioni pure:
+- `bmr({sex, weight_kg, height_cm, age})` — Mifflin-St Jeor (offset +5 / -161 / -78).
+- `tdee(bmr, activity_level)` — moltiplicatori 1.2/1.375/1.55/1.725/1.9.
+- `caloriesFromHR({avg_hr, weight_kg, age, sex, duration_min})` — formula HR, `max(0, ...)`.
+- `caloriesFromMET({met, weight_kg, duration_min, rpe?})` — con correzione `met * (0.85 + rpe/50)` se sessione GYM.
+- `MET_TABLE` con i valori richiesti + helper `metForTest(testType)` / `metForRace(distance, time)` che sceglie fondo/media/veloce dal pace.
+- `computeCaloriesForSession(profile, session)` / `...ForTest` / `...ForRace` — orchestrano: se manca `profile.weight_kg` o `height_cm` → ritornano `null` (mai default silenzioso). Scelgono automaticamente Metodo A (HR) se `avg_hr` presente, altrimenti Metodo B (MET).
 
-### Tab bar inferiore
-Nuovo componente `BottomTabBar` fisso in fondo con 3 voci: Home (dashboard), Allenamenti (schede), Profilo. Renderizzato nel layout `_authenticated`. Sostituisce/affianca `RestTimerBar` che rimane appena sopra la tab.
+Chiamato da: salvataggio workout (`workout-queries`), form test, form race. Il valore viene scritto in `calories_burned` al momento dell'insert.
 
-## Parte 2 — Dashboard personalizzata `/home`
+## PARTE 3 — Profilo utente
 
-Nuova route `src/routes/_authenticated/home.tsx` (impostata come rotta di default: `/` autenticato → redirect a `/home`).
+Refactor di `src/routes/_authenticated/profile.tsx`:
+- Sezione "I miei dati" con form editabile (altezza, peso, data nascita → età calcolata, sesso, livello attività).
+- Query `useProfile()` in `src/lib/profile-queries.ts`.
+- Salvataggio via upsert su `profiles`. Trigger DB gestisce il log del peso.
 
-Ogni sezione è un componente indipendente che usa `useQuery` proprio → caricamento progressivo con skeleton individuali.
+Banner in `home.tsx` (`ProfileIncompleteBanner`) mostrato solo se `!profile || !weight_kg || !height_cm`, con CTA verso `/profile`.
 
-### Sezioni
-1. **HeaderGreeting** — "Ciao {nome/email}", data odierna in italiano (`Intl.DateTimeFormat("it-IT")`).
-2. **StreakCard** — Query su `workout_sessions` ultime 12 settimane; calcola settimane consecutive con ≥1 sessione. Se settimana corrente vuota → CTA "Inizia la tua settimana" (link a `/workouts`). Icona `Flame` da lucide.
-3. **WeeklyVolumeChart** — Recharts (già in dipendenze o da installare). Toggle segmentato "Durata / Volume / Ripetizioni". Aggrega `logged_sets` + `workout_sessions` ultimi 90gg per settimana ISO. Totale settimana corrente in grande sopra il grafico.
-4. **MuscleMap** — Silhouette SVG frontale + posteriore semplificate. Mappa `exercise.name` → gruppo muscolare tramite tabella statica (es. "Panca" → petto, "Squat" → quadricipiti). Gruppi allenati negli ultimi 7gg in `--accent`, altri in `--fill`. Sotto: 7 pallini per i giorni della settimana corrente (L-D), evidenziati quelli con sessione.
-5. **RecentPRs** — Query aggrega MAX(weight_kg) per exercise_id + data del PR. Mostra ultimi 5 PR dell'ultimo mese con delta rispetto al record precedente. Fallback: top-3 esercizi più allenati con record assoluto.
-6. **RecentSessions** — Ultime 5 sessioni con `ended_at NOT NULL`, con durata, volume totale (sum weight×reps), n. serie. Tap → link a summary esistente.
-7. **MonthCalendar** — `<details>` collassabile "Vedi calendario completo". Griglia 7 colonne del mese corrente, pallino blu sui giorni con sessione, sotto nome scheda breve.
+## PARTE 4 — Sezione Atletica
 
-### Query centralizzata
-Nuovo `src/lib/dashboard-queries.ts` con funzioni pure che ricevono `userId` e ritornano DTO plain. Ogni componente ha il suo `useQuery` key stabile.
+Nuovo layout route `src/routes/_authenticated/athletics/route.tsx` con `<Outlet />` + segmented control Test/Gare + card insight in cima (query su `performance_log`).
 
-### Stati vuoti
-Ogni sezione ha un empty state amichevole (icona + testo + eventuale CTA), mai card vuota silenziosa.
+Route figlie:
+- `athletics/index.tsx` → redirect a `athletics/tests`.
+- `athletics/tests.tsx` — lista `test_types`, ciascuno con count + PR. Bottone "+ Test personalizzato".
+- `athletics/tests/$typeId.tsx` — form nuovo test + PR assoluto/stagionale (anno sportivo set-ago) + confronto con ultimo + grafico Recharts (asse Y invertito per TIME) + storico.
+- `athletics/races.tsx` — lista cronologica + bottone "+ Nuova gara" (dialog/route).
+- `athletics/races/new.tsx` — form nuova gara.
+- `athletics/records.tsx` — record per distanza da `performance_log`.
+
+Card insight (in `athletics/route.tsx`, max 3):
+- Miglior tempo di sempre per distanza più recente.
+- Delta vs anno precedente.
+- Rank della prestazione più recente. Skip la card se `performance_log` vuota per quella distanza.
+
+Query in `src/lib/athletics-queries.ts`. Aggiungo tab "Atletica" (icona `Medal`) alla `BottomTabBar`.
+
+## PARTE 5 — Dashboard
+
+Nuova card `CaloriesCard` in `home.tsx` — somma `calories_burned` da `workout_sessions` + `tests` + `races` ultimi 7 giorni. Se profilo incompleto → stato vuoto "Completa il profilo".
+
+## Design
+
+Tutte le nuove schermate usano `ios-card` / `ios-list-row` / `ios-btn-primary` già presenti in `styles.css`. Nessuna modifica al design system.
 
 ## Dettagli tecnici
-- Nessuna modifica DB: le query aggiuntive usano tabelle e RLS già esistenti.
-- `recharts` da installare se non presente (verifico prima).
-- SVG silhouette custom inline in `src/components/MuscleMap.tsx` con `<path>` per gruppo, `data-active` toggle.
-- Routing: aggiungo `home.tsx` sotto `_authenticated/` e faccio redirect da `/workouts` root a `/home` non è necessario; aggiorno solo il link default post-login e la tab bar.
 
-## Non incluso
-- Modifiche allo schema DB
-- Nuovi esercizi/mapping muscolare esaustivo (userò un dizionario base estendibile)
-- Modifiche al flusso di esecuzione allenamento (solo restyling visivo)
+- Preset test seed via `INSERT ... ON CONFLICT DO NOTHING` con `user_id = NULL`.
+- RLS su `test_types`: SELECT permesso se `user_id IS NULL OR user_id = auth.uid()`; INSERT/UPDATE/DELETE solo su propri custom.
+- Trigger `after insert on tests` e `after insert on races` per popolare `performance_log`.
+- Trigger `before update on profiles` per loggare cambio peso in `weight_logs`.
+- Il calcolo calorie avviene lato client al momento del save (legge profilo → calcola → include in insert). Nessuna edge function.
+- Anno sportivo: se `month >= 9` → `[sett-anno, ago-anno+1]`, altrimenti `[sett-anno-1, ago-anno]`.
+- Scelta MET per gare/corsa: pace = `time_sec / (distance_m/1000) / 60` min/km; <4:30 → 11.5, <5:30 → 9.8, altrimenti 8.3.
+
+Confermi e procedo con migration + codice?
