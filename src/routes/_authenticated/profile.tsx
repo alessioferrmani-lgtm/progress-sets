@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -122,7 +119,7 @@ function ProfilePage() {
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               className="w-24 bg-transparent text-right text-base text-label outline-none"
-              placeholder="â€”"
+              placeholder="—"
             />
           </Field>
           <Field label="Peso (kg)">
@@ -133,7 +130,7 @@ function ProfilePage() {
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className="w-24 bg-transparent text-right text-base text-label outline-none"
-              placeholder="â€”"
+              placeholder="—"
             />
           </Field>
           <Field label="Data di nascita">
@@ -146,7 +143,7 @@ function ProfilePage() {
           </Field>
           {age !== null && (
             <div className="flex items-center justify-between px-4 py-2.5">
-              <span className="text-sm text-label-secondary">EtÃ </span>
+              <span className="text-sm text-label-secondary">Età</span>
               <span className="text-sm font-medium text-label">{age} anni</span>
             </div>
           )}
@@ -156,19 +153,19 @@ function ProfilePage() {
               onChange={(e) => setSex(e.target.value as Sex | "")}
               className="bg-transparent text-right text-base text-label outline-none"
             >
-              <option value="">â€”</option>
+              <option value="">—</option>
               {(Object.keys(SEX_LABELS) as Sex[]).map((k) => (
                 <option key={k} value={k}>{SEX_LABELS[k]}</option>
               ))}
             </select>
           </Field>
-          <Field label="Livello attivitÃ ">
+          <Field label="Livello attività">
             <select
               value={activity}
               onChange={(e) => setActivity(e.target.value as ActivityLevel | "")}
               className="bg-transparent text-right text-base text-label outline-none"
             >
-              <option value="">â€”</option>
+              <option value="">—</option>
               {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((k) => (
                 <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>
               ))}
@@ -186,7 +183,7 @@ function ProfilePage() {
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97] disabled:opacity-50"
         >
           <Check className="h-4 w-4" />
-          {save.isPending ? "Salvataggioâ€¦" : "Salva dati"}
+          {save.isPending ? "Salvataggio…" : "Salva dati"}
         </button>
       </section>
 
@@ -233,4 +230,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-
