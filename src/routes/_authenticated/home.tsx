@@ -13,6 +13,10 @@ import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyProfile } from "@/lib/profile-queries";
+import { isProfileComplete } from "@/lib/calories";
+import { fetchAllTests } from "@/lib/athletics-queries";
+import { fetchRaces } from "@/lib/athletics-queries";
 import {
   Flame,
   Trophy,
@@ -20,6 +24,7 @@ import {
   ArrowRight,
   Calendar as CalendarIcon,
   History,
+  UserCog,
 } from "lucide-react";
 import {
   startOfISOWeek,
@@ -55,6 +60,18 @@ function HomePage() {
     queryKey: ["dash", "prs", user.id],
     queryFn: () => fetchAllTimePRs(),
   });
+  const profileQ = useQuery({
+    queryKey: ["profile", user.id],
+    queryFn: fetchMyProfile,
+  });
+  const testsQ = useQuery({
+    queryKey: ["dash", "tests", user.id],
+    queryFn: fetchAllTests,
+  });
+  const racesQ = useQuery({
+    queryKey: ["dash", "races", user.id],
+    queryFn: fetchRaces,
+  });
 
   const today = new Date();
   const dateLabel = format(today, "EEEE d MMMM", { locale: it });
@@ -70,6 +87,16 @@ function HomePage() {
       </header>
 
       <div className="space-y-4">
+        <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
+
+        <CaloriesCard
+          profileComplete={isProfileComplete(profileQ.data ?? null)}
+          sessions={sessionsQ.data}
+          tests={testsQ.data}
+          races={racesQ.data}
+          loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
+        />
+
         <StreakSection sessions={sessionsQ.data} loading={sessionsQ.isLoading} />
 
         <VolumeSection
@@ -548,3 +575,90 @@ function MonthCalendarSection({ sessions }: { sessions?: SessionRow[] }) {
     </details>
   );
 }
+
+function ProfileBanner({
+  profile,
+  loading,
+}: {
+  profile: import("@/lib/profile-queries").Profile | null | undefined;
+  loading: boolean;
+}) {
+  if (loading) return null;
+  if (isProfileComplete(profile ?? null)) return null;
+  return (
+    <Link
+      to="/profile"
+      className="ios-card flex items-center gap-3 p-4"
+      style={{ background: "var(--color-accent-soft)" }}
+    >
+      <UserCog className="h-5 w-5 text-accent" />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold text-label">
+          Completa il tuo profilo
+        </div>
+        <div className="text-xs text-label-secondary">
+          Aggiungi altezza, peso e data di nascita per calcolare le calorie.
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-label-tertiary" />
+    </Link>
+  );
+}
+
+function CaloriesCard({
+  profileComplete,
+  sessions,
+  tests,
+  races,
+  loading,
+}: {
+  profileComplete: boolean;
+  sessions?: SessionRow[];
+  tests?: import("@/lib/athletics-queries").TestRow[];
+  races?: import("@/lib/athletics-queries").RaceRow[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: 88 }} />
+    );
+  }
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+  const sum =
+    (sessions ?? [])
+      .filter((s) => new Date(s.started_at) >= since)
+      .reduce((a, s) => a + (Number((s as unknown as { calories_burned: number | null }).calories_burned) || 0), 0) +
+    (tests ?? [])
+      .filter((t) => new Date(t.date) >= since)
+      .reduce((a, t) => a + (Number(t.calories_burned) || 0), 0) +
+    (races ?? [])
+      .filter((r) => new Date(r.date) >= since)
+      .reduce((a, r) => a + (Number(r.calories_burned) || 0), 0);
+
+  return (
+    <section className="ios-card flex items-center gap-3 p-4">
+      <div
+        className="flex h-12 w-12 items-center justify-center rounded-full"
+        style={{ background: "var(--color-accent-soft)" }}
+      >
+        <Flame className="h-6 w-6 text-warning" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-medium uppercase text-label-tertiary">
+          Calorie bruciate · 7 giorni
+        </div>
+        {profileComplete ? (
+          <div className="text-2xl font-bold tabular-nums text-label">
+            {Math.round(sum)} kcal
+          </div>
+        ) : (
+          <div className="text-sm text-label-secondary">
+            Completa il profilo per vedere le calorie
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+

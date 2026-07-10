@@ -178,9 +178,25 @@ function RunPage() {
 
   const finish = async () => {
     if (!sessionId) return;
+    const endedAt = new Date();
+    // Compute calories from profile + duration (MET-based for gym)
+    let calories: number | null = null;
+    try {
+      const { fetchMyProfile } = await import("@/lib/profile-queries");
+      const { computeCaloriesForSession } = await import("@/lib/calories");
+      const profile = await fetchMyProfile();
+      if (profile) {
+        const durationMin = (endedAt.getTime() - startedAt) / 60000;
+        calories = computeCaloriesForSession(profile, {
+          duration_min: durationMin,
+        });
+      }
+    } catch {
+      // ignore, calories stays null
+    }
     await supabase
       .from("workout_sessions")
-      .update({ ended_at: new Date().toISOString() })
+      .update({ ended_at: endedAt.toISOString(), calories_burned: calories })
       .eq("id", sessionId);
     timer.skip();
     navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });

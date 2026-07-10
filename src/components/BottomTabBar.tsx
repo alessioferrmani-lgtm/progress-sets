@@ -1,9 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Dumbbell, User } from "lucide-react";
+import { Home, Dumbbell, User, Medal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type Tab = {
-  to: "/home" | "/workouts" | "/profile";
+  to: "/home" | "/workouts" | "/athletics" | "/profile";
   label: string;
   icon: LucideIcon;
 };
@@ -11,12 +11,12 @@ type Tab = {
 const TABS: Tab[] = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/workouts", label: "Schede", icon: Dumbbell },
+  { to: "/athletics", label: "Atletica", icon: Medal },
   { to: "/profile", label: "Profilo", icon: User },
 ];
 
 export function BottomTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Hide during workout run / summary (immersive screens)
   if (
     pathname.includes("/workouts/") &&
     (pathname.endsWith("/run") || pathname.endsWith("/edit") || pathname.endsWith("/new"))
