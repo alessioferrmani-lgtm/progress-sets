@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -46,8 +49,6 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function HomePage() {
   const { user } = Route.useRouteContext();
-  const displayName = user.user_metadata?.name || user.email?.split("@")[0] || "Atleta";
-
   const sessionsQ = useQuery({
     queryKey: ["dash", "sessions", user.id],
     queryFn: () => fetchRecentSessions(120),
@@ -64,6 +65,7 @@ function HomePage() {
     queryKey: ["profile", user.id],
     queryFn: fetchMyProfile,
   });
+  const displayName = profileQ.data?.display_name || "Aggiungi il tuo nome nelle Impostazioni";
   const testsQ = useQuery({
     queryKey: ["dash", "tests", user.id],
     queryFn: fetchAllTests,
@@ -216,7 +218,7 @@ function StreakSection({
         <div className="text-2xl font-bold leading-tight text-label">
           {streak} {streak === 1 ? "settimana" : "settimane"} di fila
         </div>
-        <div className="text-xs text-label-secondary">Continua così</div>
+        <div className="text-xs text-label-secondary">Continua cosÃ¬</div>
       </div>
     </section>
   );
@@ -416,7 +418,7 @@ function PRsSection({
                   {r.label}
                   {r.delta !== null && r.delta > 0 && (
                     <>
-                      {" · "}
+                      {" Â· "}
                       <span className="font-semibold text-success">+{r.delta}kg</span>
                     </>
                   )}
@@ -491,9 +493,9 @@ function RecentSessionsSection({
                       {s.template_name ?? "Allenamento"}
                     </div>
                     <div className="mt-0.5 text-xs text-label-secondary">
-                      {format(new Date(s.started_at), "d MMM · HH:mm", { locale: it })}
-                      {" · "}
-                      {dur} min · {sessSets.length} serie ·{" "}
+                      {format(new Date(s.started_at), "d MMM Â· HH:mm", { locale: it })}
+                      {" Â· "}
+                      {dur} min Â· {sessSets.length} serie Â·{" "}
                       {volume >= 1000
                         ? `${(volume / 1000).toFixed(1)}k`
                         : Math.round(volume)}
@@ -646,7 +648,7 @@ function CaloriesCard({
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium uppercase text-label-tertiary">
-          Calorie bruciate · 7 giorni
+          Calorie bruciate Â· 7 giorni
         </div>
         {profileComplete ? (
           <div className="text-2xl font-bold tabular-nums text-label">
