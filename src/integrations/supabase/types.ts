@@ -32,6 +32,80 @@ export type Database = {
         }
         Relationships: []
       }
+      interval_reps: {
+        Row: {
+          created_at: string
+          distance_m: number
+          id: string
+          rep_number: number
+          rest_sec: number | null
+          session_id: string
+          time_sec: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance_m: number
+          id?: string
+          rep_number: number
+          rest_sec?: number | null
+          session_id: string
+          time_sec: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distance_m?: number
+          id?: string
+          rep_number?: number
+          rest_sec?: number | null
+          session_id?: string
+          time_sec?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interval_reps_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "interval_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interval_sessions: {
+        Row: {
+          calories_burned: number | null
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          signature: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_burned?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          signature?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_burned?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          signature?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       logged_sets: {
         Row: {
           completed_at: string
