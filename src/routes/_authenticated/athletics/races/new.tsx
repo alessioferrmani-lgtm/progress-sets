@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { computeCaloriesForRace } from "@/lib/calories";
+import { DistancePicker } from "@/components/DistancePicker";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ function NewRacePage() {
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [location, setLocation] = useState("");
-  const [distance, setDistance] = useState("");
+  const [distance, setDistance] = useState<number | null>(null);
   const [time, setTime] = useState("");
   const [placement, setPlacement] = useState("");
   const [category, setCategory] = useState("");
@@ -29,7 +30,7 @@ function NewRacePage() {
   const save = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const distance_m = Number(distance);
+      const distance_m = distance;
       const time_sec = parseTime(time);
       if (!name.trim()) throw new Error("Nome obbligatorio");
       if (!distance_m || !time_sec) throw new Error("Distanza e tempo obbligatori");
