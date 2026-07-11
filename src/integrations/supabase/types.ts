@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 export type Json =
   | string
   | number
@@ -123,7 +120,6 @@ export type Database = {
             | null
           created_at: string
           date_of_birth: string | null
-          display_name: string | null
           height_cm: number | null
           sex: Database["public"]["Enums"]["sex_enum"] | null
           updated_at: string
@@ -136,7 +132,6 @@ export type Database = {
             | null
           created_at?: string
           date_of_birth?: string | null
-          display_name?: string | null
           height_cm?: number | null
           sex?: Database["public"]["Enums"]["sex_enum"] | null
           updated_at?: string
@@ -149,7 +144,6 @@ export type Database = {
             | null
           created_at?: string
           date_of_birth?: string | null
-          display_name?: string | null
           height_cm?: number | null
           sex?: Database["public"]["Enums"]["sex_enum"] | null
           updated_at?: string
@@ -586,4 +580,3 @@ export const Constants = {
     },
   },
 } as const
-
