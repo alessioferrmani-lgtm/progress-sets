@@ -83,11 +83,17 @@ function NewRacePage() {
             className="bg-transparent text-right text-base text-label outline-none" />
         </F>
         <F label="Luogo"><Input v={location} on={setLocation} placeholder="opz." /></F>
-        <F label="Distanza (m)"><Input v={distance} on={setDistance} placeholder="10000" type="number" /></F>
         <F label="Tempo (mm:ss)"><Input v={time} on={setTime} placeholder="42:15" /></F>
         <F label="Posizionamento"><Input v={placement} on={setPlacement} type="number" placeholder="opz." /></F>
         <F label="Categoria"><Input v={category} on={setCategory} placeholder="opz." /></F>
         <F label="FC media (bpm)"><Input v={hr} on={setHr} type="number" placeholder="opz." /></F>
+      </div>
+
+      <div className="ios-card mt-3 p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
+          Distanza
+        </div>
+        <DistancePicker value={distance} onChange={setDistance} />
       </div>
       <textarea
         placeholder="Note"
