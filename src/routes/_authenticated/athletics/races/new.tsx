@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { computeCaloriesForRace } from "@/lib/calories";
+import { DistancePicker } from "@/components/DistancePicker";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ function NewRacePage() {
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [location, setLocation] = useState("");
-  const [distance, setDistance] = useState("");
+  const [distance, setDistance] = useState<number | null>(null);
   const [time, setTime] = useState("");
   const [placement, setPlacement] = useState("");
   const [category, setCategory] = useState("");
@@ -29,7 +30,7 @@ function NewRacePage() {
   const save = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const distance_m = Number(distance);
+      const distance_m = distance;
       const time_sec = parseTime(time);
       if (!name.trim()) throw new Error("Nome obbligatorio");
       if (!distance_m || !time_sec) throw new Error("Distanza e tempo obbligatori");
@@ -82,11 +83,17 @@ function NewRacePage() {
             className="bg-transparent text-right text-base text-label outline-none" />
         </F>
         <F label="Luogo"><Input v={location} on={setLocation} placeholder="opz." /></F>
-        <F label="Distanza (m)"><Input v={distance} on={setDistance} placeholder="10000" type="number" /></F>
         <F label="Tempo (mm:ss)"><Input v={time} on={setTime} placeholder="42:15" /></F>
         <F label="Posizionamento"><Input v={placement} on={setPlacement} type="number" placeholder="opz." /></F>
         <F label="Categoria"><Input v={category} on={setCategory} placeholder="opz." /></F>
         <F label="FC media (bpm)"><Input v={hr} on={setHr} type="number" placeholder="opz." /></F>
+      </div>
+
+      <div className="ios-card mt-3 p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
+          Distanza
+        </div>
+        <DistancePicker value={distance} onChange={setDistance} />
       </div>
       <textarea
         placeholder="Note"

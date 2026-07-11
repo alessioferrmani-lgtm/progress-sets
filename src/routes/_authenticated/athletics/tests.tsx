@@ -11,6 +11,7 @@ import {
 } from "@/lib/athletics-queries";
 import { ChevronRight, Plus, Timer, X } from "lucide-react";
 import { toast } from "sonner";
+import { DistancePicker } from "@/components/DistancePicker";
 
 export const Route = createFileRoute("/_authenticated/athletics/tests")({
   component: TestsListPage,
@@ -94,17 +95,19 @@ function NewCustomTypeSheet({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<TestType["result_type"]>("TIME");
-  const [distance, setDistance] = useState("");
+  const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState("");
 
   const create = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
+      if (kind === "TIME" && !distance) throw new Error("Seleziona una distanza");
+      if (kind === "DISTANCE" && !duration) throw new Error("Inserisci la durata");
       const { error } = await supabase.from("test_types").insert({
         user_id: u.user!.id,
         name: name.trim(),
         result_type: kind,
-        distance_m: kind === "TIME" && distance ? Number(distance) : null,
+        distance_m: kind === "TIME" ? distance : null,
         duration_sec: kind === "DISTANCE" && duration ? Number(duration) : null,
         is_custom: true,
       });
@@ -159,13 +162,12 @@ function NewCustomTypeSheet({ onClose }: { onClose: () => void }) {
             </button>
           </div>
           {kind === "TIME" ? (
-            <input
-              type="number"
-              placeholder="Distanza fissa (metri)"
-              value={distance}
-              onChange={(e) => setDistance(e.target.value)}
-              className="w-full rounded-xl bg-fill px-4 py-3 text-base text-label outline-none"
-            />
+            <div className="rounded-xl bg-fill p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-label-secondary">
+                Distanza standard
+              </div>
+              <DistancePicker value={distance} onChange={setDistance} />
+            </div>
           ) : (
             <input
               type="number"

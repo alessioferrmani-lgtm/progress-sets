@@ -28,6 +28,13 @@ function WorkoutsIndex() {
         <Plus className="h-5 w-5" /> Nuova scheda
       </Link>
 
+      <Link
+        to="/workouts/intervals/new"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
+      >
+        <Plus className="h-4 w-4" /> Nuova sessione ripetute
+      </Link>
+
       <div className="mt-5 space-y-2">
         {isLoading && (
           <div className="py-10 text-center text-sm text-label-tertiary">Caricamento…</div>
