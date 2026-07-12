@@ -201,6 +201,12 @@ function ProfilePage() {
           </Link>
         </li>
         <li>
+          <Link to="/profile/export" className="ios-list-row">
+            <span className="min-w-0 flex-1 text-sm text-label">Esporta i miei progressi</span>
+            <ChevronRight className="h-4 w-4 text-label-tertiary" />
+          </Link>
+        </li>
+        <li>
           <a href="mailto:?subject=Feedback" className="ios-list-row">
             <Mail className="h-4 w-4 text-label-secondary" />
             <span className="min-w-0 flex-1 text-sm text-label">Feedback</span>
