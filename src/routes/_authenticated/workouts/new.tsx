@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { fetchExercises, fetchTemplate } from "@/lib/workout-queries";
+import { fetchExercises, fetchTemplate, type RepsType } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, FileText, Wrench } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, FileText, Wrench, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/workouts/new")({
   component: WorkoutNewPage,
@@ -15,8 +15,24 @@ function WorkoutNewPage() {
   return (
     <div>
       <div className="mx-auto flex max-w-md gap-2 px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
-        <button onClick={() => setMode("manual")} className={"flex-1 rounded-xl py-2 text-sm font-semibold " + (mode === "manual" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")}><Wrench className="mr-1 inline h-4 w-4" /> Builder manuale</button>
-        <button onClick={() => setMode("import")} className={"flex-1 rounded-xl py-2 text-sm font-semibold " + (mode === "import" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")}><FileText className="mr-1 inline h-4 w-4" /> Incolla scheda</button>
+        <button
+          onClick={() => setMode("manual")}
+          className={
+            "flex-1 rounded-xl py-2 text-sm font-semibold " +
+            (mode === "manual" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+          }
+        >
+          <Wrench className="mr-1 inline h-4 w-4" /> Builder manuale
+        </button>
+        <button
+          onClick={() => setMode("import")}
+          className={
+            "flex-1 rounded-xl py-2 text-sm font-semibold " +
+            (mode === "import" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+          }
+        >
+          <FileText className="mr-1 inline h-4 w-4" /> Incolla scheda
+        </button>
       </div>
       {mode === "manual" ? <TemplateEditor mode="new" embedded /> : <WorkoutImport />}
     </div>
@@ -27,7 +43,9 @@ type Row = {
   key: string;
   exercise_id: string;
   target_sets: number;
-  target_reps: number;
+  target_reps: number | null;
+  reps_type: RepsType;
+  reps_display: string | null;
   target_weight_kg: number | null;
   rest_seconds: number;
 };
@@ -43,6 +61,7 @@ export function TemplateEditor({
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  void embedded;
   const { data: allExercises } = useQuery({
     queryKey: ["exercises"],
     queryFn: fetchExercises,
@@ -66,6 +85,8 @@ export function TemplateEditor({
           exercise_id: e.exercise_id,
           target_sets: e.target_sets,
           target_reps: e.target_reps,
+          reps_type: e.reps_type,
+          reps_display: e.reps_display,
           target_weight_kg: e.target_weight_kg,
           rest_seconds: e.rest_seconds,
         })),
@@ -83,6 +104,8 @@ export function TemplateEditor({
         exercise_id: first.id,
         target_sets: 3,
         target_reps: 10,
+        reps_type: "count",
+        reps_display: "10",
         target_weight_kg: null,
         rest_seconds: 90,
       },
@@ -128,7 +151,9 @@ export function TemplateEditor({
         exercise_id: r.exercise_id,
         order_index: i,
         target_sets: r.target_sets,
-        target_reps: r.target_reps,
+        target_reps: r.reps_type === "count" ? r.target_reps : null,
+        reps_type: r.reps_type,
+        reps_display: r.reps_display,
         target_weight_kg: r.target_weight_kg,
         rest_seconds: r.rest_seconds,
       }));
@@ -187,25 +212,13 @@ export function TemplateEditor({
                   </option>
                 ))}
               </select>
-              <button
-                onClick={() => move(idx, -1)}
-                className="rounded-full bg-fill p-1.5 text-label-secondary"
-                aria-label="Su"
-              >
+              <button onClick={() => move(idx, -1)} className="rounded-full bg-fill p-1.5 text-label-secondary" aria-label="Su">
                 <ChevronUp className="h-4 w-4" />
               </button>
-              <button
-                onClick={() => move(idx, 1)}
-                className="rounded-full bg-fill p-1.5 text-label-secondary"
-                aria-label="Giù"
-              >
+              <button onClick={() => move(idx, 1)} className="rounded-full bg-fill p-1.5 text-label-secondary" aria-label="Giù">
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button
-                onClick={() => removeRow(idx)}
-                className="rounded-full bg-fill p-1.5 text-danger"
-                aria-label="Rimuovi"
-              >
+              <button onClick={() => removeRow(idx)} className="rounded-full bg-fill p-1.5 text-danger" aria-label="Rimuovi">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -214,39 +227,48 @@ export function TemplateEditor({
                 label="Serie"
                 value={r.target_sets}
                 onChange={(v) =>
-                  setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, target_sets: v ?? 0 } : x)),
-                  )
+                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, target_sets: v ?? 0 } : x)))
                 }
               />
+              <label className="col-span-2 flex flex-col gap-1">
+                <span className="text-[10px] font-medium uppercase text-label-tertiary">Ripetizioni</span>
+                <input
+                  value={r.reps_display ?? ""}
+                  onChange={(e) => {
+                    const s = e.target.value;
+                    setRows((rr) =>
+                      rr.map((x, i) => {
+                        if (i !== idx) return x;
+                        const asNum = Number(s);
+                        const isCount = /^\d+(-\d+)?$/.test(s.trim());
+                        return {
+                          ...x,
+                          reps_display: s,
+                          reps_type: isCount ? "count" : /metri|km/i.test(s) ? "distance" : /sec|min/i.test(s) ? "time" : "unspecified",
+                          target_reps: isCount && Number.isFinite(asNum) ? Math.round(asNum) : x.target_reps,
+                        };
+                      }),
+                    );
+                  }}
+                  placeholder="10 · 8-10 · 30 sec"
+                  className="rounded-lg bg-fill-secondary px-2 py-1.5 text-center text-sm text-label outline-none focus:ring-2 focus:ring-accent"
+                />
+              </label>
               <NumField
-                label="Reps"
-                value={r.target_reps}
+                label="Rec (s)"
+                value={r.rest_seconds}
                 onChange={(v) =>
-                  setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, target_reps: v ?? 0 } : x)),
-                  )
+                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v ?? 0 } : x)))
                 }
               />
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
               <NumField
                 label="Kg"
                 allowNull
                 value={r.target_weight_kg ?? undefined}
                 onChange={(v) =>
-                  setRows((rr) =>
-                    rr.map((x, i) =>
-                      i === idx ? { ...x, target_weight_kg: v ?? null } : x,
-                    ),
-                  )
-                }
-              />
-              <NumField
-                label="Rec (s)"
-                value={r.rest_seconds}
-                onChange={(v) =>
-                  setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v ?? 0 } : x)),
-                  )
+                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, target_weight_kg: v ?? null } : x)))
                 }
               />
             </div>
@@ -260,19 +282,22 @@ export function TemplateEditor({
         </button>
       </div>
 
-      <button
-        onClick={save}
-        disabled={saving}
-        className="ios-btn-primary mt-6 w-full"
-      >
+      <button onClick={save} disabled={saving} className="ios-btn-primary mt-6 w-full">
         {saving ? "Salvataggio…" : "Salva scheda"}
       </button>
     </div>
   );
 }
 
-type ImportedExercise = { name: string; sets: number; reps: number; rest_sec: number };
-type ImportedTemplate = { name: string; exercises: ImportedExercise[] };
+type ImportedExercise = {
+  name: string;
+  sets: number;
+  reps_type: RepsType;
+  reps_value: number | null;
+  reps_display: string;
+  rest_sec: number;
+};
+type ImportedTemplate = { name: string; exercises: ImportedExercise[]; _warnings?: string[] };
 
 function WorkoutImport() {
   const navigate = useNavigate();
@@ -288,25 +313,82 @@ function WorkoutImport() {
     try {
       const { data, error } = await supabase.functions.invoke("parse-workout", { body: { text: rawText } });
       if (error) throw error;
-      const result = data as { templates?: unknown };
-      if (!Array.isArray(result.templates) || result.templates.length === 0) throw new Error("Risposta non valida");
-      const clean = result.templates.map((template) => {
+      const result = data as { templates?: unknown; error?: string };
+      if (result.error) throw new Error(result.error);
+      if (!Array.isArray(result.templates) || result.templates.length === 0) {
+        throw new Error("Risposta non valida");
+      }
+
+      // Robust: never fail because of a single exercise; keep warnings.
+      const clean: ImportedTemplate[] = [];
+      for (const template of result.templates) {
         const t = template as Partial<ImportedTemplate>;
-        if (!t.name || !Array.isArray(t.exercises) || !t.exercises.length) throw new Error("Risposta non valida");
-        return { name: String(t.name), exercises: t.exercises.map((exercise) => {
-          const e = exercise as Partial<ImportedExercise>;
-          if (!e.name) throw new Error("Risposta non valida");
-          return { name: String(e.name), sets: Math.max(1, Number(e.sets) || 3), reps: Math.max(1, Number(e.reps) || 10), rest_sec: Math.max(0, Number(e.rest_sec) || 90) };
-        }) };
-      });
+        const warnings = Array.isArray((t as { _warnings?: string[] })._warnings)
+          ? [...((t as { _warnings?: string[] })._warnings as string[])]
+          : [];
+        const name = typeof t.name === "string" && t.name.trim() ? t.name.trim() : "Scheda";
+        const exercises: ImportedExercise[] = [];
+
+        if (Array.isArray(t.exercises)) {
+          for (const exercise of t.exercises) {
+            const e = exercise as Partial<ImportedExercise>;
+            if (!e.name) {
+              warnings.push("Esercizio senza nome ignorato.");
+              continue;
+            }
+            const validType: RepsType = (["count", "time", "distance", "unspecified"] as const).includes(
+              e.reps_type as never,
+            )
+              ? (e.reps_type as RepsType)
+              : "unspecified";
+            // CRITICAL: 0 is valid! Only default when truly missing.
+            const rest =
+              e.rest_sec === undefined || e.rest_sec === null
+                ? 90
+                : Math.max(0, Number(e.rest_sec));
+            exercises.push({
+              name: String(e.name),
+              sets: Math.max(1, Number(e.sets) || 3),
+              reps_type: validType,
+              reps_value:
+                validType === "count" && e.reps_value !== null && e.reps_value !== undefined
+                  ? Number(e.reps_value) || null
+                  : null,
+              reps_display:
+                typeof e.reps_display === "string" && e.reps_display.trim()
+                  ? e.reps_display.trim()
+                  : validType === "count" && e.reps_value
+                    ? String(e.reps_value)
+                    : "-",
+              rest_sec: rest,
+            });
+          }
+        }
+        clean.push({ name, exercises, _warnings: warnings });
+      }
       setTemplates(clean);
-    } catch {
-      toast.error("Non sono riuscito a interpretare la scheda. Riprova oppure usa il builder manuale.");
-    } finally { setLoading(false); }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Non sono riuscito a interpretare la scheda.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateExercise = (ti: number, ei: number, patch: Partial<ImportedExercise>) =>
-    setTemplates((all) => all?.map((t, i) => i === ti ? { ...t, exercises: t.exercises.map((e, j) => j === ei ? { ...e, ...patch } : e) } : t) ?? null);
+    setTemplates((all) =>
+      all?.map((t, i) =>
+        i === ti
+          ? { ...t, exercises: t.exercises.map((e, j) => (j === ei ? { ...e, ...patch } : e)) }
+          : t,
+      ) ?? null,
+    );
+
+  const removeExercise = (ti: number, ei: number) =>
+    setTemplates((all) =>
+      all?.map((t, i) =>
+        i === ti ? { ...t, exercises: t.exercises.filter((_, j) => j !== ei) } : t,
+      ) ?? null,
+    );
 
   const save = async () => {
     if (!templates?.length) return;
@@ -316,21 +398,45 @@ function WorkoutImport() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessione scaduta");
       for (const template of templates) {
-        if (!template.name.trim() || !template.exercises.length) throw new Error("Ogni giorno deve avere un nome e almeno un esercizio");
-        const { data: created, error: templateError } = await supabase.from("workout_templates").insert({ name: template.name.trim(), user_id: userId }).select("id").single();
+        if (!template.name.trim() || !template.exercises.length) {
+          throw new Error("Ogni giorno deve avere un nome e almeno un esercizio");
+        }
+        const { data: created, error: templateError } = await supabase
+          .from("workout_templates")
+          .insert({ name: template.name.trim(), user_id: userId })
+          .select("id")
+          .single();
         if (templateError) throw templateError;
-        const rows = [] as Array<Record<string, unknown>>;
+        const rows: Array<Record<string, unknown>> = [];
         for (let index = 0; index < template.exercises.length; index++) {
           const exercise = template.exercises[index];
-          const { data: existing, error: lookupError } = await supabase.from("exercises").select("id").ilike("name", exercise.name.trim()).limit(1).maybeSingle();
+          const { data: existing, error: lookupError } = await supabase
+            .from("exercises")
+            .select("id")
+            .ilike("name", exercise.name.trim())
+            .limit(1)
+            .maybeSingle();
           if (lookupError) throw lookupError;
           let exerciseId = existing?.id;
           if (!exerciseId) {
-            const { data: custom, error: customError } = await supabase.from("exercises").insert({ name: exercise.name.trim(), user_id: userId } as never).select("id").single();
+            const { data: custom, error: customError } = await supabase
+              .from("exercises")
+              .insert({ name: exercise.name.trim() } as never)
+              .select("id")
+              .single();
             if (customError) throw customError;
             exerciseId = custom.id;
           }
-          rows.push({ template_id: created.id, user_id: userId, exercise_id: exerciseId, order_index: index, target_sets: exercise.sets, target_reps: exercise.reps, rest_seconds: exercise.rest_sec });
+          rows.push({
+            template_id: created.id,
+            exercise_id: exerciseId,
+            order_index: index,
+            target_sets: exercise.sets,
+            target_reps: exercise.reps_type === "count" ? exercise.reps_value ?? null : null,
+            reps_type: exercise.reps_type,
+            reps_display: exercise.reps_display,
+            rest_seconds: exercise.rest_sec,
+          });
         }
         const { error: rowsError } = await supabase.from("template_exercises").insert(rows as never);
         if (rowsError) throw rowsError;
@@ -339,37 +445,142 @@ function WorkoutImport() {
       qc.invalidateQueries({ queryKey: ["templates"] });
       qc.invalidateQueries({ queryKey: ["exercises"] });
       navigate({ to: "/workouts" });
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile salvare la scheda"); }
-    finally { setSaving(false); }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Impossibile salvare la scheda");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return <div className="mx-auto max-w-md px-4 pb-8 pt-4">
-    <h1 className="text-xl font-bold text-label">Incolla scheda scritta</h1>
-    {!templates ? <>
-      <p className="mt-1 text-sm text-label-secondary">Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato prima del salvataggio.</p>
-      <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows={12} placeholder="Es. Push: panca 4x8 rec 2 min..." className="ios-card mt-4 w-full resize-none bg-background p-4 text-sm text-label outline-none" />
-      <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">{loading ? "Analisi in corso…" : "Analizza scheda"}</button>
-    </> : <>
-      <p className="mt-1 text-sm text-label-secondary">Controlla e modifica ogni valore. Nulla viene salvato finché non premi il pulsante qui sotto.</p>
-      <div className="mt-4 space-y-4">{templates.map((template, ti) => <div key={ti} className="ios-card p-3">
-        <input value={template.name} onChange={(e) => setTemplates((all) => all?.map((t, i) => i === ti ? { ...t, name: e.target.value } : t) ?? null)} className="w-full bg-transparent text-base font-semibold text-label outline-none" />
-        {template.exercises.map((exercise, ei) => <div key={ei} className="mt-3 rounded-xl bg-fill p-2">
-          <input value={exercise.name} onChange={(e) => updateExercise(ti, ei, { name: e.target.value })} className="w-full bg-transparent text-sm font-medium text-label outline-none" />
-          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-            <ImportNumber label="Serie" value={exercise.sets} onChange={(sets) => updateExercise(ti, ei, { sets })} />
-            <ImportNumber label="Reps" value={exercise.reps} onChange={(reps) => updateExercise(ti, ei, { reps })} />
-            <ImportNumber label="Rec (s)" value={exercise.rest_sec} onChange={(rest_sec) => updateExercise(ti, ei, { rest_sec })} />
+  return (
+    <div className="mx-auto max-w-md px-4 pb-8 pt-4">
+      <h1 className="text-xl font-bold text-label">Incolla scheda scritta</h1>
+      {!templates ? (
+        <>
+          <p className="mt-1 text-sm text-label-secondary">
+            Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato
+            prima del salvataggio. Sono supportati i formati abbreviati ("Squat 3x10") e quelli
+            estesi (Serie/Ripetizioni/Recupero riga per riga, con "GIORNO: nome" come intestazione).
+          </p>
+          <textarea
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            rows={12}
+            placeholder={"GIORNO: Richiamo\n\nBox Jump\nSerie: 3\nRipetizioni: 3\nRecupero: 0"}
+            className="ios-card mt-4 w-full resize-none bg-background p-4 text-sm text-label outline-none"
+          />
+          <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">
+            {loading ? "Analisi in corso…" : "Analizza scheda"}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-sm text-label-secondary">
+            Controlla e modifica ogni valore. Puoi correggere gli esercizi non interpretati.
+          </p>
+          <div className="mt-4 space-y-4">
+            {templates.map((template, ti) => (
+              <div key={ti} className="ios-card p-3">
+                <input
+                  value={template.name}
+                  onChange={(e) =>
+                    setTemplates((all) =>
+                      all?.map((t, i) => (i === ti ? { ...t, name: e.target.value } : t)) ?? null,
+                    )
+                  }
+                  className="w-full bg-transparent text-base font-semibold text-label outline-none"
+                />
+                {(template._warnings ?? []).length > 0 && (
+                  <div className="mt-2 rounded-lg bg-warning/10 p-2 text-xs text-warning">
+                    <AlertTriangle className="mr-1 inline h-3 w-3" />
+                    {template._warnings!.join(" · ")}
+                  </div>
+                )}
+                {template.exercises.map((exercise, ei) => (
+                  <div key={ei} className="mt-3 rounded-xl bg-fill p-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={exercise.name}
+                        onChange={(e) => updateExercise(ti, ei, { name: e.target.value })}
+                        className="flex-1 bg-transparent text-sm font-medium text-label outline-none"
+                      />
+                      <button
+                        onClick={() => removeExercise(ti, ei)}
+                        className="rounded-full bg-background p-1 text-danger"
+                        aria-label="Rimuovi"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                      <ImportNumber label="Serie" value={exercise.sets} onChange={(sets) => updateExercise(ti, ei, { sets })} />
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-label-tertiary">Ripetizioni</span>
+                        <input
+                          value={exercise.reps_display}
+                          onChange={(e) => {
+                            const s = e.target.value;
+                            const asNum = Number(s);
+                            const isCount = /^\d+(-\d+)?$/.test(s.trim());
+                            updateExercise(ti, ei, {
+                              reps_display: s,
+                              reps_type: isCount
+                                ? "count"
+                                : /metri|km/i.test(s)
+                                  ? "distance"
+                                  : /sec|min/i.test(s)
+                                    ? "time"
+                                    : "unspecified",
+                              reps_value: isCount && Number.isFinite(asNum) ? Math.round(asNum) : null,
+                            });
+                          }}
+                          className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none"
+                        />
+                      </label>
+                      <ImportNumber
+                        label="Rec (s)"
+                        value={exercise.rest_sec}
+                        onChange={(rest_sec) => updateExercise(ti, ei, { rest_sec })}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
-        </div>)}
-      </div>)}</div>
-      <button onClick={() => setTemplates(null)} className="mt-4 w-full text-sm text-accent">Analizza di nuovo</button>
-      <button onClick={save} disabled={saving} className="ios-btn-primary mt-3 w-full">{saving ? "Salvataggio…" : "Salva scheda"}</button>
-    </>}
-  </div>;
+          <button onClick={() => setTemplates(null)} className="mt-4 w-full text-sm text-accent">
+            Analizza di nuovo
+          </button>
+          <button onClick={save} disabled={saving} className="ios-btn-primary mt-3 w-full">
+            {saving ? "Salvataggio…" : "Salva scheda"}
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
-function ImportNumber({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return <label className="flex flex-col gap-1"><span className="text-[10px] text-label-tertiary">{label}</span><input type="number" min="0" value={value} onChange={(e) => onChange(Number(e.target.value) || 0)} className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none" /></label>;
+function ImportNumber({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[10px] text-label-tertiary">{label}</span>
+      <input
+        type="number"
+        min="0"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none"
+      />
+    </label>
+  );
 }
 
 function NumField({
