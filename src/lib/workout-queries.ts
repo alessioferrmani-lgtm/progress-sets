@@ -7,13 +7,16 @@ export type Template = {
   created_at: string;
   updated_at: string;
 };
+export type RepsType = "count" | "time" | "distance" | "unspecified";
 export type TemplateExercise = {
   id: string;
   template_id: string;
   exercise_id: string;
   order_index: number;
   target_sets: number;
-  target_reps: number;
+  target_reps: number | null;
+  reps_type: RepsType;
+  reps_display: string | null;
   target_weight_kg: number | null;
   rest_seconds: number;
   exercise: Exercise;
@@ -91,7 +94,7 @@ export async function fetchTemplate(id: string): Promise<{
   const { data: ex, error: ee } = await supabase
     .from("template_exercises")
     .select(
-      "id,template_id,exercise_id,order_index,target_sets,target_reps,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
+      "id,template_id,exercise_id,order_index,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
     )
     .eq("template_id", id)
     .order("order_index");
@@ -108,32 +111,14 @@ export async function fetchPreviousSets(
 ): Promise<Map<string, Map<number, { weight_kg: number; reps: number }>>> {
   const map = new Map<string, Map<number, { weight_kg: number; reps: number }>>();
   if (exerciseIds.length === 0) return map;
-  // Get user id
   const { data: u } = await supabase.auth.getUser();
   const userId = u.user?.id;
   if (!userId) return map;
-  const { data, error } = await supabase
-    .from("logged_sets")
-    .select(
-      "exercise_id,set_number,weight_kg,reps,completed_at,workout_sessions!inner(user_id)",
-    )
-    .in("exercise_id", exerciseIds)
-    .eq("workout_sessions.user_id", userId)
-    .order("completed_at", { ascending: false })
-    .limit(500);
-  if (error) throw error;
-  // Keep first-seen (most recent) per (exercise, set_number)
-  const seenSession = new Map<string, string>(); // exercise -> session_id? Not exposed here; use completed_at bucket
-  // Simpler: pick most recent session per exercise, then take its sets
   const latestSessionForExercise = new Map<string, string>();
   const rowsByExerciseSession = new Map<
     string,
     Array<{ set_number: number; weight_kg: number; reps: number; completed_at: string }>
   >();
-  void seenSession;
-  // We didn't select session_id; refetch with session_id included:
-  // fallback: group by exercise, take rows whose completed_at is within the most recent session date bucket.
-  // Simpler correct approach: refetch including session_id.
   const { data: data2 } = await supabase
     .from("logged_sets")
     .select(
@@ -163,11 +148,11 @@ export async function fetchPreviousSets(
   latestSessionForExercise.forEach((sessionId, exerciseId) => {
     const rows = rowsByExerciseSession.get(exerciseId + "::" + sessionId) ?? [];
     const inner = new Map<number, { weight_kg: number; reps: number }>();
-    rows.forEach((r) => inner.set(r.set_number, { weight_kg: Number(r.weight_kg), reps: r.reps }));
+    rows.forEach((r) =>
+      inner.set(r.set_number, { weight_kg: Number(r.weight_kg), reps: r.reps }),
+    );
     map.set(exerciseId, inner);
   });
-  // silence unused
-  void data;
   return map;
 }
 

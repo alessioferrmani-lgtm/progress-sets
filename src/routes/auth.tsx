@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -43,11 +44,21 @@ function AuthPage() {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/home` },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) throw error;
+      if (result.error) {
+        toast.error(
+          result.error instanceof Error
+            ? result.error.message
+            : "Impossibile accedere con Google",
+        );
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) return;
+      // Tokens set — navigate.
+      navigate({ to: next && next.startsWith("/") ? next : "/home" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Impossibile accedere con Google");
       setLoading(false);
@@ -79,15 +90,12 @@ function AuthPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl bg-fill-secondary px-4 py-3 text-base text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="ios-btn-primary w-full"
-          >
+          <button type="submit" disabled={loading} className="ios-btn-primary w-full">
             {loading ? "..." : mode === "signin" ? "Accedi" : "Registrati"}
           </button>
           <div className="flex items-center gap-3 py-1 text-xs text-label-tertiary">
-            <span className="h-px flex-1 bg-separator" /> oppure <span className="h-px flex-1 bg-separator" />
+            <span className="h-px flex-1 bg-separator" /> oppure{" "}
+            <span className="h-px flex-1 bg-separator" />
           </div>
           <button
             type="button"

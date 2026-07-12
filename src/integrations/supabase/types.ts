@@ -283,8 +283,10 @@ export type Database = {
           exercise_id: string
           id: string
           order_index: number
+          reps_display: string | null
+          reps_type: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds: number
-          target_reps: number
+          target_reps: number | null
           target_sets: number
           target_weight_kg: number | null
           template_id: string
@@ -294,8 +296,10 @@ export type Database = {
           exercise_id: string
           id?: string
           order_index?: number
+          reps_display?: string | null
+          reps_type?: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds?: number
-          target_reps?: number
+          target_reps?: number | null
           target_sets?: number
           target_weight_kg?: number | null
           template_id: string
@@ -305,8 +309,10 @@ export type Database = {
           exercise_id?: string
           id?: string
           order_index?: number
+          reps_display?: string | null
+          reps_type?: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds?: number
-          target_reps?: number
+          target_reps?: number | null
           target_sets?: number
           target_weight_kg?: number | null
           template_id?: string
@@ -515,6 +521,7 @@ export type Database = {
         | "high"
         | "athlete"
       performance_source: "TRAINING_REP" | "TEST" | "RACE"
+      reps_type_enum: "count" | "time" | "distance" | "unspecified"
       sex_enum: "M" | "F" | "O"
       test_result_type: "TIME" | "DISTANCE"
     }
@@ -652,6 +659,7 @@ export const Constants = {
         "athlete",
       ],
       performance_source: ["TRAINING_REP", "TEST", "RACE"],
+      reps_type_enum: ["count", "time", "distance", "unspecified"],
       sex_enum: ["M", "F", "O"],
       test_result_type: ["TIME", "DISTANCE"],
     },

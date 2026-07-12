@@ -9,23 +9,28 @@ import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/athletics/races/new")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    distance: typeof s.distance === "number" ? s.distance : undefined,
+  }),
   component: NewRacePage,
 });
 
 function NewRacePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { distance: presetDistance } = Route.useSearch();
   const profileQ = useQuery({ queryKey: ["profile"], queryFn: fetchMyProfile });
 
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [location, setLocation] = useState("");
-  const [distance, setDistance] = useState<number | null>(null);
+  const [distance, setDistance] = useState<number | null>(presetDistance ?? null);
   const [time, setTime] = useState("");
   const [placement, setPlacement] = useState("");
   const [category, setCategory] = useState("");
   const [hr, setHr] = useState("");
   const [notes, setNotes] = useState("");
+  const distanceLocked = presetDistance != null;
 
   const save = useMutation({
     mutationFn: async () => {
@@ -90,10 +95,15 @@ function NewRacePage() {
       </div>
 
       <div className="ios-card mt-3 p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
-          Distanza
+        <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-label-secondary">
+          <span>Distanza</span>
+          {distanceLocked && <span className="text-label-tertiary">Bloccata dalla scelta PB</span>}
         </div>
-        <DistancePicker value={distance} onChange={setDistance} />
+        {distanceLocked ? (
+          <div className="text-lg font-bold text-label">{distance}m</div>
+        ) : (
+          <DistancePicker value={distance} onChange={setDistance} />
+        )}
       </div>
       <textarea
         placeholder="Note"

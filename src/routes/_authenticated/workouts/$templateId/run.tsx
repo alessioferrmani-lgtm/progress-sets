@@ -83,7 +83,7 @@ function RunPage() {
           const setNum = i + 1;
           const p = prevMap?.get(setNum);
           const kg = p?.weight_kg ?? ex.target_weight_kg ?? 0;
-          const reps = p?.reps ?? ex.target_reps;
+          const reps = p?.reps ?? ex.target_reps ?? null;
           return {
             set_number: setNum,
             weight: kg ? String(kg) : "",
@@ -120,8 +120,10 @@ function RunPage() {
     const row = rows[rowIdx];
     if (row.completed) return;
     const weight = Number(row.weight || 0);
-    const reps = parseInt(row.reps || "0", 10);
-    if (!reps) {
+    const isCount = activeEx.reps_type === "count";
+    // For time/distance/unspecified sets we don't require a numeric rep count.
+    const reps = isCount ? parseInt(row.reps || "0", 10) : 1;
+    if (isCount && !reps) {
       toast.error("Inserisci le ripetizioni");
       return;
     }
@@ -268,22 +270,29 @@ function RunPage() {
         })}
       </div>
 
-      {activeEx && (
+      {activeEx && (() => {
+        const isCount = activeEx.reps_type === "count";
+        return (
         <div className="px-4">
           <div className="ios-card overflow-hidden">
             <div className="border-b border-separator px-4 py-3">
               <div className="text-base font-semibold text-label">
                 {activeEx.exercise.name}
               </div>
-              <div className="mt-0.5 text-xs text-label-secondary">
-                Recupero target: {activeEx.rest_seconds}s
+              <div className="mt-0.5 flex items-center gap-2 text-xs text-label-secondary">
+                <span>Recupero target: {activeEx.rest_seconds}s</span>
+                {!isCount && activeEx.reps_display && (
+                  <span className="rounded-full bg-fill px-2 py-0.5 text-[10px] font-semibold uppercase text-label">
+                    {activeEx.reps_display}
+                  </span>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator bg-fill-secondary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-label-tertiary">
               <div>Serie</div>
               <div>Precedente</div>
               <div className="text-center">Kg</div>
-              <div className="text-center">Rep</div>
+              <div className="text-center">{isCount ? "Rep" : "Target"}</div>
               <div />
             </div>
             <ul>
@@ -317,21 +326,27 @@ function RunPage() {
                         })
                       }
                     />
-                    <NumberCell
-                      value={r.reps}
-                      disabled={r.completed}
-                      step={1}
-                      integer
-                      onChange={(v) =>
-                        setRowsByExercise((c) => {
-                          const next = { ...c };
-                          const list = [...(next[activeEx.id] ?? [])];
-                          list[i] = { ...list[i], reps: v };
-                          next[activeEx.id] = list;
-                          return next;
-                        })
-                      }
-                    />
+                    {isCount ? (
+                      <NumberCell
+                        value={r.reps}
+                        disabled={r.completed}
+                        step={1}
+                        integer
+                        onChange={(v) =>
+                          setRowsByExercise((c) => {
+                            const next = { ...c };
+                            const list = [...(next[activeEx.id] ?? [])];
+                            list[i] = { ...list[i], reps: v };
+                            next[activeEx.id] = list;
+                            return next;
+                          })
+                        }
+                      />
+                    ) : (
+                      <div className="text-center text-xs font-medium text-label-secondary">
+                        {activeEx.reps_display ?? "-"}
+                      </div>
+                    )}
                     <button
                       onClick={() => confirmSet(i)}
                       disabled={r.completed}
@@ -370,7 +385,8 @@ function RunPage() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
