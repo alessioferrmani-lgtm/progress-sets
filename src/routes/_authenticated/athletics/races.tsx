@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   fetchPerformanceLog,
   fetchRaces,
@@ -9,6 +10,7 @@ import {
 import { Flag, Flame, Plus, Trophy, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { QuickRaceSheet } from "@/components/QuickRaceSheet";
 
 export const Route = createFileRoute("/_authenticated/athletics/races")({
   component: RacesPage,
@@ -17,8 +19,13 @@ export const Route = createFileRoute("/_authenticated/athletics/races")({
 function RacesPage() {
   const racesQ = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const perfQ = useQuery({ queryKey: ["performance_log"], queryFn: fetchPerformanceLog });
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetDistance, setSheetDistance] = useState<number | null>(null);
+  const openSheet = (dist: number | null) => {
+    setSheetDistance(dist);
+    setSheetOpen(true);
+  };
 
-  // PB per distanza (ultimo anno) da performance_log source=RACE
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   const perf = perfQ.data ?? [];
@@ -39,12 +46,12 @@ function RacesPage() {
 
   return (
     <>
-      <Link
-        to="/athletics/races/new"
+      <button
+        onClick={() => openSheet(null)}
         className="flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-sm font-semibold text-accent-foreground active:scale-[0.97]"
       >
         <Plus className="h-4 w-4" /> Nuova gara
-      </Link>
+      </button>
 
       <h3 className="mt-5 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
         Record ultimo anno
@@ -61,10 +68,9 @@ function RacesPage() {
         <ul className="ios-list">
           {pbs.map((pb) => (
             <li key={pb.distance_m}>
-              <Link
-                to="/athletics/races/new"
-                search={{ distance: pb.distance_m }}
-                className="ios-list-row"
+              <button
+                onClick={() => openSheet(pb.distance_m)}
+                className="ios-list-row w-full text-left"
               >
                 <Trophy className="h-4 w-4 text-warning" />
                 <div className="min-w-0 flex-1">
@@ -76,7 +82,7 @@ function RacesPage() {
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-label-tertiary" />
-              </Link>
+              </button>
             </li>
           ))}
         </ul>

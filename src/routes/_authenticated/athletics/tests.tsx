@@ -9,9 +9,10 @@ import {
   formatDistance,
   type TestType,
 } from "@/lib/athletics-queries";
-import { ChevronRight, Plus, Timer, X } from "lucide-react";
+import { ChevronRight, Plus, Timer, X, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { DistancePicker } from "@/components/DistancePicker";
+import { QuickTestSheet } from "@/components/QuickTestSheet";
 
 export const Route = createFileRoute("/_authenticated/athletics/tests")({
   component: TestsListPage,
@@ -21,6 +22,7 @@ function TestsListPage() {
   const typesQ = useQuery({ queryKey: ["test_types"], queryFn: fetchTestTypes });
   const testsQ = useQuery({ queryKey: ["tests", "all"], queryFn: fetchAllTests });
   const [showNew, setShowNew] = useState(false);
+  const [quickFor, setQuickFor] = useState<TestType | null>(null);
 
   const stats = new Map<string, { count: number; best: number | null }>();
   (testsQ.data ?? []).forEach((t) => {
@@ -28,7 +30,6 @@ function TestsListPage() {
     s.count++;
     const val = t.time_sec ?? null;
     if (val != null && (s.best === null || val < s.best)) s.best = val;
-    // For DISTANCE tests, treat "best" as MAX distance covered
     if (t.time_sec == null && t.distance_covered_m != null) {
       const cur = s.best === null ? -Infinity : s.best;
       if (t.distance_covered_m > cur) s.best = t.distance_covered_m;
@@ -42,38 +43,43 @@ function TestsListPage() {
         {(typesQ.data ?? []).map((tt) => {
           const s = stats.get(tt.id);
           return (
-            <li key={tt.id}>
+            <li key={tt.id} className="ios-list-row">
+              <Timer className="h-4 w-4 text-accent" />
+              <button
+                onClick={() => setQuickFor(tt)}
+                className="min-w-0 flex-1 text-left active:opacity-70"
+              >
+                <div className="truncate text-sm font-semibold text-label">
+                  {tt.name}
+                  {tt.is_custom && (
+                    <span className="ml-1.5 rounded-full bg-fill px-1.5 py-0.5 text-[9px] uppercase text-label-tertiary">
+                      custom
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-xs text-label-secondary">
+                  {s?.count ?? 0} {s?.count === 1 ? "prova" : "prove"}
+                  {s?.best != null && (
+                    <>
+                      {" · migliore "}
+                      <span className="font-semibold text-label">
+                        {tt.result_type === "TIME"
+                          ? formatTime(s.best)
+                          : formatDistance(s.best)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </button>
               <Link
                 to="/athletics/tests/$typeId"
                 params={{ typeId: tt.id }}
-                className="ios-list-row"
+                aria-label="Dettagli"
+                className="rounded-full bg-fill p-1.5 text-label-secondary active:opacity-70"
               >
-                <Timer className="h-4 w-4 text-accent" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-label">
-                    {tt.name}
-                    {tt.is_custom && (
-                      <span className="ml-1.5 rounded-full bg-fill px-1.5 py-0.5 text-[9px] uppercase text-label-tertiary">
-                        custom
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 text-xs text-label-secondary">
-                    {s?.count ?? 0} {s?.count === 1 ? "prova" : "prove"}
-                    {s?.best != null && (
-                      <>
-                        {" · migliore "}
-                        <span className="font-semibold text-label">
-                          {tt.result_type === "TIME"
-                            ? formatTime(s.best)
-                            : formatDistance(s.best)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-label-tertiary" />
+                <MoreHorizontal className="h-4 w-4" />
               </Link>
+              <ChevronRight className="h-4 w-4 text-label-tertiary" />
             </li>
           );
         })}
@@ -87,6 +93,11 @@ function TestsListPage() {
       </button>
 
       {showNew && <NewCustomTypeSheet onClose={() => setShowNew(false)} />}
+      <QuickTestSheet
+        type={quickFor}
+        open={quickFor != null}
+        onClose={() => setQuickFor(null)}
+      />
     </>
   );
 }
