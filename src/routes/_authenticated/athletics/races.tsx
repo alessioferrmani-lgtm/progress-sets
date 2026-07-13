@@ -124,6 +124,12 @@ function RacesPage() {
           ))}
         </ul>
       )}
+
+      <QuickRaceSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        presetDistance={sheetDistance}
+      />
     </>
   );
 }
