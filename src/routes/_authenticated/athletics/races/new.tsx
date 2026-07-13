@@ -35,10 +35,13 @@ function NewRacePage() {
   const save = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Sessione scaduta");
       const distance_m = distance;
       const time_sec = parseTime(time);
-      if (!name.trim()) throw new Error("Nome obbligatorio");
-      if (!distance_m || !time_sec) throw new Error("Distanza e tempo obbligatori");
+      if (!distance_m) throw new Error("Seleziona una distanza");
+      if (!time_sec) throw new Error("Inserisci un tempo valido");
+      const finalName =
+        name.trim() || `Gara ${distance_m}m · ${date}`;
       const calories = profileQ.data
         ? computeCaloriesForRace(profileQ.data, {
             distance_m,
@@ -46,9 +49,9 @@ function NewRacePage() {
             avg_hr: hr ? Number(hr) : null,
           })
         : null;
-      const { error } = await supabase.from("races").insert({
-        user_id: u.user!.id,
-        name: name.trim(),
+      const payload = {
+        user_id: u.user.id,
+        name: finalName,
         date,
         location: location || null,
         distance_m,
@@ -58,7 +61,10 @@ function NewRacePage() {
         avg_hr: hr ? Number(hr) : null,
         notes: notes || null,
         calories_burned: calories,
-      });
+      };
+      // eslint-disable-next-line no-console
+      console.log("[races/new] insert payload", payload);
+      const { error } = await supabase.from("races").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
