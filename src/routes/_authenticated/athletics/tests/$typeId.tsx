@@ -11,7 +11,7 @@ import {
 } from "@/lib/athletics-queries";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { computeCaloriesForTest } from "@/lib/calories";
-import { ArrowLeft, Check, Flame } from "lucide-react";
+import { ArrowLeft, Check, Flame, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -95,6 +95,26 @@ function TestTypePage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tests").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Prova eliminata");
+      qc.invalidateQueries({ queryKey: ["tests"] });
+      qc.invalidateQueries({ queryKey: ["performance_log"] });
+      qc.invalidateQueries({ queryKey: ["dash"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const confirmDelete = (id: string) => {
+    if (window.confirm("Vuoi eliminare questo test? L'operazione è definitiva.")) {
+      del.mutate(id);
+    }
+  };
 
   const rows = testsQ.data ?? [];
   const values = rows
@@ -322,13 +342,18 @@ function TestTypePage() {
                       ? formatTime(r.time_sec ?? 0)
                       : r.distance_covered_m
                         ? formatDistance(r.distance_covered_m)
-                        : "â€”"}
+                        : "—"}
                   </div>
                   <div className="mt-0.5 text-xs text-label-secondary">
                     {format(new Date(r.date), "d MMM yyyy", { locale: it })}
-                    {r.avg_hr ? ` Â· ${r.avg_hr} bpm` : ""}
-                    {r.weather ? ` Â· ${r.weather}` : ""}
+                    {r.avg_hr ? ` · ${r.avg_hr} bpm` : ""}
+                    {r.weather ? ` · ${r.weather}` : ""}
                   </div>
+                  {(r.notes || r.observations) && (
+                    <div className="mt-1 text-xs text-label-tertiary">
+                      {[r.notes, r.observations].filter(Boolean).join(" — ")}
+                    </div>
+                  )}
                 </div>
                 {r.calories_burned != null && (
                   <div className="flex items-center gap-1 text-xs font-medium text-warning">
@@ -336,6 +361,14 @@ function TestTypePage() {
                     {Math.round(r.calories_burned)}
                   </div>
                 )}
+                <button
+                  onClick={() => confirmDelete(r.id)}
+                  disabled={del.isPending}
+                  aria-label="Elimina prova"
+                  className="rounded-full bg-fill p-1.5 text-danger active:opacity-70 disabled:opacity-40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </li>
             ))}
           </ul>

@@ -311,12 +311,37 @@ function WorkoutImport() {
     if (!rawText.trim()) return toast.error("Incolla prima la tua scheda");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("parse-workout", { body: { text: rawText } });
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("parse-workout", {
+        body: { text: rawText },
+      });
+
+      // Extract detailed error from the function response body when available.
+      if (error) {
+        let detail = error.message || "Errore sconosciuto";
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.text === "function") {
+          try {
+            const txt = await ctx.text();
+            if (txt) {
+              try {
+                const j = JSON.parse(txt);
+                if (j?.error) detail = j.error;
+              } catch {
+                detail = txt.slice(0, 200);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        console.error("[parse-workout] invoke error", error, detail);
+        throw new Error(`Impossibile analizzare la scheda. Dettaglio: ${detail}. Riprova.`);
+      }
+
       const result = data as { templates?: unknown; error?: string };
-      if (result.error) throw new Error(result.error);
-      if (!Array.isArray(result.templates) || result.templates.length === 0) {
-        throw new Error("Risposta non valida");
+      if (result?.error) throw new Error(`Impossibile analizzare la scheda. Dettaglio: ${result.error}. Riprova.`);
+      if (!Array.isArray(result?.templates) || result.templates.length === 0) {
+        throw new Error("Impossibile analizzare la scheda. Dettaglio: nessun esercizio riconosciuto. Riprova.");
       }
 
       // Robust: never fail because of a single exercise; keep warnings.
@@ -341,7 +366,6 @@ function WorkoutImport() {
             )
               ? (e.reps_type as RepsType)
               : "unspecified";
-            // CRITICAL: 0 is valid! Only default when truly missing.
             const rest =
               e.rest_sec === undefined || e.rest_sec === null
                 ? 90
@@ -368,7 +392,7 @@ function WorkoutImport() {
       }
       setTemplates(clean);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Non sono riuscito a interpretare la scheda.");
+      toast.error(err instanceof Error ? err.message : "Impossibile analizzare la scheda. Riprova.");
     } finally {
       setLoading(false);
     }

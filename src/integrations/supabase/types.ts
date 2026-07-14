@@ -16,18 +16,30 @@ export type Database = {
     Tables: {
       exercises: {
         Row: {
+          category: string | null
           created_at: string
+          equipment: string | null
           id: string
+          is_default: boolean
+          muscle_group: string | null
           name: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
+          equipment?: string | null
           id?: string
+          is_default?: boolean
+          muscle_group?: string | null
           name: string
         }
         Update: {
+          category?: string | null
           created_at?: string
+          equipment?: string | null
           id?: string
+          is_default?: boolean
+          muscle_group?: string | null
           name?: string
         }
         Relationships: []
