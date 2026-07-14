@@ -36,7 +36,8 @@ DROP TRIGGER IF EXISTS races_perf_cleanup ON public.races;
 CREATE TRIGGER races_perf_cleanup AFTER DELETE ON public.races
   FOR EACH ROW EXECUTE FUNCTION public.perf_cleanup_race();
 
--- 4. Seed ~100 common exercises. Use ON CONFLICT (name) to keep existing entries intact.
+-- 4. Seed ~100 common exercises. The catalogue uses partial, expression-based
+-- unique indexes, so PostgreSQL cannot infer an ON CONFLICT (name) target.
 INSERT INTO public.exercises (name, muscle_group, equipment, category, is_default) VALUES
   -- Petto
   ('Panca piana con bilanciere','Petto','Bilanciere','Multi-articolare',true),
@@ -158,4 +159,4 @@ INSERT INTO public.exercises (name, muscle_group, equipment, category, is_defaul
   ('Clean','Full body','Bilanciere','Olimpico',true),
   ('Snatch','Full body','Bilanciere','Olimpico',true),
   ('Thruster','Full body','Bilanciere','Multi-articolare',true)
-ON CONFLICT (name) DO NOTHING;
+ON CONFLICT DO NOTHING;
