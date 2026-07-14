@@ -342,13 +342,18 @@ function TestTypePage() {
                       ? formatTime(r.time_sec ?? 0)
                       : r.distance_covered_m
                         ? formatDistance(r.distance_covered_m)
-                        : "â€”"}
+                        : "—"}
                   </div>
                   <div className="mt-0.5 text-xs text-label-secondary">
                     {format(new Date(r.date), "d MMM yyyy", { locale: it })}
-                    {r.avg_hr ? ` Â· ${r.avg_hr} bpm` : ""}
-                    {r.weather ? ` Â· ${r.weather}` : ""}
+                    {r.avg_hr ? ` · ${r.avg_hr} bpm` : ""}
+                    {r.weather ? ` · ${r.weather}` : ""}
                   </div>
+                  {(r.notes || r.observations) && (
+                    <div className="mt-1 text-xs text-label-tertiary">
+                      {[r.notes, r.observations].filter(Boolean).join(" — ")}
+                    </div>
+                  )}
                 </div>
                 {r.calories_burned != null && (
                   <div className="flex items-center gap-1 text-xs font-medium text-warning">
@@ -356,6 +361,14 @@ function TestTypePage() {
                     {Math.round(r.calories_burned)}
                   </div>
                 )}
+                <button
+                  onClick={() => confirmDelete(r.id)}
+                  disabled={del.isPending}
+                  aria-label="Elimina prova"
+                  className="rounded-full bg-fill p-1.5 text-danger active:opacity-70 disabled:opacity-40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </li>
             ))}
           </ul>
