@@ -9,10 +9,9 @@ import {
   formatDistance,
   type TestType,
 } from "@/lib/athletics-queries";
-import { ChevronRight, Plus, Timer, X, MoreHorizontal } from "lucide-react";
+import { ChevronRight, Plus, Timer, X } from "lucide-react";
 import { toast } from "sonner";
 import { DistancePicker } from "@/components/DistancePicker";
-import { QuickTestSheet } from "@/components/QuickTestSheet";
 
 export const Route = createFileRoute("/_authenticated/athletics/tests")({
   component: TestsListPage,
@@ -22,7 +21,6 @@ function TestsListPage() {
   const typesQ = useQuery({ queryKey: ["test_types"], queryFn: fetchTestTypes });
   const testsQ = useQuery({ queryKey: ["tests", "all"], queryFn: fetchAllTests });
   const [showNew, setShowNew] = useState(false);
-  const [quickFor, setQuickFor] = useState<TestType | null>(null);
 
   const stats = new Map<string, { count: number; best: number | null }>();
   (testsQ.data ?? []).forEach((t) => {
@@ -45,8 +43,9 @@ function TestsListPage() {
           return (
             <li key={tt.id} className="ios-list-row">
               <Timer className="h-4 w-4 text-accent" />
-              <button
-                onClick={() => setQuickFor(tt)}
+              <Link
+                to="/athletics/tests/$typeId"
+                params={{ typeId: tt.id }}
                 className="min-w-0 flex-1 text-left active:opacity-70"
               >
                 <div className="truncate text-sm font-semibold text-label">
@@ -70,14 +69,6 @@ function TestsListPage() {
                     </>
                   )}
                 </div>
-              </button>
-              <Link
-                to="/athletics/tests/$typeId"
-                params={{ typeId: tt.id }}
-                aria-label="Dettagli"
-                className="rounded-full bg-fill p-1.5 text-label-secondary active:opacity-70"
-              >
-                <MoreHorizontal className="h-4 w-4" />
               </Link>
               <ChevronRight className="h-4 w-4 text-label-tertiary" />
             </li>
@@ -93,11 +84,6 @@ function TestsListPage() {
       </button>
 
       {showNew && <NewCustomTypeSheet onClose={() => setShowNew(false)} />}
-      <QuickTestSheet
-        type={quickFor}
-        open={quickFor != null}
-        onClose={() => setQuickFor(null)}
-      />
     </>
   );
 }
