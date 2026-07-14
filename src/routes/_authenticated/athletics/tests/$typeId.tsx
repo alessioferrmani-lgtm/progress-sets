@@ -11,7 +11,7 @@ import {
 } from "@/lib/athletics-queries";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { computeCaloriesForTest } from "@/lib/calories";
-import { ArrowLeft, Check, Flame } from "lucide-react";
+import { ArrowLeft, Check, Flame, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -95,6 +95,26 @@ function TestTypePage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tests").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Prova eliminata");
+      qc.invalidateQueries({ queryKey: ["tests"] });
+      qc.invalidateQueries({ queryKey: ["performance_log"] });
+      qc.invalidateQueries({ queryKey: ["dash"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const confirmDelete = (id: string) => {
+    if (window.confirm("Vuoi eliminare questo test? L'operazione è definitiva.")) {
+      del.mutate(id);
+    }
+  };
 
   const rows = testsQ.data ?? [];
   const values = rows
