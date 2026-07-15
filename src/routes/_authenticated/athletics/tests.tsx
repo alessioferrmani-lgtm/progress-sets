@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,9 +18,16 @@ export const Route = createFileRoute("/_authenticated/athletics/tests")({
 });
 
 function TestsListPage() {
+  const isTestsIndex = useRouterState({
+    select: (state) => state.location.pathname.replace(/\/+$/, "") === "/athletics/tests",
+  });
   const typesQ = useQuery({ queryKey: ["test_types"], queryFn: fetchTestTypes });
   const testsQ = useQuery({ queryKey: ["tests", "all"], queryFn: fetchAllTests });
   const [showNew, setShowNew] = useState(false);
+
+  // This route is also the layout parent of /athletics/tests/$typeId.
+  // Rendering the list unconditionally hides the matched detail route.
+  if (!isTestsIndex) return <Outlet />;
 
   const stats = new Map<string, { count: number; best: number | null }>();
   (testsQ.data ?? []).forEach((t) => {
@@ -62,9 +69,7 @@ function TestsListPage() {
                     <>
                       {" · migliore "}
                       <span className="font-semibold text-label">
-                        {tt.result_type === "TIME"
-                          ? formatTime(s.best)
-                          : formatDistance(s.best)}
+                        {tt.result_type === "TIME" ? formatTime(s.best) : formatDistance(s.best)}
                       </span>
                     </>
                   )}
@@ -152,7 +157,9 @@ function NewCustomTypeSheet({ onClose }: { onClose: () => void }) {
               onClick={() => setKind("DISTANCE")}
               className={
                 "flex-1 rounded-lg py-2 text-sm font-semibold " +
-                (kind === "DISTANCE" ? "bg-background text-label shadow-sm" : "text-label-secondary")
+                (kind === "DISTANCE"
+                  ? "bg-background text-label shadow-sm"
+                  : "text-label-secondary")
               }
             >
               A distanza
