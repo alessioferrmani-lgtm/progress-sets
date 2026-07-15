@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { parseWorkoutLocally } from "../_shared/workout-parser.ts";
 
 const systemPrompt = `Sei un parser di schede di allenamento in italiano.
 Restituisci SOLO un JSON valido con questa struttura:
@@ -68,31 +69,37 @@ Deno.serve(async (req) => {
     }
 
     const key = Deno.env.get("LOVABLE_API_KEY");
-    if (!key) throw new Error("Il servizio AI non è configurato.");
+    if (!key) {
+      return jsonResponse({ templates: parseWorkoutLocally(text), parser: "local" });
+    }
 
-    const ai = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        temperature: 0,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: text },
-        ],
-      }),
-    });
+    let ai: Response;
+    try {
+      ai = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Lovable-API-Key": key,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          temperature: 0,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text },
+          ],
+        }),
+      });
+    } catch (error) {
+      console.error("AI gateway request failed", error);
+      return jsonResponse({ templates: parseWorkoutLocally(text), parser: "local" });
+    }
 
     if (!ai.ok) {
       const body = await ai.text();
       console.error("AI gateway error", ai.status, body);
-      if (ai.status === 429) throw new Error("Servizio AI momentaneamente sovraccarico. Riprova tra poco.");
-      if (ai.status === 402) throw new Error("Credito AI esaurito. Aggiorna il tuo piano.");
-      throw new Error("Il servizio AI non è disponibile.");
+      return jsonResponse({ templates: parseWorkoutLocally(text), parser: "local" });
     }
 
     const payload = await ai.json();
@@ -102,12 +109,14 @@ Deno.serve(async (req) => {
     try {
       parsed = JSON.parse(content);
     } catch {
-      throw new Error("La risposta dell'AI non è un JSON valido.");
+      return jsonResponse({ templates: parseWorkoutLocally(text), parser: "local" });
     }
 
     // Robust normalization: never throw for a single bad exercise.
     const raw = parsed as { templates?: unknown[] };
-    if (!Array.isArray(raw.templates)) throw new Error("Risposta AI non valida (templates mancanti).");
+    if (!Array.isArray(raw.templates)) {
+      return jsonResponse({ templates: parseWorkoutLocally(text), parser: "local" });
+    }
 
     const templates: Array<{
       name: string;
@@ -194,3 +203,10 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
