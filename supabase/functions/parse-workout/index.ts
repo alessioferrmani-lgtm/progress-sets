@@ -148,9 +148,10 @@ Deno.serve(async (req) => {
             warnings.push("Esercizio senza nome ignorato.");
             continue;
           }
-          const sets = Number.isFinite(Number(ee.sets)) && Number(ee.sets) > 0
-            ? Math.round(Number(ee.sets))
-            : 3;
+          const sets =
+            Number.isFinite(Number(ee.sets)) && Number(ee.sets) > 0
+              ? Math.round(Number(ee.sets))
+              : 3;
 
           const repsType = (["count", "time", "distance", "unspecified"] as const).includes(
             ee.reps_type as never,
@@ -193,7 +194,7 @@ Deno.serve(async (req) => {
       templates.push({ name, exercises, _warnings: warnings });
     }
 
-    return new Response(JSON.stringify({ templates }), {
+    return new Response(JSON.stringify({ templates, parser: "ai" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
