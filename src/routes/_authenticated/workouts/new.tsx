@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 import { fetchExercises, fetchTemplate, type RepsType } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, FileText, Wrench, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  FileText,
+  Wrench,
+  AlertTriangle,
+} from "lucide-react";
+import { parseWorkoutLocally } from "../../../../supabase/functions/_shared/workout-parser";
 
 export const Route = createFileRoute("/_authenticated/workouts/new")({
   component: WorkoutNewPage,
@@ -19,7 +29,9 @@ function WorkoutNewPage() {
           onClick={() => setMode("manual")}
           className={
             "flex-1 rounded-xl py-2 text-sm font-semibold " +
-            (mode === "manual" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+            (mode === "manual"
+              ? "bg-accent text-accent-foreground"
+              : "bg-fill text-label-secondary")
           }
         >
           <Wrench className="mr-1 inline h-4 w-4" /> Builder manuale
@@ -28,7 +40,9 @@ function WorkoutNewPage() {
           onClick={() => setMode("import")}
           className={
             "flex-1 rounded-xl py-2 text-sm font-semibold " +
-            (mode === "import" ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+            (mode === "import"
+              ? "bg-accent text-accent-foreground"
+              : "bg-fill text-label-secondary")
           }
         >
           <FileText className="mr-1 inline h-4 w-4" /> Incolla scheda
@@ -200,9 +214,7 @@ export function TemplateEditor({
                 value={r.exercise_id}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setRows((rr) =>
-                    rr.map((x, i) => (i === idx ? { ...x, exercise_id: v } : x)),
-                  );
+                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, exercise_id: v } : x)));
                 }}
                 className="min-w-0 flex-1 rounded-lg bg-fill-secondary px-2 py-2 text-sm text-label"
               >
@@ -212,13 +224,25 @@ export function TemplateEditor({
                   </option>
                 ))}
               </select>
-              <button onClick={() => move(idx, -1)} className="rounded-full bg-fill p-1.5 text-label-secondary" aria-label="Su">
+              <button
+                onClick={() => move(idx, -1)}
+                className="rounded-full bg-fill p-1.5 text-label-secondary"
+                aria-label="Su"
+              >
                 <ChevronUp className="h-4 w-4" />
               </button>
-              <button onClick={() => move(idx, 1)} className="rounded-full bg-fill p-1.5 text-label-secondary" aria-label="Giù">
+              <button
+                onClick={() => move(idx, 1)}
+                className="rounded-full bg-fill p-1.5 text-label-secondary"
+                aria-label="Giù"
+              >
                 <ChevronDown className="h-4 w-4" />
               </button>
-              <button onClick={() => removeRow(idx)} className="rounded-full bg-fill p-1.5 text-danger" aria-label="Rimuovi">
+              <button
+                onClick={() => removeRow(idx)}
+                className="rounded-full bg-fill p-1.5 text-danger"
+                aria-label="Rimuovi"
+              >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -231,7 +255,9 @@ export function TemplateEditor({
                 }
               />
               <label className="col-span-2 flex flex-col gap-1">
-                <span className="text-[10px] font-medium uppercase text-label-tertiary">Ripetizioni</span>
+                <span className="text-[10px] font-medium uppercase text-label-tertiary">
+                  Ripetizioni
+                </span>
                 <input
                   value={r.reps_display ?? ""}
                   onChange={(e) => {
@@ -244,8 +270,15 @@ export function TemplateEditor({
                         return {
                           ...x,
                           reps_display: s,
-                          reps_type: isCount ? "count" : /metri|km/i.test(s) ? "distance" : /sec|min/i.test(s) ? "time" : "unspecified",
-                          target_reps: isCount && Number.isFinite(asNum) ? Math.round(asNum) : x.target_reps,
+                          reps_type: isCount
+                            ? "count"
+                            : /metri|km/i.test(s)
+                              ? "distance"
+                              : /sec|min/i.test(s)
+                                ? "time"
+                                : "unspecified",
+                          target_reps:
+                            isCount && Number.isFinite(asNum) ? Math.round(asNum) : x.target_reps,
                         };
                       }),
                     );
@@ -258,7 +291,9 @@ export function TemplateEditor({
                 label="Rec (s)"
                 value={r.rest_seconds}
                 onChange={(v) =>
-                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v ?? 0 } : x)))
+                  setRows((rr) =>
+                    rr.map((x, i) => (i === idx ? { ...x, rest_seconds: v ?? 0 } : x)),
+                  )
                 }
               />
             </div>
@@ -268,7 +303,9 @@ export function TemplateEditor({
                 allowNull
                 value={r.target_weight_kg ?? undefined}
                 onChange={(v) =>
-                  setRows((rr) => rr.map((x, i) => (i === idx ? { ...x, target_weight_kg: v ?? null } : x)))
+                  setRows((rr) =>
+                    rr.map((x, i) => (i === idx ? { ...x, target_weight_kg: v ?? null } : x)),
+                  )
                 }
               />
             </div>
@@ -307,6 +344,14 @@ function WorkoutImport() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const localFallback = (reason: string) => {
+    const parsed = parseWorkoutLocally(rawText) as ImportedTemplate[];
+    setTemplates(parsed);
+    toast.warning(
+      `Servizio AI non disponibile: scheda interpretata automaticamente sul dispositivo. ${reason}`,
+    );
+  };
+
   const analyze = async () => {
     if (!rawText.trim()) return toast.error("Incolla prima la tua scheda");
     setLoading(true);
@@ -335,13 +380,20 @@ function WorkoutImport() {
           }
         }
         console.error("[parse-workout] invoke error", error, detail);
-        throw new Error(`Impossibile analizzare la scheda. Dettaglio: ${detail}. Riprova.`);
+        console.warn("[parse-workout] using local fallback", detail);
+        localFallback(detail);
+        return;
       }
 
       const result = data as { templates?: unknown; error?: string };
-      if (result?.error) throw new Error(`Impossibile analizzare la scheda. Dettaglio: ${result.error}. Riprova.`);
+      if (result?.error) {
+        localFallback(result.error);
+        return;
+      }
       if (!Array.isArray(result?.templates) || result.templates.length === 0) {
-        throw new Error("Impossibile analizzare la scheda. Dettaglio: nessun esercizio riconosciuto. Riprova.");
+        throw new Error(
+          "Impossibile analizzare la scheda. Dettaglio: nessun esercizio riconosciuto. Riprova.",
+        );
       }
 
       // Robust: never fail because of a single exercise; keep warnings.
@@ -361,9 +413,9 @@ function WorkoutImport() {
               warnings.push("Esercizio senza nome ignorato.");
               continue;
             }
-            const validType: RepsType = (["count", "time", "distance", "unspecified"] as const).includes(
-              e.reps_type as never,
-            )
+            const validType: RepsType = (
+              ["count", "time", "distance", "unspecified"] as const
+            ).includes(e.reps_type as never)
               ? (e.reps_type as RepsType)
               : "unspecified";
             const rest =
@@ -392,26 +444,30 @@ function WorkoutImport() {
       }
       setTemplates(clean);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossibile analizzare la scheda. Riprova.");
+      toast.error(
+        err instanceof Error ? err.message : "Impossibile analizzare la scheda. Riprova.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const updateExercise = (ti: number, ei: number, patch: Partial<ImportedExercise>) =>
-    setTemplates((all) =>
-      all?.map((t, i) =>
-        i === ti
-          ? { ...t, exercises: t.exercises.map((e, j) => (j === ei ? { ...e, ...patch } : e)) }
-          : t,
-      ) ?? null,
+    setTemplates(
+      (all) =>
+        all?.map((t, i) =>
+          i === ti
+            ? { ...t, exercises: t.exercises.map((e, j) => (j === ei ? { ...e, ...patch } : e)) }
+            : t,
+        ) ?? null,
     );
 
   const removeExercise = (ti: number, ei: number) =>
-    setTemplates((all) =>
-      all?.map((t, i) =>
-        i === ti ? { ...t, exercises: t.exercises.filter((_, j) => j !== ei) } : t,
-      ) ?? null,
+    setTemplates(
+      (all) =>
+        all?.map((t, i) =>
+          i === ti ? { ...t, exercises: t.exercises.filter((_, j) => j !== ei) } : t,
+        ) ?? null,
     );
 
   const save = async () => {
@@ -456,13 +512,15 @@ function WorkoutImport() {
             exercise_id: exerciseId,
             order_index: index,
             target_sets: exercise.sets,
-            target_reps: exercise.reps_type === "count" ? exercise.reps_value ?? null : null,
+            target_reps: exercise.reps_type === "count" ? (exercise.reps_value ?? null) : null,
             reps_type: exercise.reps_type,
             reps_display: exercise.reps_display,
             rest_seconds: exercise.rest_sec,
           });
         }
-        const { error: rowsError } = await supabase.from("template_exercises").insert(rows as never);
+        const { error: rowsError } = await supabase
+          .from("template_exercises")
+          .insert(rows as never);
         if (rowsError) throw rowsError;
       }
       toast.success("Scheda salvata");
@@ -482,9 +540,9 @@ function WorkoutImport() {
       {!templates ? (
         <>
           <p className="mt-1 text-sm text-label-secondary">
-            Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato
-            prima del salvataggio. Sono supportati i formati abbreviati ("Squat 3x10") e quelli
-            estesi (Serie/Ripetizioni/Recupero riga per riga, con "GIORNO: nome" come intestazione).
+            Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato prima
+            del salvataggio. Sono supportati i formati abbreviati ("Squat 3x10") e quelli estesi
+            (Serie/Ripetizioni/Recupero riga per riga, con "GIORNO: nome" come intestazione).
           </p>
           <textarea
             value={rawText}
@@ -508,8 +566,9 @@ function WorkoutImport() {
                 <input
                   value={template.name}
                   onChange={(e) =>
-                    setTemplates((all) =>
-                      all?.map((t, i) => (i === ti ? { ...t, name: e.target.value } : t)) ?? null,
+                    setTemplates(
+                      (all) =>
+                        all?.map((t, i) => (i === ti ? { ...t, name: e.target.value } : t)) ?? null,
                     )
                   }
                   className="w-full bg-transparent text-base font-semibold text-label outline-none"
@@ -537,7 +596,11 @@ function WorkoutImport() {
                       </button>
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                      <ImportNumber label="Serie" value={exercise.sets} onChange={(sets) => updateExercise(ti, ei, { sets })} />
+                      <ImportNumber
+                        label="Serie"
+                        value={exercise.sets}
+                        onChange={(sets) => updateExercise(ti, ei, { sets })}
+                      />
                       <label className="flex flex-col gap-1">
                         <span className="text-[10px] text-label-tertiary">Ripetizioni</span>
                         <input
@@ -555,7 +618,8 @@ function WorkoutImport() {
                                   : /sec|min/i.test(s)
                                     ? "time"
                                     : "unspecified",
-                              reps_value: isCount && Number.isFinite(asNum) ? Math.round(asNum) : null,
+                              reps_value:
+                                isCount && Number.isFinite(asNum) ? Math.round(asNum) : null,
                             });
                           }}
                           className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none"

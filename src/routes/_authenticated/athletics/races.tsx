@@ -1,30 +1,65 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   fetchPerformanceLog,
   fetchRaces,
   formatDistance,
   formatTime,
 } from "@/lib/athletics-queries";
-import { Flag, Flame, Plus, Trophy, ChevronRight } from "lucide-react";
+import { Flag, Flame, Plus, Trophy, ChevronRight, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { QuickRaceSheet } from "@/components/QuickRaceSheet";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/athletics/races")({
   component: RacesPage,
 });
 
 function RacesPage() {
+  const qc = useQueryClient();
   const racesQ = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const perfQ = useQuery({ queryKey: ["performance_log"], queryFn: fetchPerformanceLog });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetDistance, setSheetDistance] = useState<number | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const openSheet = (dist: number | null) => {
     setSheetDistance(dist);
     setSheetOpen(true);
   };
+
+  const removeRace = useMutation({
+    mutationFn: async (id: string) => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("Sessione scaduta. Esci e accedi di nuovo.");
+
+      const { data, error } = await supabase
+        .from("races")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("La gara non è stata eliminata.");
+      return id;
+    },
+    onSuccess: async () => {
+      setPendingDeleteId(null);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["races"] }),
+        qc.invalidateQueries({ queryKey: ["performance_log"] }),
+        qc.invalidateQueries({ queryKey: ["dash"] }),
+      ]);
+      toast.success("Gara eliminata");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
@@ -78,7 +113,8 @@ function RacesPage() {
                     {formatDistance(pb.distance_m)} · PB {formatTime(pb.best.time_sec)}
                   </div>
                   <div className="mt-0.5 text-xs text-label-secondary">
-                    {pb.count} {pb.count === 1 ? "gara" : "gare"} · {format(new Date(pb.best.date), "d MMM yyyy", { locale: it })}
+                    {pb.count} {pb.count === 1 ? "gara" : "gare"} ·{" "}
+                    {format(new Date(pb.best.date), "d MMM yyyy", { locale: it })}
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-label-tertiary" />
@@ -120,6 +156,15 @@ function RacesPage() {
                   {Math.round(r.calories_burned)}
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => setPendingDeleteId(r.id)}
+                disabled={removeRace.isPending}
+                aria-label={`Elimina ${r.name}`}
+                className="flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded-full bg-fill text-danger active:opacity-70 disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </li>
           ))}
         </ul>
@@ -130,6 +175,59 @@ function RacesPage() {
         onClose={() => setSheetOpen(false)}
         presetDistance={sheetDistance}
       />
+
+      {pendingDeleteId && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-race-title"
+          onClick={() => !removeRace.isPending && setPendingDeleteId(null)}
+        >
+          <div
+            className="ios-card w-full max-w-sm bg-background p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="delete-race-title" className="text-lg font-bold text-label">
+                  Eliminare questa gara?
+                </h3>
+                <p className="mt-1 text-sm text-label-secondary">
+                  Verrà rimossa anche dai record e dalle statistiche.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingDeleteId(null)}
+                disabled={removeRace.isPending}
+                className="flex min-h-10 min-w-10 items-center justify-center rounded-full bg-fill text-label"
+                aria-label="Chiudi"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteId(null)}
+                disabled={removeRace.isPending}
+                className="min-h-11 rounded-full bg-fill px-4 py-2.5 font-semibold text-label"
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                onClick={() => pendingDeleteId && removeRace.mutate(pendingDeleteId)}
+                disabled={removeRace.isPending}
+                className="min-h-11 rounded-full bg-danger px-4 py-2.5 font-semibold text-white disabled:opacity-50"
+              >
+                {removeRace.isPending ? "Eliminazione…" : "Elimina"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
