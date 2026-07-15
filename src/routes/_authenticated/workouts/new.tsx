@@ -343,106 +343,15 @@ function WorkoutImport() {
   const [templates, setTemplates] = useState<ImportedTemplate[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const localFallback = (reason: string) => {
-    const parsed = parseWorkoutLocally(rawText) as ImportedTemplate[];
-    setTemplates(parsed);
-    toast.warning(
-      `Servizio AI non disponibile: scheda interpretata automaticamente sul dispositivo. ${reason}`,
-    );
-  };
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const analyze = async () => {
-    if (!rawText.trim()) return toast.error("Incolla prima la tua scheda");
+    if (!rawText.trim()) return toast.error("Incolla una scheda o scegli un file di testo");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("parse-workout", {
-        body: { text: rawText },
-      });
-
-      // Extract detailed error from the function response body when available.
-      if (error) {
-        let detail = error.message || "Errore sconosciuto";
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.text === "function") {
-          try {
-            const txt = await ctx.text();
-            if (txt) {
-              try {
-                const j = JSON.parse(txt);
-                if (j?.error) detail = j.error;
-              } catch {
-                detail = txt.slice(0, 200);
-              }
-            }
-          } catch {
-            /* ignore */
-          }
-        }
-        console.error("[parse-workout] invoke error", error, detail);
-        console.warn("[parse-workout] using local fallback", detail);
-        localFallback(detail);
-        return;
-      }
-
-      const result = data as { templates?: unknown; error?: string };
-      if (result?.error) {
-        localFallback(result.error);
-        return;
-      }
-      if (!Array.isArray(result?.templates) || result.templates.length === 0) {
-        throw new Error(
-          "Impossibile analizzare la scheda. Dettaglio: nessun esercizio riconosciuto. Riprova.",
-        );
-      }
-
-      // Robust: never fail because of a single exercise; keep warnings.
-      const clean: ImportedTemplate[] = [];
-      for (const template of result.templates) {
-        const t = template as Partial<ImportedTemplate>;
-        const warnings = Array.isArray((t as { _warnings?: string[] })._warnings)
-          ? [...((t as { _warnings?: string[] })._warnings as string[])]
-          : [];
-        const name = typeof t.name === "string" && t.name.trim() ? t.name.trim() : "Scheda";
-        const exercises: ImportedExercise[] = [];
-
-        if (Array.isArray(t.exercises)) {
-          for (const exercise of t.exercises) {
-            const e = exercise as Partial<ImportedExercise>;
-            if (!e.name) {
-              warnings.push("Esercizio senza nome ignorato.");
-              continue;
-            }
-            const validType: RepsType = (
-              ["count", "time", "distance", "unspecified"] as const
-            ).includes(e.reps_type as never)
-              ? (e.reps_type as RepsType)
-              : "unspecified";
-            const rest =
-              e.rest_sec === undefined || e.rest_sec === null
-                ? 90
-                : Math.max(0, Number(e.rest_sec));
-            exercises.push({
-              name: String(e.name),
-              sets: Math.max(1, Number(e.sets) || 3),
-              reps_type: validType,
-              reps_value:
-                validType === "count" && e.reps_value !== null && e.reps_value !== undefined
-                  ? Number(e.reps_value) || null
-                  : null,
-              reps_display:
-                typeof e.reps_display === "string" && e.reps_display.trim()
-                  ? e.reps_display.trim()
-                  : validType === "count" && e.reps_value
-                    ? String(e.reps_value)
-                    : "-",
-              rest_sec: rest,
-            });
-          }
-        }
-        clean.push({ name, exercises, _warnings: warnings });
-      }
-      setTemplates(clean);
+      const parsed = parseWorkoutLocally(rawText) as ImportedTemplate[];
+      setTemplates(parsed);
+      toast.success("Scheda letta correttamente");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Impossibile analizzare la scheda. Riprova.",
@@ -540,16 +449,41 @@ function WorkoutImport() {
       {!templates ? (
         <>
           <p className="mt-1 text-sm text-label-secondary">
-            Puoi incollare testo da WhatsApp, PDF o appunti: controllerai sempre il risultato prima
-            del salvataggio. Sono supportati i formati abbreviati ("Squat 3x10") e quelli estesi
-            (Serie/Ripetizioni/Recupero riga per riga, con "GIORNO: nome" come intestazione).
+            Incolla il testo oppure scegli un file .txt. Tutto viene letto sul dispositivo e potrai
+            controllare il risultato prima di salvarlo.
           </p>
+          <label className="ios-card mt-4 flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-dashed border-separator px-4 py-3 text-sm font-semibold text-accent active:opacity-70">
+            <FileText className="h-4 w-4" />
+            <span>{fileName ? `File: ${fileName}` : "Scegli file di testo"}</span>
+            <input
+              type="file"
+              accept=".txt,.md,.csv,text/plain,text/markdown,text/csv"
+              className="sr-only"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (file.size > 1024 * 1024) {
+                  toast.error("Il file è troppo grande. Dimensione massima: 1 MB.");
+                  event.target.value = "";
+                  return;
+                }
+                try {
+                  setRawText(await file.text());
+                  setFileName(file.name);
+                  setTemplates(null);
+                  toast.success("File caricato");
+                } catch {
+                  toast.error("Impossibile leggere il file di testo");
+                }
+              }}
+            />
+          </label>
           <textarea
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             rows={12}
             placeholder={"GIORNO: Richiamo\n\nBox Jump\nSerie: 3\nRipetizioni: 3\nRecupero: 0"}
-            className="ios-card mt-4 w-full resize-none bg-background p-4 text-sm text-label outline-none"
+            className="ios-card mt-3 w-full resize-none bg-background p-4 text-sm text-label outline-none"
           />
           <button onClick={analyze} disabled={loading} className="ios-btn-primary mt-4 w-full">
             {loading ? "Analisi in corso…" : "Analizza scheda"}
