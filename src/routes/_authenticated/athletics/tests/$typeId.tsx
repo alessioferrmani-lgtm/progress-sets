@@ -191,11 +191,7 @@ function TestTypePage() {
     .map((row) => (isTime ? row.time_sec : row.distance_covered_m))
     .filter((value): value is number => value != null);
 
-  const bestAll = values.length
-    ? isTime
-      ? Math.min(...values)
-      : Math.max(...values)
-    : null;
+  const bestAll = values.length ? (isTime ? Math.min(...values) : Math.max(...values)) : null;
 
   const { start: sportsYearStart, end: sportsYearEnd } = currentSportsYear();
   const seasonValues = rows
@@ -212,25 +208,14 @@ function TestTypePage() {
       : Math.max(...seasonValues)
     : null;
 
-  const lastValue = rows[0]
-    ? isTime
-      ? rows[0].time_sec
-      : rows[0].distance_covered_m
-    : null;
-  const previousValue = rows[1]
-    ? isTime
-      ? rows[1].time_sec
-      : rows[1].distance_covered_m
-    : null;
-  const delta =
-    lastValue != null && previousValue != null ? lastValue - previousValue : null;
+  const lastValue = rows[0] ? (isTime ? rows[0].time_sec : rows[0].distance_covered_m) : null;
+  const previousValue = rows[1] ? (isTime ? rows[1].time_sec : rows[1].distance_covered_m) : null;
+  const delta = lastValue != null && previousValue != null ? lastValue - previousValue : null;
 
   const chartData = useMemo(
     () =>
       [...rows]
-        .filter((row) =>
-          isTime ? row.time_sec != null : row.distance_covered_m != null,
-        )
+        .filter((row) => (isTime ? row.time_sec != null : row.distance_covered_m != null))
         .reverse()
         .map((row) => ({
           date: format(new Date(row.date), "d MMM", { locale: it }),
@@ -241,9 +226,7 @@ function TestTypePage() {
 
   if (typeQ.isError) {
     return (
-      <div className="ios-card p-5 text-sm text-danger">
-        Impossibile caricare il tipo di test.
-      </div>
+      <div className="ios-card p-5 text-sm text-danger">Impossibile caricare il tipo di test.</div>
     );
   }
 
@@ -270,13 +253,7 @@ function TestTypePage() {
       <div className="mt-4 grid grid-cols-3 gap-2">
         <StatCell
           label="PR assoluto"
-          value={
-            bestAll != null
-              ? isTime
-                ? formatTime(bestAll)
-                : formatDistance(bestAll)
-              : "—"
-          }
+          value={bestAll != null ? (isTime ? formatTime(bestAll) : formatDistance(bestAll)) : "—"}
         />
         <StatCell
           label="Stagione"
@@ -297,27 +274,16 @@ function TestTypePage() {
                 ? `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} ↓`
                 : `${Math.abs(delta).toFixed(1)}${isTime ? "s" : "m"} ↑`
           }
-          tone={
-            delta == null
-              ? "n"
-              : (isTime ? delta < 0 : delta > 0)
-                ? "up"
-                : "down"
-          }
+          tone={delta == null ? "n" : (isTime ? delta < 0 : delta > 0) ? "up" : "down"}
         />
       </div>
 
       {chartData.length > 1 && (
         <div className="ios-card mt-4 p-3">
-          <div className="mb-1 text-xs font-semibold text-label-secondary">
-            Andamento
-          </div>
+          <div className="mb-1 text-xs font-semibold text-label-secondary">Andamento</div>
           <div className="h-40 w-full">
             <ResponsiveContainer>
-              <LineChart
-                data={chartData}
-                margin={{ left: 0, right: 8, top: 8, bottom: 0 }}
-              >
+              <LineChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                 <CartesianGrid
                   stroke="var(--color-separator)"
                   strokeDasharray="3 3"
@@ -337,14 +303,10 @@ function TestTypePage() {
                     fill: "var(--color-label-tertiary)",
                   }}
                   width={40}
-                  tickFormatter={(value) =>
-                    isTime ? formatTime(value) : String(value)
-                  }
+                  tickFormatter={(value) => (isTime ? formatTime(value) : String(value))}
                 />
                 <Tooltip
-                  formatter={(value: number) =>
-                    isTime ? formatTime(value) : `${value}m`
-                  }
+                  formatter={(value: number) => (isTime ? formatTime(value) : `${value}m`)}
                   contentStyle={{
                     borderRadius: 12,
                     border: "1px solid var(--color-separator)",
@@ -461,9 +423,7 @@ function TestTypePage() {
           <div
             role="status"
             className={`ios-card mt-3 p-3 text-center text-sm ${
-              statusMessage.startsWith("Errore")
-                ? "text-danger"
-                : "text-label-secondary"
+              statusMessage.startsWith("Errore") ? "text-danger" : "text-label-secondary"
             }`}
           >
             {statusMessage}
@@ -529,10 +489,11 @@ function TestTypePage() {
                     setPendingDeleteId(row.id);
                   }}
                   disabled={del.isPending}
-                  aria-label="Elimina prova"
-                  className="pointer-events-auto relative z-30 flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded-full bg-fill text-danger active:opacity-70 disabled:opacity-40"
+                  aria-label="Elimina test"
+                  className="pointer-events-auto relative z-30 flex min-h-10 shrink-0 touch-manipulation items-center justify-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-danger active:opacity-70 disabled:opacity-40"
                 >
                   <Trash2 className="h-4 w-4" />
+                  Elimina
                 </button>
               </li>
             ))}
@@ -559,9 +520,7 @@ function TestTypePage() {
                 <h3 id="delete-test-title" className="text-lg font-bold text-label">
                   Eliminare questo test?
                 </h3>
-                <p className="mt-1 text-sm text-label-secondary">
-                  L’operazione è definitiva.
-                </p>
+                <p className="mt-1 text-sm text-label-secondary">L’operazione è definitiva.</p>
               </div>
               <button
                 type="button"
@@ -612,32 +571,17 @@ function StatCell({
   value: string;
   tone?: "up" | "down" | "n";
 }) {
-  const color =
-    tone === "up"
-      ? "text-success"
-      : tone === "down"
-        ? "text-danger"
-        : "text-label";
+  const color = tone === "up" ? "text-success" : tone === "down" ? "text-danger" : "text-label";
 
   return (
     <div className="ios-card p-3 text-center">
-      <div className="text-[10px] font-semibold uppercase text-label-tertiary">
-        {label}
-      </div>
-      <div className={`mt-1 text-base font-bold tabular-nums ${color}`}>
-        {value}
-      </div>
+      <div className="text-[10px] font-semibold uppercase text-label-tertiary">{label}</div>
+      <div className={`mt-1 text-base font-bold tabular-nums ${color}`}>{value}</div>
     </div>
   );
 }
 
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-2.5">
       <span className="text-sm text-label">{label}</span>
