@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -8,6 +8,14 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),
+  beforeLoad: async ({ search }) => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      throw redirect({
+        to: search.next?.startsWith("/") ? search.next : "/home",
+      });
+    }
+  },
   component: AuthPage,
 });
 
@@ -49,9 +57,7 @@ function AuthPage() {
       });
       if (result.error) {
         toast.error(
-          result.error instanceof Error
-            ? result.error.message
-            : "Impossibile accedere con Google",
+          result.error instanceof Error ? result.error.message : "Impossibile accedere con Google",
         );
         setLoading(false);
         return;
@@ -72,6 +78,19 @@ function AuthPage() {
         <p className="mt-1 text-sm text-label-secondary">
           {mode === "signin" ? "Accedi al tuo account" : "Crea un nuovo account"}
         </p>
+        {mode === "signin" && (
+          <div className="mt-4 flex items-center gap-3 rounded-xl bg-fill-secondary px-4 py-3">
+            <span
+              aria-hidden="true"
+              className="flex size-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
+            >
+              ✓
+            </span>
+            <p className="text-sm text-label-secondary">
+              L'accesso resta memorizzato su questo dispositivo
+            </p>
+          </div>
+        )}
         <form onSubmit={submit} className="mt-5 space-y-3">
           <input
             type="email"
@@ -111,9 +130,7 @@ function AuthPage() {
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="mt-4 w-full text-center text-sm text-accent"
         >
-          {mode === "signin"
-            ? "Non hai un account? Registrati"
-            : "Hai già un account? Accedi"}
+          {mode === "signin" ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}
         </button>
       </div>
     </div>
