@@ -1,8 +1,4 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   createRootRouteWithContext,
@@ -62,7 +58,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
       { name: "theme-color", content: "#F2F2F7" },
-      { title: "Allenamento Palestra" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Progress Sets" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { title: "Progress Sets" },
       {
         name: "description",
         content:
@@ -71,17 +71,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Allenamento Palestra" },
       {
         property: "og:description",
-        content: "Esecuzione guidata delle tue schede di palestra con timer di recupero automatico.",
+        content:
+          "Esecuzione guidata delle tue schede di palestra con timer di recupero automatico.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Allenamento Palestra" },
-      { name: "twitter:description", content: "Esecuzione guidata delle tue schede di palestra con timer di recupero automatico." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Esecuzione guidata delle tue schede di palestra con timer di recupero automatico.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
