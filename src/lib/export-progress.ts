@@ -62,12 +62,22 @@ type Race = {
   calories: number | null;
   notes: string | null;
 };
+type IntervalSession = {
+  date: string;
+  signature: string;
+  repetitions: number;
+  distance_m: number;
+  active_time_sec: number;
+  calories: number | null;
+  notes: string | null;
+};
 
 export type ExportData = {
   sessions: Session[];
   workouts: WorkoutSet[];
   tests: Test[];
   races: Race[];
+  intervals: IntervalSession[];
   personalRecordsGym: Array<{ exercise: string; weight_kg: number; reps: number; date: string }>;
   personalRecordsAthletics: Array<{
     distance_m: number;
@@ -80,6 +90,7 @@ export type ExportData = {
     workout_count: number;
     test_count: number;
     race_count: number;
+    interval_count: number;
     total_volume_kg: number;
     total_calories: number;
   };
@@ -200,6 +211,26 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
     calories: r.calories_burned == null ? null : Number(r.calories_burned),
   }));
 
+  let intervalQ = supabase
+    .from("interval_sessions")
+    .select("date,signature,notes,calories_burned,interval_reps(distance_m,time_sec)")
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
+  if (startDate) intervalQ = intervalQ.gte("date", startDate);
+  const intervalsRaw = assertQuery(await intervalQ, "Ripetute");
+  const intervals: IntervalSession[] = intervalsRaw.map((session) => {
+    const reps = (session.interval_reps ?? []) as Array<{ distance_m: number; time_sec: number }>;
+    return {
+      date: session.date,
+      signature: session.signature || "Sessione ripetute",
+      repetitions: reps.length,
+      distance_m: reps.reduce((sum, rep) => sum + Number(rep.distance_m), 0),
+      active_time_sec: reps.reduce((sum, rep) => sum + Number(rep.time_sec), 0),
+      calories: session.calories_burned == null ? null : Number(session.calories_burned),
+      notes: session.notes,
+    };
+  });
+
   const prGymRaw = assertQuery(
     await supabase
       .from("logged_sets")
@@ -237,12 +268,14 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
     ...sessions.map((s) => s.calories),
     ...tests.map((t) => t.calories),
     ...races.map((r) => r.calories),
+    ...intervals.map((session) => session.calories),
   ].reduce<number>((sum, value) => sum + (Number.isFinite(value) ? Number(value) : 0), 0);
   return {
     sessions,
     workouts,
     tests,
     races,
+    intervals,
     personalRecordsGym: Array.from(gymMap, ([exercise, v]) => ({ exercise, ...v })).sort(
       (a, b) => b.weight_kg - a.weight_kg,
     ),
@@ -254,6 +287,7 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
       workout_count: sessions.length,
       test_count: tests.length,
       race_count: races.length,
+      interval_count: intervals.length,
       total_volume_kg: Math.round(totalVolume),
       total_calories: Math.round(totalCalories),
     },
@@ -261,7 +295,9 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
 }
 
 function isEmpty(data: ExportData): boolean {
-  return !data.sessions.length && !data.tests.length && !data.races.length;
+  return (
+    !data.sessions.length && !data.tests.length && !data.races.length && !data.intervals.length
+  );
 }
 function filename(ext: string): string {
   return `progress-sets-progressi-${format(new Date(), "yyyy-MM-dd")}.${ext}`;
@@ -298,6 +334,7 @@ export function buildWorkbook(data: ExportData): XLSX.WorkBook {
       { Voce: "Allenamenti", Valore: data.summary.workout_count },
       { Voce: "Test", Valore: data.summary.test_count },
       { Voce: "Gare", Valore: data.summary.race_count },
+      { Voce: "Sessioni atletica", Valore: data.summary.interval_count },
       { Voce: "Volume totale (kg)", Valore: data.summary.total_volume_kg },
       { Voce: "Calorie totali (kcal)", Valore: data.summary.total_calories },
     ],
@@ -354,6 +391,20 @@ export function buildWorkbook(data: ExportData): XLSX.WorkBook {
       Note: r.notes ?? "",
     })),
     [13, 28, 13, 12, 11, 14, 35],
+  );
+  addSheet(
+    wb,
+    "Ripetute",
+    data.intervals.map((session) => ({
+      Data: session.date,
+      Sessione: session.signature,
+      Ripetute: session.repetitions,
+      Distanza_m: session.distance_m,
+      Tempo_attivo: fmtTime(session.active_time_sec),
+      Calorie_kcal: session.calories ?? "",
+      Note: session.notes ?? "",
+    })),
+    [13, 24, 11, 13, 14, 14, 35],
   );
   addSheet(
     wb,
@@ -422,11 +473,9 @@ export async function prepareExcelExport(period: ExportPeriod): Promise<PrepareE
     bookType: "xlsx",
     compression: true,
   });
-  const file = new File(
-    [bytes],
-    filename("xlsx"),
-    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-  );
+  const file = new File([bytes], filename("xlsx"), {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   return { empty: false, prepared: { file, format: "xlsx" } };
 }
 
@@ -455,10 +504,11 @@ export function buildPDF(data: ExportData): jsPDF {
   );
   autoTable(doc, {
     startY: 38,
-    head: [["Allenamenti", "Test", "Gare", "Volume kg", "Calorie kcal"]],
+    head: [["Palestra", "Atletica", "Test", "Gare", "Volume kg", "Calorie kcal"]],
     body: [
       [
         data.summary.workout_count,
+        data.summary.interval_count,
         data.summary.test_count,
         data.summary.race_count,
         data.summary.total_volume_kg,
@@ -521,6 +571,20 @@ export function buildPDF(data: ExportData): jsPDF {
         fmtTime(r.time_sec),
         r.placement ?? "—",
         r.calories ?? "—",
+      ]),
+    );
+  if (data.intervals.length)
+    table(
+      doc,
+      "Sessioni atletica - Ripetute",
+      [["Data", "Sessione", "Rip.", "Distanza", "Tempo", "kcal"]],
+      data.intervals.map((session) => [
+        session.date,
+        session.signature,
+        session.repetitions,
+        `${session.distance_m}m`,
+        fmtTime(session.active_time_sec),
+        session.calories ?? "—",
       ]),
     );
   if (data.personalRecordsGym.length || data.personalRecordsAthletics.length)

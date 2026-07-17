@@ -48,6 +48,46 @@ export type PerformanceRow = {
   date: string;
 };
 
+export type IntervalRepRow = {
+  id: string;
+  rep_number: number;
+  distance_m: number;
+  time_sec: number;
+  rest_sec: number | null;
+};
+
+export type IntervalSessionRow = {
+  id: string;
+  date: string;
+  signature: string | null;
+  notes: string | null;
+  calories_burned: number | null;
+  created_at: string;
+  interval_reps: IntervalRepRow[];
+};
+
+export async function fetchIntervalSessions(): Promise<IntervalSessionRow[]> {
+  const { data, error } = await supabase
+    .from("interval_sessions")
+    .select(
+      "id,date,signature,notes,calories_burned,created_at,interval_reps(id,rep_number,distance_m,time_sec,rest_sec)",
+    )
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((session) => ({
+    ...session,
+    calories_burned: session.calories_burned == null ? null : Number(session.calories_burned),
+    interval_reps: [...(session.interval_reps ?? [])]
+      .map((rep) => ({
+        ...rep,
+        distance_m: Number(rep.distance_m),
+        time_sec: Number(rep.time_sec),
+      }))
+      .sort((a, b) => a.rep_number - b.rep_number),
+  })) as IntervalSessionRow[];
+}
+
 export async function fetchTestTypes(): Promise<TestType[]> {
   const { data, error } = await supabase
     .from("test_types")

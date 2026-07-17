@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, Download, FileSpreadsheet, FileText, Share2, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  FileSpreadsheet,
+  FileText,
+  Share2,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   deliverExportFile,
@@ -22,10 +30,21 @@ const PERIODS: Array<{ id: ExportPeriod; label: string }> = [
 ];
 
 function ExportPage() {
-  const [format, setFormat] = useState<"pdf" | "xlsx">("xlsx");
+  const [format, setFormat] = useState<"pdf" | "xlsx">("pdf");
   const [period, setPeriod] = useState<ExportPeriod>("3m");
   const [busy, setBusy] = useState(false);
   const [prepared, setPrepared] = useState<PreparedExport | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!prepared) {
+      setFileUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(prepared.file);
+    setFileUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [prepared]);
 
   const prepare = async () => {
     setBusy(true);
@@ -60,10 +79,7 @@ function ExportPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
-      <Link
-        to="/profile"
-        className="mb-2 inline-flex items-center gap-1 text-sm text-accent"
-      >
+      <Link to="/profile" className="mb-2 inline-flex items-center gap-1 text-sm text-accent">
         <ArrowLeft className="h-4 w-4" /> Profilo
       </Link>
       <h1 className="text-2xl font-bold text-label">Esporta i miei progressi</h1>
@@ -79,7 +95,10 @@ function ExportPage() {
           <button
             type="button"
             disabled={busy}
-            onClick={() => { setFormat("xlsx"); setPrepared(null); }}
+            onClick={() => {
+              setFormat("xlsx");
+              setPrepared(null);
+            }}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
               (format === "xlsx" ? "ring-2 ring-accent" : "")
@@ -91,7 +110,10 @@ function ExportPage() {
           <button
             type="button"
             disabled={busy}
-            onClick={() => { setFormat("pdf"); setPrepared(null); }}
+            onClick={() => {
+              setFormat("pdf");
+              setPrepared(null);
+            }}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
               (format === "pdf" ? "ring-2 ring-accent" : "")
@@ -113,16 +135,17 @@ function ExportPage() {
               type="button"
               disabled={busy}
               key={p.id}
-              onClick={() => { setPeriod(p.id); setPrepared(null); }}
+              onClick={() => {
+                setPeriod(p.id);
+                setPrepared(null);
+              }}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
             >
               <span className="text-sm text-label">{p.label}</span>
               <span
                 className={
                   "h-4 w-4 rounded-full border " +
-                  (period === p.id
-                    ? "border-accent bg-accent"
-                    : "border-label-tertiary")
+                  (period === p.id ? "border-accent bg-accent" : "border-label-tertiary")
                 }
               />
             </button>
@@ -147,6 +170,16 @@ function ExportPage() {
             <Share2 className="h-4 w-4" />
             Salva o condividi
           </button>
+          {prepared.format === "pdf" && fileUrl && (
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
+            >
+              <ExternalLink className="h-4 w-4" /> Apri PDF
+            </a>
+          )}
           <p className="mt-2 text-center text-[11px] text-label-tertiary">
             Su iPhone scegli “Salva su File” dal menu di condivisione.
           </p>
