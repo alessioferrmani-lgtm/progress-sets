@@ -92,7 +92,12 @@ function HomePage() {
           loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
         />
 
-        <MonthCalendarSection sessions={sessionsQ.data} intervals={intervalsQ.data} />
+        <MonthCalendarSection
+          sessions={sessionsQ.data}
+          intervals={intervalsQ.data}
+          tests={testsQ.data}
+          races={racesQ.data}
+        />
 
         <VolumeSection
           sessions={sessionsQ.data}
@@ -308,11 +313,15 @@ function RecentSessionsSection({
 function MonthCalendarSection({
   sessions,
   intervals,
+  tests,
+  races,
 }: {
   sessions?: SessionRow[];
   intervals?: import("@/lib/athletics-queries").IntervalSessionRow[];
+  tests?: import("@/lib/athletics-queries").TestRow[];
+  races?: import("@/lib/athletics-queries").RaceRow[];
 }) {
-  if (!sessions || !intervals) return <Skeleton h={300} />;
+  if (!sessions || !intervals || !tests || !races) return <Skeleton h={300} />;
   const now = new Date();
   const start = startOfMonth(now);
   const end = endOfMonth(now);
@@ -326,6 +335,8 @@ function MonthCalendarSection({
     gymDays.add(key);
   });
   intervals.forEach((session) => runDays.add(session.date));
+  tests.forEach((test) => runDays.add(test.date));
+  races.forEach((race) => runDays.add(race.date));
 
   return (
     <section className="ios-card p-4">
