@@ -21,10 +21,7 @@ function WorkoutsIndex() {
         <h1 className="text-3xl font-bold text-label">Schede</h1>
       </div>
 
-      <Link
-        to="/workouts/new"
-        className="ios-btn-primary mt-3 w-full"
-      >
+      <Link to="/workouts/new" className="ios-btn-primary mt-3 w-full">
         <Plus className="h-5 w-5" /> Nuova scheda
       </Link>
 
@@ -41,16 +38,14 @@ function WorkoutsIndex() {
         )}
         {!isLoading && data && data.length === 0 && (
           <div className="ios-card p-6 text-center">
-            <p className="text-sm text-label-secondary">
-              Nessuna scheda. Creane una per iniziare.
-            </p>
+            <p className="text-sm text-label-secondary">Nessuna scheda. Creane una per iniziare.</p>
           </div>
         )}
         <ul className="ios-card divide-y divide-separator overflow-hidden">
           {(data ?? []).map((t) => (
             <li key={t.id}>
               <Link
-                to="/workouts/$templateId/run"
+                to="/workouts/$templateId"
                 params={{ templateId: t.id }}
                 className="flex items-center gap-3 px-4 py-3 active:bg-fill-secondary"
               >
@@ -66,14 +61,6 @@ function WorkoutsIndex() {
                       : "mai eseguita"}
                   </div>
                 </div>
-                <Link
-                  to="/workouts/$templateId/edit"
-                  params={{ templateId: t.id }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="rounded-full bg-fill px-3 py-1 text-xs font-medium text-label-secondary active:opacity-70"
-                >
-                  Modifica
-                </Link>
                 <ChevronRight className="h-4 w-4 text-label-tertiary" />
               </Link>
             </li>
