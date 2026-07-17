@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { parseWorkoutLocally } from "../../../../supabase/functions/_shared/workout-parser";
+import { storedMuscleGroupFor } from "@/lib/muscle-map";
 
 export const Route = createFileRoute("/_authenticated/workouts/new")({
   component: WorkoutNewPage,
@@ -328,6 +329,7 @@ export function TemplateEditor({
 
 type ImportedExercise = {
   name: string;
+  muscle_group: string;
   sets: number;
   reps_type: RepsType;
   reps_value: number | null;
@@ -350,7 +352,15 @@ function WorkoutImport() {
     setLoading(true);
     try {
       const parsed = parseWorkoutLocally(rawText) as ImportedTemplate[];
-      setTemplates(parsed);
+      setTemplates(
+        parsed.map((template) => ({
+          ...template,
+          exercises: template.exercises.map((exercise) => ({
+            ...exercise,
+            muscle_group: storedMuscleGroupFor(exercise.name) ?? "",
+          })),
+        })),
+      );
       toast.success("Scheda letta correttamente");
     } catch (err) {
       toast.error(
@@ -399,9 +409,12 @@ function WorkoutImport() {
         const rows: Array<Record<string, unknown>> = [];
         for (let index = 0; index < template.exercises.length; index++) {
           const exercise = template.exercises[index];
+          if (!exercise.muscle_group) {
+            throw new Error(`Seleziona il gruppo muscolare per “${exercise.name}”`);
+          }
           const { data: existing, error: lookupError } = await supabase
             .from("exercises")
-            .select("id")
+            .select("id,muscle_group")
             .ilike("name", exercise.name.trim())
             .limit(1)
             .maybeSingle();
@@ -410,11 +423,20 @@ function WorkoutImport() {
           if (!exerciseId) {
             const { data: custom, error: customError } = await supabase
               .from("exercises")
-              .insert({ name: exercise.name.trim() } as never)
+              .insert({
+                name: exercise.name.trim(),
+                muscle_group: exercise.muscle_group,
+              } as never)
               .select("id")
               .single();
             if (customError) throw customError;
             exerciseId = custom.id;
+          } else if (existing && !existing.muscle_group) {
+            const { error: groupError } = await supabase
+              .from("exercises")
+              .update({ muscle_group: exercise.muscle_group })
+              .eq("id", existing.id);
+            if (groupError) throw groupError;
           }
           rows.push({
             template_id: created.id,
@@ -565,6 +587,23 @@ function WorkoutImport() {
                         onChange={(rest_sec) => updateExercise(ti, ei, { rest_sec })}
                       />
                     </div>
+                    <label className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-label-tertiary">Gruppo muscolare</span>
+                      <select
+                        value={exercise.muscle_group}
+                        onChange={(event) =>
+                          updateExercise(ti, ei, { muscle_group: event.target.value })
+                        }
+                        className="rounded-lg bg-background px-2 py-1.5 text-sm text-label outline-none"
+                      >
+                        <option value="">Seleziona</option>
+                        {[
+                          "Petto", "Schiena", "Spalle", "Bicipiti", "Tricipiti",
+                          "Gambe", "Glutei", "Polpacci", "Core", "Avambracci",
+                          "Cardio", "Atletica", "Full body",
+                        ].map((group) => <option key={group}>{group}</option>)}
+                      </select>
+                    </label>
                   </div>
                 ))}
               </div>

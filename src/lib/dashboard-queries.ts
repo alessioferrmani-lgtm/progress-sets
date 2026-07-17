@@ -15,6 +15,7 @@ export type SetRow = {
   session_id: string;
   exercise_id: string;
   exercise_name: string;
+  exercise_muscle_group: string | null;
   set_number: number;
   weight_kg: number;
   reps: number;
@@ -57,7 +58,7 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
   const { data, error } = await supabase
     .from("logged_sets")
     .select(
-      "id,session_id,exercise_id,set_number,weight_kg,reps,completed_at,exercise:exercises(name),workout_sessions!inner(user_id)",
+      "id,session_id,exercise_id,set_number,weight_kg,reps,completed_at,exercise:exercises(name,muscle_group),workout_sessions!inner(user_id)",
     )
     .eq("workout_sessions.user_id", userId)
     .gte("completed_at", since)
@@ -72,13 +73,14 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
       weight_kg: number | string;
       reps: number;
       completed_at: string;
-      exercise: { name: string } | null;
+      exercise: { name: string; muscle_group: string | null } | null;
     };
     return {
       id: row.id,
       session_id: row.session_id,
       exercise_id: row.exercise_id,
       exercise_name: row.exercise?.name ?? "Esercizio",
+      exercise_muscle_group: row.exercise?.muscle_group ?? null,
       set_number: row.set_number,
       weight_kg: Number(row.weight_kg),
       reps: row.reps,

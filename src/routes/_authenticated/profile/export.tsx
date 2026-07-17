@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { ArrowLeft, Download, FileSpreadsheet, FileText, Share2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { exportToExcel, exportToPDF, type ExportPeriod } from "@/lib/export-progress";
+import {
+  deliverExportFile,
+  prepareExcelExport,
+  preparePDFExport,
+  type ExportPeriod,
+  type PreparedExport,
+} from "@/lib/export-progress";
 
 export const Route = createFileRoute("/_authenticated/profile/export")({
   component: ExportPage,
@@ -19,20 +25,36 @@ function ExportPage() {
   const [format, setFormat] = useState<"pdf" | "xlsx">("xlsx");
   const [period, setPeriod] = useState<ExportPeriod>("3m");
   const [busy, setBusy] = useState(false);
+  const [prepared, setPrepared] = useState<PreparedExport | null>(null);
 
-  const run = async () => {
+  const prepare = async () => {
     setBusy(true);
+    setPrepared(null);
     try {
-      const result = format === "xlsx" ? await exportToExcel(period) : await exportToPDF(period);
+      const result =
+        format === "xlsx" ? await prepareExcelExport(period) : await preparePDFExport(period);
       if (result.empty) {
         toast.error("Nessun dato nel periodo selezionato");
       } else {
-        toast.success(result.delivery === "shared" ? "File pronto per la condivisione" : "File scaricato");
+        setPrepared(result.prepared ?? null);
+        toast.success("Riepilogo pronto");
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore durante l'esportazione");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const save = async () => {
+    if (!prepared) return;
+    try {
+      const result = await deliverExportFile(prepared);
+      if (result === "shared") toast.success("Riepilogo condiviso");
+      else if (result === "opened") toast.success("Riepilogo aperto: usa Condividi per salvarlo");
+      else toast.success("Riepilogo scaricato");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossibile salvare il riepilogo");
     }
   };
 
@@ -57,7 +79,7 @@ function ExportPage() {
           <button
             type="button"
             disabled={busy}
-            onClick={() => setFormat("xlsx")}
+            onClick={() => { setFormat("xlsx"); setPrepared(null); }}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
               (format === "xlsx" ? "ring-2 ring-accent" : "")
@@ -69,7 +91,7 @@ function ExportPage() {
           <button
             type="button"
             disabled={busy}
-            onClick={() => setFormat("pdf")}
+            onClick={() => { setFormat("pdf"); setPrepared(null); }}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
               (format === "pdf" ? "ring-2 ring-accent" : "")
@@ -91,7 +113,7 @@ function ExportPage() {
               type="button"
               disabled={busy}
               key={p.id}
-              onClick={() => setPeriod(p.id)}
+              onClick={() => { setPeriod(p.id); setPrepared(null); }}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
             >
               <span className="text-sm text-label">{p.label}</span>
@@ -108,15 +130,38 @@ function ExportPage() {
         </div>
       </section>
 
-      <button
-        type="button"
-        onClick={run}
-        disabled={busy}
-        className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97] disabled:opacity-50"
-      >
-        <Download className="h-4 w-4" />
-        {busy ? "Generazione in corso…" : "Esporta"}
-      </button>
+      {prepared ? (
+        <div className="ios-card mt-6 p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-label">Riepilogo pronto</div>
+              <div className="truncate text-xs text-label-secondary">{prepared.file.name}</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97]"
+          >
+            <Share2 className="h-4 w-4" />
+            Salva o condividi
+          </button>
+          <p className="mt-2 text-center text-[11px] text-label-tertiary">
+            Su iPhone scegli “Salva su File” dal menu di condivisione.
+          </p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={prepare}
+          disabled={busy}
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97] disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {busy ? "Generazione in corso…" : "Prepara riepilogo"}
+        </button>
+      )}
     </div>
   );
 }
