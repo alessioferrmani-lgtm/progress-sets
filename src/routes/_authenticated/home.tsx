@@ -13,8 +13,7 @@ import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
-import { fetchAllTests } from "@/lib/athletics-queries";
-import { fetchRaces } from "@/lib/athletics-queries";
+import { fetchAllTests, fetchIntervalSessions, fetchRaces } from "@/lib/athletics-queries";
 import {
   Flame,
   Trophy,
@@ -25,10 +24,7 @@ import {
   UserCog,
 } from "lucide-react";
 import {
-  startOfISOWeek,
-  endOfISOWeek,
   subDays,
-  subWeeks,
   format,
   isSameDay,
   startOfMonth,
@@ -69,6 +65,10 @@ function HomePage() {
     queryKey: ["dash", "races", user.id],
     queryFn: fetchRaces,
   });
+  const intervalsQ = useQuery({
+    queryKey: ["interval_sessions"],
+    queryFn: fetchIntervalSessions,
+  });
 
   const today = new Date();
   const dateLabel = format(today, "EEEE d MMMM", { locale: it });
@@ -92,7 +92,7 @@ function HomePage() {
           loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
         />
 
-        <StreakSection sessions={sessionsQ.data} loading={sessionsQ.isLoading} />
+        <MonthCalendarSection sessions={sessionsQ.data} intervals={intervalsQ.data} />
 
         <VolumeSection
           sessions={sessionsQ.data}
@@ -107,8 +107,6 @@ function HomePage() {
           sets={setsQ.data}
           loading={sessionsQ.isLoading}
         />
-
-        <MonthCalendarSection sessions={sessionsQ.data} />
 
         <button
           onClick={() => supabase.auth.signOut()}
@@ -125,73 +123,6 @@ function HomePage() {
 
 function Skeleton({ h = 80 }: { h?: number }) {
   return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: h }} />;
-}
-
-function StreakSection({ sessions, loading }: { sessions?: SessionRow[]; loading: boolean }) {
-  if (loading || !sessions) return <Skeleton h={96} />;
-  const now = new Date();
-  const currentWeekStart = startOfISOWeek(now);
-  const currentWeekHas = sessions.some((s) => new Date(s.started_at) >= currentWeekStart);
-  // Count consecutive prior weeks (excluding current if empty) that have at least one session
-  let streak = 0;
-  const cursor = new Date(currentWeekStart);
-  if (currentWeekHas) streak = 1;
-  for (let i = 1; i < 104; i++) {
-    const start = subWeeks(cursor, i);
-    const end = endOfISOWeek(start);
-    const has = sessions.some((s) => {
-      const t = new Date(s.started_at);
-      return t >= start && t <= end;
-    });
-    if (has) streak = (currentWeekHas ? 1 : 0) + i;
-    else break;
-  }
-
-  if (!currentWeekHas) {
-    return (
-      <section className="ios-card p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-full"
-            style={{ background: "var(--color-accent-soft)" }}
-          >
-            <Flame className="h-5 w-5 text-accent" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-base font-semibold text-label">Inizia la tua settimana</div>
-            <div className="text-xs text-label-secondary">
-              {streak > 0
-                ? `Non perdere la serie di ${streak} settimane`
-                : "Registra il primo allenamento"}
-            </div>
-          </div>
-          <Link
-            to="/workouts"
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground active:scale-[0.97]"
-          >
-            Inizia
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="ios-card flex items-center gap-3 p-4">
-      <div
-        className="flex h-12 w-12 items-center justify-center rounded-full"
-        style={{ background: "var(--color-accent-soft)" }}
-      >
-        <Flame className="h-6 w-6 text-accent" />
-      </div>
-      <div>
-        <div className="text-2xl font-bold leading-tight text-label">
-          {streak} {streak === 1 ? "settimana" : "settimane"} di fila
-        </div>
-        <div className="text-xs text-label-secondary">Continua così</div>
-      </div>
-    </section>
-  );
 }
 
 function VolumeSection({
@@ -374,31 +305,46 @@ function RecentSessionsSection({
   );
 }
 
-function MonthCalendarSection({ sessions }: { sessions?: SessionRow[] }) {
-  if (!sessions) return null;
+function MonthCalendarSection({
+  sessions,
+  intervals,
+}: {
+  sessions?: SessionRow[];
+  intervals?: import("@/lib/athletics-queries").IntervalSessionRow[];
+}) {
+  if (!sessions || !intervals) return <Skeleton h={300} />;
   const now = new Date();
   const start = startOfMonth(now);
   const end = endOfMonth(now);
   const days = eachDayOfInterval({ start, end });
   const leadingBlanks = (getDay(start) + 6) % 7; // Monday-first
 
-  const byDay = new Map<string, string>(); // yyyy-MM-dd -> template name
+  const gymDays = new Set<string>();
+  const runDays = new Set<string>();
   sessions.forEach((s) => {
     const key = format(new Date(s.started_at), "yyyy-MM-dd");
-    if (!byDay.has(key)) byDay.set(key, s.template_name ?? "Allenamento");
+    gymDays.add(key);
   });
+  intervals.forEach((session) => runDays.add(session.date));
 
   return (
-    <details className="ios-card group p-4">
-      <summary className="flex cursor-pointer items-center justify-between list-none">
+    <section className="ios-card p-4">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-label-secondary" />
           <span className="text-base font-semibold text-label">
             {format(now, "MMMM yyyy", { locale: it })}
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-label-tertiary transition-transform group-open:rotate-90" />
-      </summary>
+        <div className="flex gap-2 text-[9px] font-medium text-label-secondary">
+          <span className="flex items-center gap-1">
+            <i className="size-2 rounded-full bg-success" /> Corsa
+          </span>
+          <span className="flex items-center gap-1">
+            <i className="size-2 rounded-full bg-accent" /> Palestra
+          </span>
+        </div>
+      </div>
       <div className="mt-4 grid grid-cols-7 gap-1 text-center">
         {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
           <div key={i} className="text-[10px] font-semibold text-label-tertiary">
@@ -410,32 +356,33 @@ function MonthCalendarSection({ sessions }: { sessions?: SessionRow[] }) {
         ))}
         {days.map((d) => {
           const key = format(d, "yyyy-MM-dd");
-          const has = byDay.has(key);
+          const hasGym = gymDays.has(key);
+          const hasRun = runDays.has(key);
           const isToday = isSameDay(d, new Date());
           return (
             <div key={key} className="flex flex-col items-center gap-0.5 py-1">
               <span
                 className={
                   "flex h-7 w-7 items-center justify-center rounded-full text-xs " +
-                  (has
-                    ? "bg-accent font-semibold text-accent-foreground"
-                    : isToday
-                      ? "border border-accent text-accent"
-                      : "text-label")
+                  (hasGym && hasRun
+                    ? "bg-gradient-to-br from-success from-50% to-accent to-50% font-semibold text-white"
+                    : hasRun
+                      ? "bg-success font-semibold text-white"
+                      : hasGym
+                        ? "bg-accent font-semibold text-accent-foreground"
+                        : isToday
+                          ? "border border-accent text-accent"
+                          : "text-label")
                 }
               >
                 {format(d, "d")}
               </span>
-              {has && (
-                <span className="w-full truncate text-[8px] leading-tight text-label-secondary">
-                  {byDay.get(key)}
-                </span>
-              )}
+              {(hasGym || hasRun) && <span className="size-1 rounded-full bg-label-tertiary" />}
             </div>
           );
         })}
       </div>
-    </details>
+    </section>
   );
 }
 

@@ -36,9 +36,13 @@ function WorkoutTemplateDetail() {
       if (!data) throw new Error("Scheda non trovata");
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["templates"] });
+      setConfirmDelete(false);
+      queryClient.setQueriesData<{ id: string }[]>({ queryKey: ["templates"] }, (current) =>
+        current?.filter((item) => item.id !== templateId),
+      );
       toast.success("Scheda eliminata");
       navigate({ to: "/workouts" });
+      void queryClient.invalidateQueries({ queryKey: ["templates"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

@@ -5,20 +5,21 @@ interface RestTimerState {
   endsAt: number; // epoch ms
   duration: number; // seconds (original)
   exerciseId: string | null;
+  exerciseName: string | null;
   now: number;
-  start: (seconds: number, exerciseId: string) => void;
+  start: (seconds: number, exerciseId: string, exerciseName: string) => void;
   addSeconds: (delta: number) => void;
   skip: () => void;
   tick: () => void;
   _fired: boolean;
 }
 
-const STORAGE_KEY = "rest_timer_state_v1";
+const STORAGE_KEY = "rest_timer_state_v2";
 
 function loadInitial(): Partial<RestTimerState> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const s = JSON.parse(raw);
     if (s.running && s.endsAt > Date.now()) {
@@ -27,34 +28,42 @@ function loadInitial(): Partial<RestTimerState> {
         endsAt: s.endsAt,
         duration: s.duration,
         exerciseId: s.exerciseId ?? null,
+        exerciseName: s.exerciseName ?? null,
       };
     }
-  } catch {}
+  } catch {
+    // Ignore invalid or unavailable persisted timer state.
+  }
   return {};
 }
 
 function persist(s: RestTimerState) {
   if (typeof window === "undefined") return;
   if (s.running) {
-    sessionStorage.setItem(
+    localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         running: s.running,
         endsAt: s.endsAt,
         duration: s.duration,
         exerciseId: s.exerciseId,
+        exerciseName: s.exerciseName,
       }),
     );
   } else {
-    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
   }
 }
 
 function beep() {
   try {
     const AC =
-      (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
-        .AudioContext ||
+      (
+        window as unknown as {
+          AudioContext?: typeof AudioContext;
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).AudioContext ||
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
@@ -69,7 +78,9 @@ function beep() {
     osc.start();
     osc.stop(ctx.currentTime + 0.42);
     setTimeout(() => ctx.close(), 500);
-  } catch {}
+  } catch {
+    // Audio feedback is optional and may be blocked by the browser.
+  }
 }
 
 export const useRestTimer = create<RestTimerState>((set, get) => {
@@ -79,9 +90,10 @@ export const useRestTimer = create<RestTimerState>((set, get) => {
     endsAt: initial.endsAt ?? 0,
     duration: initial.duration ?? 0,
     exerciseId: initial.exerciseId ?? null,
+    exerciseName: initial.exerciseName ?? null,
     now: Date.now(),
     _fired: false,
-    start: (seconds, exerciseId) => {
+    start: (seconds, exerciseId, exerciseName) => {
       const endsAt = Date.now() + seconds * 1000;
       const next: RestTimerState = {
         ...get(),
@@ -89,6 +101,7 @@ export const useRestTimer = create<RestTimerState>((set, get) => {
         endsAt,
         duration: seconds,
         exerciseId,
+        exerciseName,
         now: Date.now(),
         _fired: false,
       };
@@ -105,7 +118,14 @@ export const useRestTimer = create<RestTimerState>((set, get) => {
       persist(next);
     },
     skip: () => {
-      const next = { ...get(), running: false, endsAt: 0, exerciseId: null, _fired: false };
+      const next = {
+        ...get(),
+        running: false,
+        endsAt: 0,
+        exerciseId: null,
+        exerciseName: null,
+        _fired: false,
+      };
       set(next);
       persist(next);
     },
@@ -119,9 +139,31 @@ export const useRestTimer = create<RestTimerState>((set, get) => {
       if (now >= s.endsAt && !s._fired) {
         try {
           navigator.vibrate?.([200, 100, 200]);
-        } catch {}
+        } catch {
+          // Vibration is not supported on every device.
+        }
         beep();
-        const next = { ...s, running: false, now, _fired: true, endsAt: 0, exerciseId: null };
+        try {
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Recupero terminato", {
+              body: s.exerciseName
+                ? `Tocca a ${s.exerciseName}`
+                : "Puoi iniziare la prossima serie",
+              tag: "progress-sets-rest",
+            });
+          }
+        } catch {
+          // System notifications are optional; the fixed in-app timer remains visible.
+        }
+        const next = {
+          ...s,
+          running: false,
+          now,
+          _fired: true,
+          endsAt: 0,
+          exerciseId: null,
+          exerciseName: null,
+        };
         set(next);
         persist(next);
         return;

@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554"><defs><path id="chest-half" d="M61 94C72 87 90 87 103 95L103 143C94 154 76 156 63 148C58 132 57 109 61 94Z"/></defs><g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linejoin="round"><use href="#chest-half"/><use href="#chest-half" transform="translate(214 0) scale(-1 1)"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554">
+  <defs>
+    <path id="chest-half" d="M61 98C70 91 88 89 103 96L103 143C94 151 78 154 65 147C60 135 58 111 61 98Z"/>
+  </defs>
+  <g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#chest-half"/>
+    <use href="#chest-half" transform="translate(214 0) scale(-1 1)"/>
+  </g>
+</svg>

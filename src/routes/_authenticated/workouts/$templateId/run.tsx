@@ -1,11 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  fetchPreviousSets,
-  fetchTemplate,
-  type TemplateExercise,
-} from "@/lib/workout-queries";
+import { fetchPreviousSets, fetchTemplate, type TemplateExercise } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
@@ -79,11 +75,12 @@ function RunPage() {
       const next: Record<string, Row[]> = {};
       templateData.exercises.forEach((ex) => {
         const prevMap = previous.get(ex.exercise_id);
+        const firstPrevious = prevMap?.get(1);
         next[ex.id] = Array.from({ length: ex.target_sets }, (_, i) => {
           const setNum = i + 1;
           const p = prevMap?.get(setNum);
-          const kg = p?.weight_kg ?? ex.target_weight_kg ?? 0;
-          const reps = p?.reps ?? ex.target_reps ?? null;
+          const kg = p?.weight_kg ?? firstPrevious?.weight_kg ?? ex.target_weight_kg ?? 0;
+          const reps = p?.reps ?? firstPrevious?.reps ?? ex.target_reps ?? null;
           return {
             set_number: setNum,
             weight: kg ? String(kg) : "",
@@ -108,7 +105,7 @@ function RunPage() {
   const timer = useRestTimer();
 
   const activeEx = exercises[activeIdx];
-  const rows = activeEx ? rowsByExercise[activeEx.id] ?? [] : [];
+  const rows = activeEx ? (rowsByExercise[activeEx.id] ?? []) : [];
 
   const totalSets = exercises.reduce((s, e) => s + e.target_sets, 0);
   const completedSets = Object.values(rowsByExercise)
@@ -161,7 +158,7 @@ function RunPage() {
       return next;
     });
     // Start rest timer
-    timer.start(activeEx.rest_seconds, activeEx.exercise_id);
+    timer.start(activeEx.rest_seconds, activeEx.exercise_id, activeEx.exercise.name);
 
     // Focus next: same exercise next uncompleted, else next exercise
     const nextInSame = rows.findIndex((r, i) => i > rowIdx && !r.completed);
@@ -263,9 +260,7 @@ function RunPage() {
               onClick={() => setActiveIdx(i)}
               className={
                 "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors " +
-                (isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-fill text-label-secondary")
+                (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
               }
             >
               {ex.exercise.name} · {done}/{ex.target_sets}
@@ -274,123 +269,125 @@ function RunPage() {
         })}
       </div>
 
-      {activeEx && (() => {
-        const isCount = activeEx.reps_type === "count";
-        return (
-        <div className="px-4">
-          <div className="ios-card overflow-hidden">
-            <div className="border-b border-separator px-4 py-3">
-              <div className="text-base font-semibold text-label">
-                {activeEx.exercise.name}
-              </div>
-              <div className="mt-0.5 flex items-center gap-2 text-xs text-label-secondary">
-                <span>Recupero target: {activeEx.rest_seconds}s</span>
-                {!isCount && activeEx.reps_display && (
-                  <span className="rounded-full bg-fill px-2 py-0.5 text-[10px] font-semibold uppercase text-label">
-                    {activeEx.reps_display}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator bg-fill-secondary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-label-tertiary">
-              <div>Serie</div>
-              <div>Precedente</div>
-              <div className="text-center">Kg</div>
-              <div className="text-center">{isCount ? "Rep" : "Target"}</div>
-              <div />
-            </div>
-            <ul>
-              {rows.map((r, i) => {
-                const prev = previous?.get(activeEx.exercise_id)?.get(r.set_number);
-                return (
-                  <li
-                    key={r.set_number}
-                    className={
-                      "grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator px-3 py-2 last:border-b-0 " +
-                      (r.completed ? "bg-row-completed" : "")
-                    }
-                  >
-                    <div className="text-center text-sm font-semibold text-label">
-                      {r.set_number}
-                    </div>
-                    <div className="text-xs text-label-secondary">
-                      {prev ? `${prev.weight_kg}kg × ${prev.reps}` : "-"}
-                    </div>
-                    <NumberCell
-                      value={r.weight}
-                      disabled={r.completed}
-                      step={2.5}
-                      onChange={(v) =>
-                        setRowsByExercise((c) => {
-                          const next = { ...c };
-                          const list = [...(next[activeEx.id] ?? [])];
-                          list[i] = { ...list[i], weight: v };
-                          next[activeEx.id] = list;
-                          return next;
-                        })
-                      }
-                    />
-                    {isCount ? (
-                      <NumberCell
-                        value={r.reps}
-                        disabled={r.completed}
-                        step={1}
-                        integer
-                        onChange={(v) =>
-                          setRowsByExercise((c) => {
-                            const next = { ...c };
-                            const list = [...(next[activeEx.id] ?? [])];
-                            list[i] = { ...list[i], reps: v };
-                            next[activeEx.id] = list;
-                            return next;
-                          })
-                        }
-                      />
-                    ) : (
-                      <div className="text-center text-xs font-medium text-label-secondary">
-                        {activeEx.reps_display ?? "-"}
-                      </div>
+      {activeEx &&
+        (() => {
+          const isCount = activeEx.reps_type === "count";
+          return (
+            <div className="px-4">
+              <div className="ios-card overflow-hidden">
+                <div className="border-b border-separator px-4 py-3">
+                  <div className="text-base font-semibold text-label">{activeEx.exercise.name}</div>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-label-secondary">
+                    <span>Recupero target: {activeEx.rest_seconds}s</span>
+                    {!isCount && activeEx.reps_display && (
+                      <span className="rounded-full bg-fill px-2 py-0.5 text-[10px] font-semibold uppercase text-label">
+                        {activeEx.reps_display}
+                      </span>
                     )}
-                    <button
-                      onClick={() => confirmSet(i)}
-                      disabled={r.completed}
-                      className={
-                        "flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
-                        (r.completed
-                          ? "bg-success text-white"
-                          : "bg-fill text-label active:bg-accent active:text-accent-foreground")
-                      }
-                      aria-label="Conferma serie"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            <button
-              onClick={() =>
-                setRowsByExercise((c) => {
-                  const list = [...(c[activeEx.id] ?? [])];
-                  const nextNum = list.length + 1;
-                  const prev = previous?.get(activeEx.exercise_id)?.get(nextNum);
-                  list.push({
-                    set_number: nextNum,
-                    weight: String(prev?.weight_kg ?? activeEx.target_weight_kg ?? ""),
-                    reps: String(prev?.reps ?? activeEx.target_reps ?? ""),
-                    completed: false,
-                  });
-                  return { ...c, [activeEx.id]: list };
-                })
-              }
-              className="flex w-full items-center justify-center gap-1 py-2.5 text-sm font-medium text-accent active:opacity-70"
-            >
-              <Plus className="h-4 w-4" /> Aggiungi serie
-            </button>
-          </div>
-        </div>
-        );
-      })()}
+                  </div>
+                </div>
+                <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator bg-fill-secondary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-label-tertiary">
+                  <div>Serie</div>
+                  <div>Precedente</div>
+                  <div className="text-center">Kg</div>
+                  <div className="text-center">{isCount ? "Rep" : "Target"}</div>
+                  <div />
+                </div>
+                <ul>
+                  {rows.map((r, i) => {
+                    const prev = previous?.get(activeEx.exercise_id)?.get(r.set_number);
+                    return (
+                      <li
+                        key={r.set_number}
+                        className={
+                          "grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator px-3 py-2 last:border-b-0 " +
+                          (r.completed ? "bg-row-completed" : "")
+                        }
+                      >
+                        <div className="text-center text-sm font-semibold text-label">
+                          {r.set_number}
+                        </div>
+                        <div className="text-xs text-label-secondary">
+                          {prev ? `${prev.weight_kg}kg × ${prev.reps}` : "-"}
+                        </div>
+                        <NumberCell
+                          value={r.weight}
+                          disabled={r.completed}
+                          step={2.5}
+                          onChange={(v) =>
+                            setRowsByExercise((c) => {
+                              const next = { ...c };
+                              const list = [...(next[activeEx.id] ?? [])];
+                              list[i] = { ...list[i], weight: v };
+                              next[activeEx.id] = list;
+                              return next;
+                            })
+                          }
+                        />
+                        {isCount ? (
+                          <NumberCell
+                            value={r.reps}
+                            disabled={r.completed}
+                            step={1}
+                            integer
+                            onChange={(v) =>
+                              setRowsByExercise((c) => {
+                                const next = { ...c };
+                                const list = [...(next[activeEx.id] ?? [])];
+                                list[i] = { ...list[i], reps: v };
+                                next[activeEx.id] = list;
+                                return next;
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="text-center text-xs font-medium text-label-secondary">
+                            {activeEx.reps_display ?? "-"}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => confirmSet(i)}
+                          disabled={r.completed}
+                          className={
+                            "flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
+                            (r.completed
+                              ? "bg-success text-white"
+                              : "bg-fill text-label active:bg-accent active:text-accent-foreground")
+                          }
+                          aria-label="Conferma serie"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <button
+                  onClick={() =>
+                    setRowsByExercise((c) => {
+                      const list = [...(c[activeEx.id] ?? [])];
+                      const nextNum = list.length + 1;
+                      const prev = previous?.get(activeEx.exercise_id)?.get(nextNum);
+                      const reference = list[list.length - 1] ?? list[0];
+                      list.push({
+                        set_number: nextNum,
+                        weight: String(
+                          prev?.weight_kg ?? reference?.weight ?? activeEx.target_weight_kg ?? "",
+                        ),
+                        reps: String(prev?.reps ?? reference?.reps ?? activeEx.target_reps ?? ""),
+                        completed: false,
+                      });
+                      return { ...c, [activeEx.id]: list };
+                    })
+                  }
+                  className="flex w-full items-center justify-center gap-1 py-2.5 text-sm font-medium text-accent active:opacity-70"
+                >
+                  <Plus className="h-4 w-4" /> Aggiungi serie
+                </button>
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }
