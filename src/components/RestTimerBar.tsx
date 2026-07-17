@@ -31,18 +31,20 @@ export function RestTimerBar() {
           <button
             type="button"
             onClick={() => addSeconds(-15)}
-            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
+            className="flex h-10 min-w-[88px] items-center justify-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
+            aria-label="Diminuisci recupero di 15 secondi"
           >
             <Minus className="h-4 w-4" />
-            15s
+            15 sec
           </button>
           <button
             type="button"
             onClick={() => addSeconds(15)}
-            className="flex h-9 items-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
+            className="flex h-10 min-w-[88px] items-center justify-center gap-1 rounded-full bg-fill px-3 text-sm font-semibold text-label active:scale-[0.97]"
+            aria-label="Aumenta recupero di 15 secondi"
           >
             <Plus className="h-4 w-4" />
-            15s
+            15 sec
           </button>
           <button
             type="button"
