@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554"><defs><path id="shoulder-front" d="M43 105C50 95 63 93 74 100L71 131C63 139 52 139 45 132Z"/><path id="shoulder-back" d="M240 109C247 99 259 98 270 104L268 135C260 143 249 143 242 136Z"/></defs><g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linejoin="round"><use href="#shoulder-front"/><use href="#shoulder-front" transform="translate(214 0) scale(-1 1)"/><use href="#shoulder-back"/><use href="#shoulder-back" transform="translate(624 0) scale(-1 1)"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554">
+  <defs>
+    <path id="shoulder-front" d="M45 105C51 97 62 94 72 99L72 128C65 136 54 138 46 132C43 123 42 113 45 105Z"/>
+    <path id="shoulder-back" d="M242 108C249 101 260 99 269 104L269 132C262 140 251 142 243 136C240 127 239 116 242 108Z"/>
+  </defs>
+  <g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#shoulder-front"/><use href="#shoulder-front" transform="translate(214 0) scale(-1 1)"/>
+    <use href="#shoulder-back"/><use href="#shoulder-back" transform="translate(624 0) scale(-1 1)"/>
+  </g>
+</svg>

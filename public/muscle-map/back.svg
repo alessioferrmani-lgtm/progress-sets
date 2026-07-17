@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554"><defs><path id="back-top" d="M269 97C281 91 298 90 308 98V139L292 135L271 118Z"/><path id="back-lat" d="M267 126C277 123 289 132 299 146L304 197C294 208 281 216 270 215C264 188 262 151 267 126Z"/></defs><g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linejoin="round"><use href="#back-top"/><use href="#back-top" transform="translate(624 0) scale(-1 1)"/><use href="#back-lat"/><use href="#back-lat" transform="translate(624 0) scale(-1 1)"/><path d="M307 147L312 142L317 147L315 211L312 220L309 211Z"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554">
+  <defs>
+    <path id="back-top" d="M270 99C281 93 297 92 307 99L307 137C297 139 284 132 272 119Z"/>
+    <path id="back-lat" d="M269 126C279 125 291 135 298 148L302 194C294 205 282 212 272 212C267 190 264 151 269 126Z"/>
+  </defs>
+  <g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#back-top"/><use href="#back-top" transform="translate(624 0) scale(-1 1)"/>
+    <use href="#back-lat"/><use href="#back-lat" transform="translate(624 0) scale(-1 1)"/>
+    <path d="M307 145C309 142 311 140 312 140C314 140 316 142 317 145L315 207L312 217L309 207Z"/>
+  </g>
+</svg>
