@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   fetchAllTimePRs,
   fetchRecentSessions,
@@ -9,7 +9,7 @@ import {
   type SessionRow,
   type SetRow,
 } from "@/lib/dashboard-queries";
-import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
+import { musclesForDay, type MuscleGroup } from "@/lib/muscle-map";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
@@ -262,18 +262,13 @@ function MuscleSection({
   sets?: SetRow[];
   loading: boolean;
 }) {
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const [selectedDay, setSelectedDay] = useState(todayKey);
   if (loading || !sets || !sessions) return <Skeleton h={260} />;
-  const since = subDays(new Date(), 7);
-  const recentSets = sets.filter((s) => new Date(s.completed_at) >= since);
-  const active = new Set<MuscleGroup>();
-  recentSets.forEach((s) => musclesFor(s.exercise_name).forEach((g) => active.add(g)));
 
-  const weekStart = startOfISOWeek(new Date());
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const active = musclesForDay(sets, selectedDay);
+
+  const days = Array.from({ length: 7 }, (_, index) => subDays(new Date(), 6 - index));
   const sessionDays = new Set(
     sessions.map((s) => format(new Date(s.started_at), "yyyy-MM-dd")),
   );
@@ -282,11 +277,15 @@ function MuscleSection({
     <section className="ios-card p-4">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-base font-semibold text-label">Muscoli allenati</h2>
-        <span className="text-xs text-label-secondary">ultimi 7 giorni</span>
+        <span className="text-xs capitalize text-label-secondary">
+          {selectedDay === todayKey
+            ? "oggi"
+            : format(new Date(`${selectedDay}T12:00:00`), "d MMMM", { locale: it })}
+        </span>
       </div>
       {active.size === 0 ? (
         <p className="py-4 text-center text-sm text-label-secondary">
-          Nessun allenamento negli ultimi 7 giorni.
+          Nessun muscolo registrato in questo giorno.
         </p>
       ) : (
         <>
@@ -310,15 +309,24 @@ function MuscleSection({
           const has = sessionDays.has(key);
           const isToday = isSameDay(d, new Date());
           return (
-            <div key={key} className="flex flex-col items-center gap-1">
+            <button
+              type="button"
+              key={key}
+              onClick={() => setSelectedDay(key)}
+              aria-label={`Mostra i muscoli allenati ${format(d, "EEEE d MMMM", { locale: it })}`}
+              aria-pressed={selectedDay === key}
+              className="flex flex-col items-center gap-1"
+            >
               <span className="text-[10px] font-medium uppercase text-label-tertiary">
                 {format(d, "EEEEEE", { locale: it })}
               </span>
               <span
                 className={
                   "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold " +
-                  (has
+                  (selectedDay === key
                     ? "bg-accent text-accent-foreground"
+                    : has
+                      ? "bg-accent/20 text-accent"
                     : isToday
                       ? "border border-accent text-accent"
                       : "bg-fill text-label-secondary")
@@ -326,7 +334,7 @@ function MuscleSection({
               >
                 {format(d, "d")}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>

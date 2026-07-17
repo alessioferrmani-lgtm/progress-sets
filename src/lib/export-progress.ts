@@ -6,7 +6,8 @@ import { format, subMonths, subYears } from "date-fns";
 import { it } from "date-fns/locale";
 
 export type ExportPeriod = "1m" | "3m" | "1y" | "all";
-export type ExportResult = { ok: boolean; empty: boolean; delivery?: "shared" | "downloaded" };
+export type PreparedExport = { file: File; format: "xlsx" | "pdf" };
+export type PrepareExportResult = { empty: boolean; prepared?: PreparedExport };
 
 export function periodStart(period: ExportPeriod, now = new Date()): Date | null {
   switch (period) {
@@ -376,9 +377,11 @@ export function buildWorkbook(data: ExportData): XLSX.WorkBook {
   return wb;
 }
 
-async function deliver(blob: Blob, name: string): Promise<"shared" | "downloaded"> {
-  const file = new File([blob], name, { type: blob.type });
-  const shareData = { files: [file], title: name };
+export async function deliverExportFile(
+  prepared: PreparedExport,
+): Promise<"shared" | "downloaded" | "opened"> {
+  const { file } = prepared;
+  const shareData = { files: [file], title: file.name };
   if (navigator.share && navigator.canShare?.(shareData)) {
     try {
       await navigator.share(shareData);
@@ -386,12 +389,23 @@ async function deliver(blob: Blob, name: string): Promise<"shared" | "downloaded
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError")
         throw new Error("Esportazione annullata");
+      // Some iOS/PWA versions report NotAllowedError even after a direct tap.
+      // Continue with the visible-file fallback below.
     }
   }
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(file);
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) window.location.assign(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 300_000);
+    return "opened";
+  }
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = name;
+  anchor.download = file.name;
   anchor.style.display = "none";
   document.body.appendChild(anchor);
   anchor.click();
@@ -400,21 +414,20 @@ async function deliver(blob: Blob, name: string): Promise<"shared" | "downloaded
   return "downloaded";
 }
 
-export async function exportToExcel(period: ExportPeriod): Promise<ExportResult> {
+export async function prepareExcelExport(period: ExportPeriod): Promise<PrepareExportResult> {
   const data = await loadExportData(period);
-  if (isEmpty(data)) return { ok: false, empty: true };
+  if (isEmpty(data)) return { empty: true };
   const bytes = XLSX.write(buildWorkbook(data), {
     type: "array",
     bookType: "xlsx",
     compression: true,
   });
-  const delivery = await deliver(
-    new Blob([bytes], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
+  const file = new File(
+    [bytes],
     filename("xlsx"),
+    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
   );
-  return { ok: true, empty: false, delivery };
+  return { empty: false, prepared: { file, format: "xlsx" } };
 }
 
 function table(doc: jsPDF, title: string, head: string[][], body: Array<Array<string | number>>) {
@@ -533,9 +546,10 @@ export function buildPDF(data: ExportData): jsPDF {
   return doc;
 }
 
-export async function exportToPDF(period: ExportPeriod): Promise<ExportResult> {
+export async function preparePDFExport(period: ExportPeriod): Promise<PrepareExportResult> {
   const data = await loadExportData(period);
-  if (isEmpty(data)) return { ok: false, empty: true };
-  const delivery = await deliver(buildPDF(data).output("blob"), filename("pdf"));
-  return { ok: true, empty: false, delivery };
+  if (isEmpty(data)) return { empty: true };
+  const blob = buildPDF(data).output("blob");
+  const file = new File([blob], filename("pdf"), { type: "application/pdf" });
+  return { empty: false, prepared: { file, format: "pdf" } };
 }
