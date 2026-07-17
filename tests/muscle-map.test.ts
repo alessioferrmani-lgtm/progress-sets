@@ -9,6 +9,7 @@ test("collega gli esercizi principali ai muscoli specifici", () => {
   assert.deepEqual(musclesFor("Pulley basso", "Schiena"), ["back", "biceps"]);
   assert.deepEqual(musclesFor("Leg curl sdraiato", "Gambe"), ["hamstrings"]);
   assert.deepEqual(musclesFor("Hip thrust", "Glutei"), ["glutes"]);
+  assert.deepEqual(musclesFor("Tibialis raise", "Tibiali (stinchi)"), ["calves"]);
 });
 
 test("usa il gruppo strutturato quando il nome è personalizzato", () => {
@@ -19,6 +20,7 @@ test("usa il gruppo strutturato quando il nome è personalizzato", () => {
     "glutes",
     "calves",
   ]);
+  assert.deepEqual(musclesFor("Esercizio personale", "Tibiali (stinchi)"), ["calves"]);
 });
 
 test("classifica i nuovi esercizi importati", () => {

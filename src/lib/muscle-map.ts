@@ -21,6 +21,7 @@ const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
   { match: /stacc|deadlift|good ?morning/i, groups: ["hamstrings", "glutes", "back"] },
   { match: /leg curl|femoral/i, groups: ["hamstrings"] },
   { match: /leg extension|quadric/i, groups: ["quads"] },
+  { match: /tibial|tibialis|shin raise|toe raise|stinco|stinchi/i, groups: ["calves"] },
   { match: /polpacc|calf|calves/i, groups: ["calves"] },
   {
     match:
@@ -63,6 +64,8 @@ const STORED_GROUPS: Record<string, MuscleGroup[]> = {
   addome: ["abs"],
   glutei: ["glutes"],
   polpacci: ["calves"],
+  tibiali: ["calves"],
+  "tibiali (stinchi)": ["calves"],
   avambracci: ["forearms"],
   gambe: ["quads", "hamstrings", "glutes", "calves"],
   cardio: ["quads", "hamstrings", "glutes", "calves"],
