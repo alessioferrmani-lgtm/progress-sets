@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554">
   <g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linejoin="round">
-    <path d="M274 391 C284 383 298 386 304 399 C309 422 304 450 292 471 C280 461 274 438 272 416 Z"/>
-    <path d="M322 399 C328 386 342 383 352 391 L354 416 C352 438 346 461 334 471 C322 450 317 422 322 399 Z"/>
+    <path id="calf-half" d="M276 394C284 387 296 389 301 400C305 422 301 447 292 467C282 457 277 436 275 416Z"/>
+    <use href="#calf-half" transform="translate(624 0) scale(-1 1)"/>
   </g>
 </svg>

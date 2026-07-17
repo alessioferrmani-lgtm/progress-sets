@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 418 554">
   <g fill="#ff5600" stroke="#242422" stroke-width="3" stroke-linejoin="round">
-    <path d="M271 277 C281 270 298 269 309 278 L307 344 C305 365 298 384 287 392 C276 381 270 359 269 337 Z"/>
-    <path d="M317 278 C328 269 345 270 355 277 L357 337 C356 359 350 381 339 392 C328 384 321 365 319 344 Z"/>
+    <path id="hamstring-half" d="M273 279C281 273 296 272 305 280L304 343C302 363 296 380 287 388C278 378 273 358 272 337Z"/>
+    <use href="#hamstring-half" transform="translate(624 0) scale(-1 1)"/>
   </g>
 </svg>
