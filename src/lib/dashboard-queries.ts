@@ -1,10 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import {
-  startOfISOWeek,
-  endOfISOWeek,
-  subDays,
-  formatISO,
-} from "date-fns";
+import { startOfISOWeek, endOfISOWeek, subDays, formatISO } from "date-fns";
 
 export type SessionRow = {
   id: string;
@@ -12,6 +7,7 @@ export type SessionRow = {
   template_name: string | null;
   started_at: string;
   ended_at: string | null;
+  calories_burned: number | null;
 };
 
 export type SetRow = {
@@ -29,7 +25,7 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
   const since = subDays(new Date(), days).toISOString();
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("id,template_id,started_at,ended_at,template:workout_templates(name)")
+    .select("id,template_id,started_at,ended_at,calories_burned,template:workout_templates(name)")
     .gte("started_at", since)
     .order("started_at", { ascending: false });
   if (error) throw error;
@@ -39,6 +35,7 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
       template_id: string | null;
       started_at: string;
       ended_at: string | null;
+      calories_burned: number | string | null;
       template: { name: string } | null;
     };
     return {
@@ -47,6 +44,7 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
       template_name: row.template?.name ?? null,
       started_at: row.started_at,
       ended_at: row.ended_at,
+      calories_burned: row.calories_burned == null ? null : Number(row.calories_burned),
     };
   });
 }
@@ -169,11 +167,7 @@ export type WeekBucket = {
   hasSession: boolean;
 };
 
-export function bucketByWeek(
-  sessions: SessionRow[],
-  sets: SetRow[],
-  weeks: number,
-): WeekBucket[] {
+export function bucketByWeek(sessions: SessionRow[], sets: SetRow[], weeks: number): WeekBucket[] {
   const out: WeekBucket[] = [];
   const now = new Date();
   const currentStart = startOfISOWeek(now);
@@ -194,8 +188,7 @@ export function bucketByWeek(
         hasSession = true;
         if (s.ended_at) {
           durationMin +=
-            (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) /
-            60000;
+            (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000;
         }
       }
     });

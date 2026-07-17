@@ -196,10 +196,14 @@ function RunPage() {
     } catch {
       // ignore, calories stays null
     }
-    await supabase
+    const { error } = await supabase
       .from("workout_sessions")
       .update({ ended_at: endedAt.toISOString(), calories_burned: calories })
       .eq("id", sessionId);
+    if (error) {
+      toast.error(`Impossibile salvare l'allenamento: ${error.message}`);
+      return;
+    }
     timer.skip();
     navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
   };

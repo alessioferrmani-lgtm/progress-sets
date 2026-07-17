@@ -1,465 +1,541 @@
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, subMonths, subYears } from "date-fns";
 import { it } from "date-fns/locale";
 
 export type ExportPeriod = "1m" | "3m" | "1y" | "all";
+export type ExportResult = { ok: boolean; empty: boolean; delivery?: "shared" | "downloaded" };
 
-function periodStart(period: ExportPeriod): Date | null {
-  const now = new Date();
-  const d = new Date(now);
+export function periodStart(period: ExportPeriod, now = new Date()): Date | null {
   switch (period) {
     case "1m":
-      d.setMonth(d.getMonth() - 1);
-      return d;
+      return subMonths(now, 1);
     case "3m":
-      d.setMonth(d.getMonth() - 3);
-      return d;
+      return subMonths(now, 3);
     case "1y":
-      d.setFullYear(d.getFullYear() - 1);
-      return d;
+      return subYears(now, 1);
     case "all":
       return null;
   }
 }
 
 function periodLabel(period: ExportPeriod): string {
-  switch (period) {
-    case "1m":
-      return "Ultimo mese";
-    case "3m":
-      return "Ultimi 3 mesi";
-    case "1y":
-      return "Ultimo anno";
-    case "all":
-      return "Da sempre";
-  }
+  return { "1m": "Ultimo mese", "3m": "Ultimi 3 mesi", "1y": "Ultimo anno", all: "Da sempre" }[
+    period
+  ];
 }
 
-type ExportData = {
-  workouts: Array<{
-    date: string;
-    template: string;
-    exercise: string;
-    set_number: number;
-    weight_kg: number;
-    reps: number;
-    reps_display: string;
-    rest_taken_sec: number | null;
-    calories_burned: number | null;
-    session_id: string;
-  }>;
-  tests: Array<{
-    date: string;
-    type: string;
-    result: string;
-    avg_hr: number | null;
-    notes: string | null;
-  }>;
-  races: Array<{
-    date: string;
-    name: string;
+type Session = {
+  id: string;
+  date: string;
+  template: string;
+  duration_min: number | null;
+  calories: number | null;
+};
+type WorkoutSet = {
+  session_id: string;
+  date: string;
+  template: string;
+  exercise: string;
+  set_number: number;
+  weight_kg: number;
+  reps: number;
+  rest_taken_sec: number | null;
+};
+type Test = {
+  date: string;
+  type: string;
+  result: string;
+  avg_hr: number | null;
+  calories: number | null;
+  notes: string | null;
+};
+type Race = {
+  date: string;
+  name: string;
+  distance_m: number;
+  time_sec: number;
+  placement: number | null;
+  calories: number | null;
+  notes: string | null;
+};
+
+export type ExportData = {
+  sessions: Session[];
+  workouts: WorkoutSet[];
+  tests: Test[];
+  races: Race[];
+  personalRecordsGym: Array<{ exercise: string; weight_kg: number; reps: number; date: string }>;
+  personalRecordsAthletics: Array<{
     distance_m: number;
     time_sec: number;
-    placement: number | null;
-    notes: string | null;
+    date: string;
+    source: string;
   }>;
-  personalRecordsGym: Array<{ exercise: string; weight_kg: number; reps: number; date: string }>;
-  personalRecordsAthletics: Array<{ distance_m: number; time_sec: number; date: string; source: string }>;
   summary: {
     period: string;
     workout_count: number;
+    test_count: number;
+    race_count: number;
     total_volume_kg: number;
     total_calories: number;
   };
 };
 
+function assertQuery<T>(
+  result: { data: T | null; error: { message: string } | null },
+  context: string,
+): T {
+  if (result.error) throw new Error(`${context}: ${result.error.message}`);
+  return result.data as T;
+}
+
 async function loadExportData(period: ExportPeriod): Promise<ExportData> {
-  const { data: u } = await supabase.auth.getUser();
-  const userId = u.user?.id;
+  const auth = await supabase.auth.getUser();
+  if (auth.error) throw new Error(`Accesso: ${auth.error.message}`);
+  const userId = auth.data.user?.id;
   if (!userId) throw new Error("Sessione scaduta");
 
   const start = periodStart(period);
-  const startISO = start ? start.toISOString() : null;
-  const startDate = start ? start.toISOString().slice(0, 10) : null;
+  const startISO = start?.toISOString() ?? null;
+  const startDate = startISO?.slice(0, 10) ?? null;
 
-  // Sessions in period
   let sessQ = supabase
     .from("workout_sessions")
-    .select("id,started_at,template_id,calories_burned,workout_templates(name)")
+    .select("id,started_at,ended_at,calories_burned,workout_templates(name)")
     .eq("user_id", userId)
+    .not("ended_at", "is", null)
     .order("started_at", { ascending: false });
   if (startISO) sessQ = sessQ.gte("started_at", startISO);
-  const { data: sessions } = await sessQ;
+  const sessionsRaw = assertQuery(await sessQ, "Allenamenti");
 
-  const sessionIds = (sessions ?? []).map((s) => s.id);
-  let logged: Array<Record<string, unknown>> = [];
-  if (sessionIds.length) {
-    const { data } = await supabase
-      .from("logged_sets")
-      .select(
-        "session_id,exercise_id,set_number,weight_kg,reps,rest_taken_sec,completed_at,exercises(name)",
-      )
-      .in("session_id", sessionIds);
-    logged = (data ?? []) as Array<Record<string, unknown>>;
-  }
-
-  const sessionById = new Map<string, { started_at: string; template: string; calories: number | null }>();
-  (sessions ?? []).forEach((s) => {
+  const sessions: Session[] = sessionsRaw.map((s) => {
     const tpl = s.workout_templates as { name?: string } | null;
-    sessionById.set(s.id, {
-      started_at: s.started_at,
-      template: tpl?.name ?? "—",
-      calories: s.calories_burned,
-    });
-  });
-
-  const workouts = logged.map((r) => {
-    const info = sessionById.get(r.session_id as string);
-    const ex = r.exercises as { name?: string } | null;
+    const duration = s.ended_at
+      ? (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000
+      : null;
     return {
-      date: info ? format(new Date(info.started_at), "yyyy-MM-dd HH:mm") : "",
-      template: info?.template ?? "—",
-      exercise: ex?.name ?? "—",
-      set_number: r.set_number as number,
-      weight_kg: Number(r.weight_kg ?? 0),
-      reps: r.reps as number,
-      reps_display: String(r.reps ?? ""),
-      rest_taken_sec: (r.rest_taken_sec as number | null) ?? null,
-      calories_burned: info?.calories ?? null,
-      session_id: r.session_id as string,
+      id: s.id,
+      date: format(new Date(s.started_at), "yyyy-MM-dd HH:mm"),
+      template: tpl?.name ?? "—",
+      duration_min:
+        duration !== null && Number.isFinite(duration) && duration >= 0
+          ? Math.round(duration)
+          : null,
+      calories: s.calories_burned == null ? null : Number(s.calories_burned),
     };
   });
+  const sessionById = new Map(sessions.map((s) => [s.id, s]));
 
-  // Tests
+  let workouts: WorkoutSet[] = [];
+  if (sessions.length) {
+    const logged = assertQuery(
+      await supabase
+        .from("logged_sets")
+        .select("session_id,set_number,weight_kg,reps,rest_taken_sec,completed_at,exercises(name)")
+        .in(
+          "session_id",
+          sessions.map((s) => s.id),
+        )
+        .order("completed_at", { ascending: true }),
+      "Serie",
+    );
+    workouts = logged.map((r) => {
+      const session = sessionById.get(r.session_id);
+      const exercise = r.exercises as { name?: string } | null;
+      return {
+        session_id: r.session_id,
+        date: session?.date ?? "",
+        template: session?.template ?? "—",
+        exercise: exercise?.name ?? "—",
+        set_number: r.set_number,
+        weight_kg: Number(r.weight_kg ?? 0),
+        reps: r.reps,
+        rest_taken_sec: r.rest_taken_sec,
+      };
+    });
+  }
+
   let testQ = supabase
     .from("tests")
     .select(
-      "date,time_sec,distance_covered_m,avg_hr,notes,observations,test_types(name,result_type,distance_m,duration_sec)",
+      "date,time_sec,distance_covered_m,avg_hr,notes,calories_burned,test_types(name,result_type)",
     )
     .eq("user_id", userId)
     .order("date", { ascending: false });
   if (startDate) testQ = testQ.gte("date", startDate);
-  const { data: testsRaw } = await testQ;
-  const tests = (testsRaw ?? []).map((t) => {
-    const tt = t.test_types as {
-      name?: string;
-      result_type?: string;
-      distance_m?: number | null;
-    } | null;
-    const isTime = tt?.result_type === "TIME";
-    const result = isTime
-      ? t.time_sec != null
-        ? `${t.time_sec}s`
-        : "—"
-      : t.distance_covered_m != null
-        ? `${t.distance_covered_m}m`
-        : "—";
+  const testsRaw = assertQuery(await testQ, "Test");
+  const tests: Test[] = testsRaw.map((t) => {
+    const type = t.test_types as { name?: string; result_type?: string } | null;
+    const value =
+      type?.result_type === "TIME"
+        ? t.time_sec == null
+          ? "—"
+          : fmtTime(Number(t.time_sec))
+        : t.distance_covered_m == null
+          ? "—"
+          : `${t.distance_covered_m} m`;
     return {
-      date: t.date as string,
-      type: tt?.name ?? "—",
-      result,
-      avg_hr: (t.avg_hr as number | null) ?? null,
-      notes: (t.notes as string | null) ?? null,
+      date: t.date,
+      type: type?.name ?? "—",
+      result: value,
+      avg_hr: t.avg_hr,
+      calories: t.calories_burned == null ? null : Number(t.calories_burned),
+      notes: t.notes,
     };
   });
 
-  // Races
   let raceQ = supabase
     .from("races")
-    .select("date,name,distance_m,time_sec,placement,notes")
+    .select("date,name,distance_m,time_sec,placement,notes,calories_burned")
     .eq("user_id", userId)
     .order("date", { ascending: false });
   if (startDate) raceQ = raceQ.gte("date", startDate);
-  const { data: races } = await raceQ;
+  const racesRaw = assertQuery(await raceQ, "Gare");
+  const races: Race[] = racesRaw.map((r) => ({
+    ...r,
+    calories: r.calories_burned == null ? null : Number(r.calories_burned),
+  }));
 
-  // PR gym: max weight per exercise across ALL time (records are always all-time)
-  const { data: prGymRaw } = await supabase
-    .from("logged_sets")
-    .select(
-      "weight_kg,reps,completed_at,exercises(name),workout_sessions!inner(user_id)",
-    )
-    .eq("workout_sessions.user_id", userId)
-    .order("weight_kg", { ascending: false })
-    .limit(2000);
-  const prGymMap = new Map<string, { weight_kg: number; reps: number; date: string }>();
-  (prGymRaw ?? []).forEach((r) => {
-    const ex = r.exercises as { name?: string } | null;
-    const name = ex?.name ?? "—";
-    const cur = prGymMap.get(name);
-    const w = Number(r.weight_kg ?? 0);
-    if (!cur || w > cur.weight_kg) {
-      prGymMap.set(name, {
-        weight_kg: w,
-        reps: r.reps as number,
-        date: (r.completed_at as string).slice(0, 10),
-      });
-    }
+  const prGymRaw = assertQuery(
+    await supabase
+      .from("logged_sets")
+      .select("weight_kg,reps,completed_at,exercises(name),workout_sessions!inner(user_id)")
+      .eq("workout_sessions.user_id", userId)
+      .order("weight_kg", { ascending: false })
+      .limit(5000),
+    "Record palestra",
+  );
+  const gymMap = new Map<string, { weight_kg: number; reps: number; date: string }>();
+  prGymRaw.forEach((r) => {
+    const name = (r.exercises as { name?: string } | null)?.name ?? "—";
+    const weight = Number(r.weight_kg ?? 0);
+    const current = gymMap.get(name);
+    if (weight > 0 && (!current || weight > current.weight_kg))
+      gymMap.set(name, { weight_kg: weight, reps: r.reps, date: r.completed_at.slice(0, 10) });
   });
 
-  // PR athletics: best per distance from performance_log
-  const { data: perfAll } = await supabase
-    .from("performance_log")
-    .select("distance_m,time_sec,date,source")
-    .eq("user_id", userId)
-    .order("time_sec", { ascending: true });
-  const prAthMap = new Map<number, { time_sec: number; date: string; source: string }>();
-  (perfAll ?? []).forEach((p) => {
-    const cur = prAthMap.get(p.distance_m);
-    if (!cur || p.time_sec < cur.time_sec) {
-      prAthMap.set(p.distance_m, {
-        time_sec: p.time_sec,
-        date: p.date,
-        source: p.source,
-      });
-    }
+  const perf = assertQuery(
+    await supabase
+      .from("performance_log")
+      .select("distance_m,time_sec,date,source")
+      .eq("user_id", userId)
+      .order("time_sec", { ascending: true }),
+    "Record atletica",
+  );
+  const athMap = new Map<number, { time_sec: number; date: string; source: string }>();
+  perf.forEach((p) => {
+    if (!athMap.has(p.distance_m))
+      athMap.set(p.distance_m, { time_sec: p.time_sec, date: p.date, source: p.source });
   });
 
-  const totalVolume = workouts.reduce((s, w) => s + w.weight_kg * w.reps, 0);
-  const uniqueSessions = new Set(workouts.map((w) => w.session_id));
-  const totalCalories = Array.from(uniqueSessions).reduce((sum, sid) => {
-    const info = sessionById.get(sid);
-    return sum + (info?.calories ?? 0);
-  }, 0);
-
+  const totalVolume = workouts.reduce((sum, w) => sum + w.weight_kg * w.reps, 0);
+  const totalCalories = [
+    ...sessions.map((s) => s.calories),
+    ...tests.map((t) => t.calories),
+    ...races.map((r) => r.calories),
+  ].reduce<number>((sum, value) => sum + (Number.isFinite(value) ? Number(value) : 0), 0);
   return {
+    sessions,
     workouts,
     tests,
-    races: (races ?? []) as ExportData["races"],
-    personalRecordsGym: Array.from(prGymMap.entries())
-      .map(([exercise, v]) => ({ exercise, ...v }))
-      .sort((a, b) => b.weight_kg - a.weight_kg),
-    personalRecordsAthletics: Array.from(prAthMap.entries())
-      .map(([distance_m, v]) => ({ distance_m, ...v }))
-      .sort((a, b) => a.distance_m - b.distance_m),
+    races,
+    personalRecordsGym: Array.from(gymMap, ([exercise, v]) => ({ exercise, ...v })).sort(
+      (a, b) => b.weight_kg - a.weight_kg,
+    ),
+    personalRecordsAthletics: Array.from(athMap, ([distance_m, v]) => ({ distance_m, ...v })).sort(
+      (a, b) => a.distance_m - b.distance_m,
+    ),
     summary: {
       period: periodLabel(period),
-      workout_count: uniqueSessions.size,
+      workout_count: sessions.length,
+      test_count: tests.length,
+      race_count: races.length,
       total_volume_kg: Math.round(totalVolume),
       total_calories: Math.round(totalCalories),
     },
   };
 }
 
+function isEmpty(data: ExportData): boolean {
+  return !data.sessions.length && !data.tests.length && !data.races.length;
+}
 function filename(ext: string): string {
-  const yyyymm = new Date().toISOString().slice(0, 7);
-  return `fitlog-progressi-${yyyymm}.${ext}`;
+  return `progress-sets-progressi-${format(new Date(), "yyyy-MM-dd")}.${ext}`;
 }
 
-export async function exportToExcel(period: ExportPeriod): Promise<{ ok: boolean; empty: boolean }> {
-  const data = await loadExportData(period);
-  if (
-    !data.workouts.length &&
-    !data.tests.length &&
-    !data.races.length &&
-    !data.personalRecordsGym.length &&
-    !data.personalRecordsAthletics.length
-  ) {
-    return { ok: false, empty: true };
-  }
+export function fmtTime(sec: number): string {
+  if (!Number.isFinite(sec) || sec < 0) return "—";
+  const hundredths = Math.round(sec * 100);
+  if (hundredths < 6000) return `${(hundredths / 100).toFixed(2)}s`;
+  const minutes = Math.floor(hundredths / 6000);
+  const remaining = (hundredths - minutes * 6000) / 100;
+  return `${minutes}:${remaining.toFixed(2).padStart(5, "0")}`;
+}
 
+function addSheet(
+  wb: XLSX.WorkBook,
+  name: string,
+  rows: Record<string, unknown>[],
+  widths: number[],
+) {
+  const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ Informazione: "Nessun dato" }]);
+  ws["!cols"] = widths.map((wch) => ({ wch }));
+  ws["!autofilter"] = ws["!ref"] ? { ref: ws["!ref"] } : undefined;
+  XLSX.utils.book_append_sheet(wb, ws, name);
+}
+
+export function buildWorkbook(data: ExportData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
+  addSheet(
     wb,
-    XLSX.utils.json_to_sheet(
-      data.workouts.map((w) => ({
-        Data: w.date,
-        Scheda: w.template,
-        Esercizio: w.exercise,
-        Serie: w.set_number,
-        Peso_kg: w.weight_kg,
-        Ripetizioni: w.reps,
-        Recupero_sec: w.rest_taken_sec ?? "",
-      })),
-    ),
-    "Allenamenti",
+    "Riepilogo",
+    [
+      { Voce: "Periodo", Valore: data.summary.period },
+      { Voce: "Allenamenti", Valore: data.summary.workout_count },
+      { Voce: "Test", Valore: data.summary.test_count },
+      { Voce: "Gare", Valore: data.summary.race_count },
+      { Voce: "Volume totale (kg)", Valore: data.summary.total_volume_kg },
+      { Voce: "Calorie totali (kcal)", Valore: data.summary.total_calories },
+    ],
+    [24, 22],
   );
-
-  XLSX.utils.book_append_sheet(
+  addSheet(
     wb,
-    XLSX.utils.json_to_sheet(
-      data.tests.map((t) => ({
-        Data: t.date,
-        Tipo: t.type,
-        Risultato: t.result,
-        FC_media: t.avg_hr ?? "",
-        Note: t.notes ?? "",
-      })),
-    ),
+    "Sessioni",
+    data.sessions.map((s) => ({
+      Data: s.date,
+      Scheda: s.template,
+      Durata_min: s.duration_min ?? "",
+      Calorie_kcal: s.calories ?? "",
+    })),
+    [19, 28, 13, 14],
+  );
+  addSheet(
+    wb,
+    "Serie",
+    data.workouts.map((w) => ({
+      Data: w.date,
+      Scheda: w.template,
+      Esercizio: w.exercise,
+      Serie: w.set_number,
+      Peso_kg: w.weight_kg,
+      Ripetizioni: w.reps,
+      Recupero_sec: w.rest_taken_sec ?? "",
+    })),
+    [19, 25, 28, 8, 11, 13, 14],
+  );
+  addSheet(
+    wb,
     "Test",
+    data.tests.map((t) => ({
+      Data: t.date,
+      Tipo: t.type,
+      Risultato: t.result,
+      FC_media: t.avg_hr ?? "",
+      Calorie_kcal: t.calories ?? "",
+      Note: t.notes ?? "",
+    })),
+    [13, 28, 16, 11, 14, 35],
   );
-
-  XLSX.utils.book_append_sheet(
+  addSheet(
     wb,
-    XLSX.utils.json_to_sheet(
-      data.races.map((r) => ({
-        Data: r.date,
-        Nome: r.name,
-        Distanza_m: r.distance_m,
-        Tempo_sec: r.time_sec,
-        Posizione: r.placement ?? "",
-        Note: r.notes ?? "",
-      })),
-    ),
     "Gare",
+    data.races.map((r) => ({
+      Data: r.date,
+      Nome: r.name,
+      Distanza_m: r.distance_m,
+      Tempo: fmtTime(r.time_sec),
+      Posizione: r.placement ?? "",
+      Calorie_kcal: r.calories ?? "",
+      Note: r.notes ?? "",
+    })),
+    [13, 28, 13, 12, 11, 14, 35],
   );
-
-  const prSheet = [
-    { Sezione: "Palestra", "": "" },
-    ...data.personalRecordsGym.map((p) => ({
-      Sezione: p.exercise,
-      Valore: `${p.weight_kg}kg × ${p.reps}`,
-      Data: p.date,
-    })),
-    { Sezione: "", "": "" },
-    { Sezione: "Atletica", "": "" },
-    ...data.personalRecordsAthletics.map((p) => ({
-      Sezione: `${p.distance_m}m`,
-      Valore: `${p.time_sec}s`,
-      Data: p.date,
-    })),
-  ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(prSheet), "Record");
-
-  XLSX.writeFile(wb, filename("xlsx"));
-  return { ok: true, empty: false };
+  addSheet(
+    wb,
+    "Record",
+    [
+      ...data.personalRecordsGym.map((p) => ({
+        Sezione: "Palestra",
+        Prova: p.exercise,
+        Risultato: `${p.weight_kg} kg × ${p.reps}`,
+        Data: p.date,
+      })),
+      ...data.personalRecordsAthletics.map((p) => ({
+        Sezione: "Atletica",
+        Prova: `${p.distance_m} m`,
+        Risultato: fmtTime(p.time_sec),
+        Data: p.date,
+      })),
+    ],
+    [14, 30, 18, 13],
+  );
+  return wb;
 }
 
-function fmtTime(sec: number): string {
-  if (sec < 60) return `${sec.toFixed(2)}s`;
-  const m = Math.floor(sec / 60);
-  const s = sec - m * 60;
-  return `${m}:${String(Math.round(s)).padStart(2, "0")}`;
-}
-
-export async function exportToPDF(period: ExportPeriod): Promise<{ ok: boolean; empty: boolean }> {
-  const data = await loadExportData(period);
-  if (
-    !data.workouts.length &&
-    !data.tests.length &&
-    !data.races.length &&
-    !data.personalRecordsGym.length &&
-    !data.personalRecordsAthletics.length
-  ) {
-    return { ok: false, empty: true };
+async function deliver(blob: Blob, name: string): Promise<"shared" | "downloaded"> {
+  const file = new File([blob], name, { type: blob.type });
+  const shareData = { files: [file], title: name };
+  if (navigator.share && navigator.canShare?.(shareData)) {
+    try {
+      await navigator.share(shareData);
+      return "shared";
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError")
+        throw new Error("Esportazione annullata");
+    }
   }
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  return "downloaded";
+}
 
+export async function exportToExcel(period: ExportPeriod): Promise<ExportResult> {
+  const data = await loadExportData(period);
+  if (isEmpty(data)) return { ok: false, empty: true };
+  const bytes = XLSX.write(buildWorkbook(data), {
+    type: "array",
+    bookType: "xlsx",
+    compression: true,
+  });
+  const delivery = await deliver(
+    new Blob([bytes], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    filename("xlsx"),
+  );
+  return { ok: true, empty: false, delivery };
+}
+
+function table(doc: jsPDF, title: string, head: string[][], body: Array<Array<string | number>>) {
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text(title, 14, 20);
+  autoTable(doc, {
+    startY: 26,
+    head,
+    body,
+    styles: { fontSize: 8, cellPadding: 1.8 },
+    headStyles: { fillColor: [0, 122, 255] },
+  });
+}
+
+export function buildPDF(data: ExportData): jsPDF {
   const doc = new jsPDF();
   doc.setFontSize(18);
-  doc.text("Report progressi", 14, 20);
+  doc.text("Progress Sets — Report progressi", 14, 20);
   doc.setFontSize(10);
   doc.text(
-    `Periodo: ${data.summary.period}  ·  Generato il ${format(new Date(), "d MMM yyyy", { locale: it })}`,
+    `Periodo: ${data.summary.period} · Generato il ${format(new Date(), "d MMM yyyy", { locale: it })}`,
     14,
     28,
   );
-
-  doc.setFontSize(12);
-  doc.text("Riepilogo", 14, 40);
   autoTable(doc, {
-    startY: 44,
-    head: [["Allenamenti", "Volume totale (kg)", "Calorie stimate"]],
-    body: [[
-      String(data.summary.workout_count),
-      String(data.summary.total_volume_kg),
-      String(data.summary.total_calories),
-    ]],
-    styles: { fontSize: 10 },
+    startY: 38,
+    head: [["Allenamenti", "Test", "Gare", "Volume kg", "Calorie kcal"]],
+    body: [
+      [
+        data.summary.workout_count,
+        data.summary.test_count,
+        data.summary.race_count,
+        data.summary.total_volume_kg,
+        data.summary.total_calories,
+      ],
+    ],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [0, 122, 255] },
   });
-
-  if (data.workouts.length) {
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text("Allenamenti", 14, 20);
-    autoTable(doc, {
-      startY: 26,
-      head: [["Data", "Scheda", "Esercizio", "Set", "Kg", "Rep", "Rec"]],
-      body: data.workouts.slice(0, 300).map((w) => [
+  if (data.sessions.length)
+    table(
+      doc,
+      "Sessioni",
+      [["Data", "Scheda", "Durata", "kcal"]],
+      data.sessions.map((s) => [
+        s.date,
+        s.template,
+        s.duration_min == null ? "—" : `${s.duration_min} min`,
+        s.calories ?? "—",
+      ]),
+    );
+  if (data.workouts.length)
+    table(
+      doc,
+      "Serie",
+      [["Data", "Scheda", "Esercizio", "Set", "Kg", "Rep", "Rec"]],
+      data.workouts.map((w) => [
         w.date,
         w.template,
         w.exercise,
-        String(w.set_number),
-        String(w.weight_kg),
-        String(w.reps),
-        w.rest_taken_sec != null ? `${w.rest_taken_sec}s` : "—",
+        w.set_number,
+        w.weight_kg,
+        w.reps,
+        w.rest_taken_sec == null ? "—" : `${w.rest_taken_sec}s`,
       ]),
-      styles: { fontSize: 8 },
-    });
-  }
-
-  if (data.tests.length) {
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text("Test", 14, 20);
-    autoTable(doc, {
-      startY: 26,
-      head: [["Data", "Tipo", "Risultato", "FC", "Note"]],
-      body: data.tests.map((t) => [t.date, t.type, t.result, t.avg_hr ?? "—", t.notes ?? ""]),
-      styles: { fontSize: 9 },
-    });
-  }
-
-  if (data.races.length) {
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text("Gare", 14, 20);
-    autoTable(doc, {
-      startY: 26,
-      head: [["Data", "Gara", "Distanza", "Tempo", "Pos", "Note"]],
-      body: data.races.map((r) => [
+    );
+  if (data.tests.length)
+    table(
+      doc,
+      "Test",
+      [["Data", "Tipo", "Risultato", "FC", "kcal", "Note"]],
+      data.tests.map((t) => [
+        t.date,
+        t.type,
+        t.result,
+        t.avg_hr ?? "—",
+        t.calories ?? "—",
+        t.notes ?? "",
+      ]),
+    );
+  if (data.races.length)
+    table(
+      doc,
+      "Gare",
+      [["Data", "Gara", "Distanza", "Tempo", "Pos", "kcal"]],
+      data.races.map((r) => [
         r.date,
         r.name,
         `${r.distance_m}m`,
         fmtTime(r.time_sec),
         r.placement ?? "—",
-        r.notes ?? "",
+        r.calories ?? "—",
       ]),
-      styles: { fontSize: 9 },
-    });
-  }
-
-  if (data.personalRecordsGym.length || data.personalRecordsAthletics.length) {
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text("Record personali", 14, 20);
-    if (data.personalRecordsGym.length) {
-      doc.setFontSize(11);
-      doc.text("Palestra", 14, 30);
-      autoTable(doc, {
-        startY: 34,
-        head: [["Esercizio", "Peso", "Ripetizioni", "Data"]],
-        body: data.personalRecordsGym.map((p) => [
+    );
+  if (data.personalRecordsGym.length || data.personalRecordsAthletics.length)
+    table(
+      doc,
+      "Record personali (da sempre)",
+      [["Sezione", "Prova", "Risultato", "Data"]],
+      [
+        ...data.personalRecordsGym.map((p) => [
+          "Palestra",
           p.exercise,
-          `${p.weight_kg}kg`,
-          String(p.reps),
+          `${p.weight_kg} kg × ${p.reps}`,
           p.date,
         ]),
-        styles: { fontSize: 9 },
-      });
-    }
-    if (data.personalRecordsAthletics.length) {
-      const startY =
-        // @ts-expect-error jspdf-autotable extends doc with lastAutoTable at runtime
-        (doc.lastAutoTable?.finalY ?? 30) + 10;
-      doc.setFontSize(11);
-      doc.text("Atletica", 14, startY);
-      autoTable(doc, {
-        startY: startY + 4,
-        head: [["Distanza", "Tempo", "Fonte", "Data"]],
-        body: data.personalRecordsAthletics.map((p) => [
-          `${p.distance_m}m`,
+        ...data.personalRecordsAthletics.map((p) => [
+          "Atletica",
+          `${p.distance_m} m`,
           fmtTime(p.time_sec),
-          p.source,
           p.date,
         ]),
-        styles: { fontSize: 9 },
-      });
-    }
-  }
+      ],
+    );
+  return doc;
+}
 
-  doc.save(filename("pdf"));
-  return { ok: true, empty: false };
+export async function exportToPDF(period: ExportPeriod): Promise<ExportResult> {
+  const data = await loadExportData(period);
+  if (isEmpty(data)) return { ok: false, empty: true };
+  const delivery = await deliver(buildPDF(data).output("blob"), filename("pdf"));
+  return { ok: true, empty: false, delivery };
 }
