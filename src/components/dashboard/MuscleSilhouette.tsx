@@ -14,6 +14,7 @@ const LAYERS: MuscleGroup[] = [
   "hamstrings",
   "glutes",
   "calves",
+  "tibialis",
 ];
 
 export function MuscleSilhouette({ active }: Props) {
@@ -31,7 +32,7 @@ export function MuscleSilhouette({ active }: Props) {
           active.has(group) ? (
             <img
               key={group}
-              src={`/muscle-map/${group}.png`}
+              src={`/muscle-map/${group}.${["quads", "hamstrings", "glutes", "calves", "tibialis"].includes(group) ? "svg" : "png"}`}
               alt=""
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 size-full select-none object-contain transition-opacity duration-300"

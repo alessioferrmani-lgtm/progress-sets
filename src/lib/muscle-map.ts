@@ -9,6 +9,7 @@ export type MuscleGroup =
   | "hamstrings"
   | "glutes"
   | "calves"
+  | "tibialis"
   | "forearms";
 
 const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
@@ -21,6 +22,7 @@ const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
   { match: /stacc|deadlift|good ?morning/i, groups: ["hamstrings", "glutes", "back"] },
   { match: /leg curl|femoral/i, groups: ["hamstrings"] },
   { match: /leg extension|quadric/i, groups: ["quads"] },
+  { match: /tibial|tibialis|shin raise|toe raise|stinco|stinchi/i, groups: ["tibialis"] },
   { match: /polpacc|calf|calves/i, groups: ["calves"] },
   {
     match:
@@ -63,6 +65,8 @@ const STORED_GROUPS: Record<string, MuscleGroup[]> = {
   addome: ["abs"],
   glutei: ["glutes"],
   polpacci: ["calves"],
+  tibiali: ["tibialis"],
+  "tibiali (stinchi)": ["tibialis"],
   avambracci: ["forearms"],
   gambe: ["quads", "hamstrings", "glutes", "calves"],
   cardio: ["quads", "hamstrings", "glutes", "calves"],
@@ -93,6 +97,7 @@ export function storedMuscleGroupFor(exerciseName: string): string | null {
           hamstrings: "Gambe",
           glutes: "Glutei",
           calves: "Polpacci",
+          tibialis: "Tibiali (stinchi)",
           forearms: "Avambracci",
         } satisfies Record<MuscleGroup, string>
       )[primary]

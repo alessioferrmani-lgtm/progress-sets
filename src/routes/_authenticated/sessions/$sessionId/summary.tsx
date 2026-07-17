@@ -15,7 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
+import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
 
 export const Route = createFileRoute("/_authenticated/sessions/$sessionId/summary")({
   component: SummaryPage,
@@ -25,6 +27,7 @@ type SessionSet = {
   id: string;
   exerciseId: string;
   exerciseName: string;
+  exerciseMuscleGroup: string | null;
   setNumber: number;
   weightKg: number;
   reps: number;
@@ -55,6 +58,10 @@ function formatRest(totalSeconds: number) {
   return `${seconds} sec`;
 }
 
+function formatVolume(totalKg: number) {
+  return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 }).format(totalKg);
+}
+
 function SummaryPage() {
   const { sessionId } = Route.useParams();
   const navigate = useNavigate();
@@ -74,7 +81,7 @@ function SummaryPage() {
       const { data: rows, error: setsError } = await supabase
         .from("logged_sets")
         .select(
-          "id,exercise_id,set_number,weight_kg,reps,rest_taken_sec,completed_at,exercise:exercises(name)",
+          "id,exercise_id,set_number,weight_kg,reps,rest_taken_sec,completed_at,exercise:exercises(name,muscle_group)",
         )
         .eq("session_id", sessionId)
         .order("completed_at", { ascending: true });
@@ -89,12 +96,13 @@ function SummaryPage() {
           reps: number;
           rest_taken_sec: number | null;
           completed_at: string;
-          exercise: { name: string } | null;
+          exercise: { name: string; muscle_group: string | null } | null;
         };
         return {
           id: typed.id,
           exerciseId: typed.exercise_id,
           exerciseName: typed.exercise?.name ?? "Esercizio",
+          exerciseMuscleGroup: typed.exercise?.muscle_group ?? null,
           setNumber: typed.set_number,
           weightKg: Number(typed.weight_kg),
           reps: typed.reps,
@@ -165,6 +173,16 @@ function SummaryPage() {
         (total, set) => total + Math.max(0, set.restTakenSec ?? 0),
         0,
       );
+      const totalVolumeKg = sets.reduce(
+        (total, set) => total + Math.max(0, set.weightKg) * Math.max(0, set.reps),
+        0,
+      );
+      const activeMuscles = new Set<MuscleGroup>();
+      sets.forEach((set) => {
+        musclesFor(set.exerciseName, set.exerciseMuscleGroup).forEach((muscle) =>
+          activeMuscles.add(muscle),
+        );
+      });
       const template = (session as unknown as { template: { name: string } | null }).template;
 
       return {
@@ -173,6 +191,8 @@ function SummaryPage() {
         durationSec,
         totalRestSec,
         calories: session.calories_burned == null ? null : Number(session.calories_burned),
+        totalVolumeKg,
+        activeMuscles,
         totalSets: sets.length,
         exercises: Array.from(groups.values()),
         personalRecords,
@@ -255,6 +275,27 @@ function SummaryPage() {
           </div>
         </header>
 
+        <section className="ios-card mt-5 overflow-hidden p-3" aria-label="Riepilogo principale">
+          <div className="grid grid-cols-2 gap-2 pb-3">
+            <HeroMetric
+              icon={<Flame className="size-5 text-warning" />}
+              value={data.calories == null ? "—" : String(Math.round(data.calories))}
+              unit="kcal"
+              label={data.calories == null ? "Non calcolate" : "Consumate"}
+            />
+            <HeroMetric
+              icon={<Dumbbell className="size-5 text-accent" />}
+              value={formatVolume(data.totalVolumeKg)}
+              unit="kg"
+              label="Sollevati totali"
+            />
+          </div>
+          <MuscleSilhouette active={data.activeMuscles} />
+          <p className="px-2 pb-1 pt-3 text-center text-xs font-medium text-label-secondary">
+            Muscoli allenati in questa sessione
+          </p>
+        </section>
+
         <section className="mt-5 grid grid-cols-2 gap-3">
           <MetricCard
             icon={<Clock className="size-5 text-accent" />}
@@ -270,11 +311,6 @@ function SummaryPage() {
             icon={<ListChecks className="size-5 text-accent" />}
             value={String(data.totalSets)}
             label="Serie completate"
-          />
-          <MetricCard
-            icon={<Flame className="size-5 text-warning" />}
-            value={data.calories == null ? "—" : `${Math.round(data.calories)} kcal`}
-            label={data.calories == null ? "Calorie non calcolate" : "Calorie bruciate"}
           />
         </section>
 
@@ -430,6 +466,29 @@ function MetricCard({ icon, value, label }: { icon: ReactNode; value: string; la
       {icon}
       <div className="mt-2 truncate text-xl font-bold tabular-nums text-label">{value}</div>
       <div className="mt-0.5 text-xs text-label-secondary">{label}</div>
+    </div>
+  );
+}
+
+function HeroMetric({
+  icon,
+  value,
+  unit,
+  label,
+}: {
+  icon: ReactNode;
+  value: string;
+  unit: string;
+  label: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-fill px-3 py-3 text-center">
+      <div className="flex items-center justify-center gap-1.5">
+        {icon}
+        <span className="text-2xl font-bold tabular-nums text-label">{value}</span>
+        <span className="self-end pb-0.5 text-sm font-semibold text-label-secondary">{unit}</span>
+      </div>
+      <div className="mt-1 text-xs font-medium text-label-secondary">{label}</div>
     </div>
   );
 }

@@ -80,9 +80,7 @@ function HomePage() {
       {/* Header */}
       <header className="pb-3 pt-1">
         <p className="text-sm capitalize text-label-secondary">{dateLabel}</p>
-        <h1 className="mt-0.5 text-3xl font-bold tracking-tight text-label">
-          Ciao, {displayName}
-        </h1>
+        <h1 className="mt-0.5 text-3xl font-bold tracking-tight text-label">Ciao, {displayName}</h1>
       </header>
 
       <div className="space-y-4">
@@ -104,17 +102,9 @@ function HomePage() {
           loading={sessionsQ.isLoading || setsQ.isLoading}
         />
 
-        <MuscleSection
-          sessions={sessionsQ.data}
-          sets={setsQ.data}
-          loading={setsQ.isLoading}
-        />
+        <MuscleSection sessions={sessionsQ.data} sets={setsQ.data} loading={setsQ.isLoading} />
 
-        <PRsSection
-          prs={prsQ.data}
-          sets={setsQ.data}
-          loading={prsQ.isLoading || setsQ.isLoading}
-        />
+        <PRsSection prs={prsQ.data} sets={setsQ.data} loading={prsQ.isLoading || setsQ.isLoading} />
 
         <RecentSessionsSection
           sessions={sessionsQ.data}
@@ -138,27 +128,14 @@ function HomePage() {
 /* ------------------ Sections ------------------ */
 
 function Skeleton({ h = 80 }: { h?: number }) {
-  return (
-    <div
-      className="ios-card animate-pulse bg-fill-secondary"
-      style={{ height: h }}
-    />
-  );
+  return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: h }} />;
 }
 
-function StreakSection({
-  sessions,
-  loading,
-}: {
-  sessions?: SessionRow[];
-  loading: boolean;
-}) {
+function StreakSection({ sessions, loading }: { sessions?: SessionRow[]; loading: boolean }) {
   if (loading || !sessions) return <Skeleton h={96} />;
   const now = new Date();
   const currentWeekStart = startOfISOWeek(now);
-  const currentWeekHas = sessions.some(
-    (s) => new Date(s.started_at) >= currentWeekStart,
-  );
+  const currentWeekHas = sessions.some((s) => new Date(s.started_at) >= currentWeekStart);
   // Count consecutive prior weeks (excluding current if empty) that have at least one session
   let streak = 0;
   const cursor = new Date(currentWeekStart);
@@ -250,6 +227,7 @@ const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   hamstrings: "Femorali",
   glutes: "Glutei",
   calves: "Polpacci",
+  tibialis: "Tibiali",
   forearms: "Avambracci",
 };
 
@@ -269,9 +247,7 @@ function MuscleSection({
   const active = musclesForDay(sets, selectedDay);
 
   const days = Array.from({ length: 7 }, (_, index) => subDays(new Date(), 6 - index));
-  const sessionDays = new Set(
-    sessions.map((s) => format(new Date(s.started_at), "yyyy-MM-dd")),
-  );
+  const sessionDays = new Set(sessions.map((s) => format(new Date(s.started_at), "yyyy-MM-dd")));
 
   return (
     <section className="ios-card p-4">
@@ -327,9 +303,9 @@ function MuscleSection({
                     ? "bg-accent text-accent-foreground"
                     : has
                       ? "bg-accent/20 text-accent"
-                    : isToday
-                      ? "border border-accent text-accent"
-                      : "bg-fill text-label-secondary")
+                      : isToday
+                        ? "border border-accent text-accent"
+                        : "bg-fill text-label-secondary")
                 }
               >
                 {format(d, "d")}
@@ -413,10 +389,7 @@ function PRsSection({
       ) : (
         <ul className="-mx-4">
           {rows.map((r, i) => (
-            <li
-              key={i}
-              className="ios-list-row"
-            >
+            <li key={i} className="ios-list-row">
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-label">{r.name}</div>
                 <div className="mt-0.5 text-xs text-label-secondary">
@@ -429,9 +402,7 @@ function PRsSection({
                   )}
                 </div>
               </div>
-              <div className="text-base font-semibold tabular-nums text-label">
-                {r.weight}kg
-              </div>
+              <div className="text-base font-semibold tabular-nums text-label">{r.weight}kg</div>
             </li>
           ))}
         </ul>
@@ -461,9 +432,7 @@ function RecentSessionsSection({
       </div>
       {completed.length === 0 ? (
         <div className="ios-card p-6 text-center">
-          <p className="text-sm text-label-secondary">
-            Non hai ancora completato allenamenti.
-          </p>
+          <p className="text-sm text-label-secondary">Non hai ancora completato allenamenti.</p>
           <Link
             to="/workouts"
             className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent"
@@ -476,16 +445,11 @@ function RecentSessionsSection({
           {completed.map((s) => {
             const dur = s.ended_at
               ? Math.round(
-                  (new Date(s.ended_at).getTime() -
-                    new Date(s.started_at).getTime()) /
-                    60000,
+                  (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000,
                 )
               : 0;
             const sessSets = (sets ?? []).filter((x) => x.session_id === s.id);
-            const volume = sessSets.reduce(
-              (a, x) => a + x.weight_kg * x.reps,
-              0,
-            );
+            const volume = sessSets.reduce((a, x) => a + x.weight_kg * x.reps, 0);
             return (
               <li key={s.id}>
                 <Link
@@ -501,9 +465,7 @@ function RecentSessionsSection({
                       {format(new Date(s.started_at), "d MMM · HH:mm", { locale: it })}
                       {" · "}
                       {dur} min · {sessSets.length} serie ·{" "}
-                      {volume >= 1000
-                        ? `${(volume / 1000).toFixed(1)}k`
-                        : Math.round(volume)}
+                      {volume >= 1000 ? `${(volume / 1000).toFixed(1)}k` : Math.round(volume)}
                       kg
                     </div>
                   </div>
@@ -600,9 +562,7 @@ function ProfileBanner({
     >
       <UserCog className="h-5 w-5 text-accent" />
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-label">
-          Completa il tuo profilo
-        </div>
+        <div className="text-sm font-semibold text-label">Completa il tuo profilo</div>
         <div className="text-xs text-label-secondary">
           Aggiungi peso, data di nascita e sesso per stime più precise.
         </div>
@@ -626,9 +586,7 @@ function CaloriesCard({
   loading: boolean;
 }) {
   if (loading) {
-    return (
-      <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: 88 }} />
-    );
+    return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: 88 }} />;
   }
   const since = new Date();
   since.setHours(0, 0, 0, 0);
@@ -657,9 +615,7 @@ function CaloriesCard({
           Calorie bruciate · 7 giorni
         </div>
         {profileComplete || sum > 0 ? (
-          <div className="text-2xl font-bold tabular-nums text-label">
-            {Math.round(sum)} kcal
-          </div>
+          <div className="text-2xl font-bold tabular-nums text-label">{Math.round(sum)} kcal</div>
         ) : (
           <div className="text-sm text-label-secondary">
             Completa il profilo per vedere le calorie
