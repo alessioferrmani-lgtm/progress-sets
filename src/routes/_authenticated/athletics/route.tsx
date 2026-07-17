@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchPerformanceLog, formatDistance, formatTime } from "@/lib/athletics-queries";
@@ -17,19 +12,26 @@ export const Route = createFileRoute("/_authenticated/athletics")({
 
 function AthleticsLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isOverview = pathname.replace(/\/+$/, "") === "/athletics";
   const isRaces = pathname.startsWith("/athletics/races");
 
   return (
     <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
       <h1 className="pb-3 text-3xl font-bold text-label">Atletica</h1>
 
-      <InsightsCards />
+      {!isOverview && <InsightsCards />}
 
       {/* Segmented control */}
-      <div className="mt-4 flex rounded-xl bg-fill p-1">
-        <SegBtn to="/athletics/tests" active={!isRaces}>Test</SegBtn>
-        <SegBtn to="/athletics/races" active={isRaces}>Gare</SegBtn>
-      </div>
+      {!isOverview && (
+        <div className="mt-4 flex rounded-xl bg-fill p-1">
+          <SegBtn to="/athletics/tests" active={!isRaces}>
+            Test
+          </SegBtn>
+          <SegBtn to="/athletics/races" active={isRaces}>
+            Gare
+          </SegBtn>
+        </div>
+      )}
 
       <div className="mt-4">
         <Outlet />
@@ -52,9 +54,7 @@ function SegBtn({
       to={to}
       className={
         "flex-1 rounded-lg py-1.5 text-center text-sm font-semibold transition-all " +
-        (active
-          ? "bg-background text-label shadow-sm"
-          : "text-label-secondary")
+        (active ? "bg-background text-label shadow-sm" : "text-label-secondary")
       }
     >
       {children}
@@ -121,10 +121,7 @@ function InsightsCards() {
       {insights.map((i, k) => {
         const Icon = i.icon === "trophy" ? Trophy : i.icon === "up" ? TrendingUp : Sparkles;
         return (
-          <div
-            key={k}
-            className="ios-card min-w-[85%] shrink-0 snap-start p-3"
-          >
+          <div key={k} className="ios-card min-w-[85%] shrink-0 snap-start p-3">
             <Icon className="mb-1.5 h-4 w-4 text-accent" />
             <p className="text-sm leading-snug text-label">{i.text}</p>
           </div>
