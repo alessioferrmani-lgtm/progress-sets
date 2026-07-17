@@ -58,3 +58,27 @@ test("la sagoma contiene soltanto i muscoli del giorno selezionato", () => {
   assert.deepEqual([...musclesForDay(sets, "2026-07-17")], ["chest", "triceps"]);
   assert.deepEqual([...musclesForDay(sets, "2026-07-16")], ["quads", "glutes"]);
 });
+
+test("le zone bilaterali sono specchiate sugli assi centrali della sagoma", () => {
+  const frontGroups = ["chest", "abs", "biceps", "quads", "tibialis"];
+  const backGroups = ["back", "triceps", "glutes", "hamstrings", "calves"];
+
+  frontGroups.forEach((group) => {
+    const svg = readFileSync(new URL(`../public/muscle-map/${group}.svg`, import.meta.url), "utf8");
+    assert.match(svg, /translate\(214 0\) scale\(-1 1\)/, `${group} non è centrato sul fronte`);
+  });
+  backGroups.forEach((group) => {
+    const svg = readFileSync(new URL(`../public/muscle-map/${group}.svg`, import.meta.url), "utf8");
+    assert.match(svg, /translate\(624 0\) scale\(-1 1\)/, `${group} non è centrato sul retro`);
+  });
+});
+
+test("la sagoma è presente nei riepiloghi allenamento ma non nella Home", () => {
+  const home = readFileSync(new URL("../src/routes/_authenticated/home.tsx", import.meta.url), "utf8");
+  const summary = readFileSync(
+    new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(home, /MuscleSilhouette|MuscleSection/);
+  assert.match(summary, /<MuscleSilhouette active=\{data\.activeMuscles\}/);
+});

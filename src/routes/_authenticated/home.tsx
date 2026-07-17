@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   fetchAllTimePRs,
   fetchRecentSessions,
@@ -9,9 +9,7 @@ import {
   type SessionRow,
   type SetRow,
 } from "@/lib/dashboard-queries";
-import { musclesForDay, type MuscleGroup } from "@/lib/muscle-map";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
-import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
@@ -101,8 +99,6 @@ function HomePage() {
           sets={setsQ.data}
           loading={sessionsQ.isLoading || setsQ.isLoading}
         />
-
-        <MuscleSection sessions={sessionsQ.data} sets={setsQ.data} loading={setsQ.isLoading} />
 
         <PRsSection prs={prsQ.data} sets={setsQ.data} loading={prsQ.isLoading || setsQ.isLoading} />
 
@@ -214,108 +210,6 @@ function VolumeSection({
 
   if (loading || !weeks.length) return <Skeleton h={280} />;
   return <WeeklyVolumeChart weeks={weeks} />;
-}
-
-const MUSCLE_LABELS: Record<MuscleGroup, string> = {
-  chest: "Petto",
-  back: "Schiena",
-  shoulders: "Spalle",
-  biceps: "Bicipiti",
-  triceps: "Tricipiti",
-  abs: "Addome",
-  quads: "Quadricipiti",
-  hamstrings: "Femorali",
-  glutes: "Glutei",
-  calves: "Polpacci",
-  tibialis: "Tibiali",
-  forearms: "Avambracci",
-};
-
-function MuscleSection({
-  sessions,
-  sets,
-  loading,
-}: {
-  sessions?: SessionRow[];
-  sets?: SetRow[];
-  loading: boolean;
-}) {
-  const todayKey = format(new Date(), "yyyy-MM-dd");
-  const [selectedDay, setSelectedDay] = useState(todayKey);
-  if (loading || !sets || !sessions) return <Skeleton h={260} />;
-
-  const active = musclesForDay(sets, selectedDay);
-
-  const days = Array.from({ length: 7 }, (_, index) => subDays(new Date(), 6 - index));
-  const sessionDays = new Set(sessions.map((s) => format(new Date(s.started_at), "yyyy-MM-dd")));
-
-  return (
-    <section className="ios-card p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-label">Muscoli allenati</h2>
-        <span className="text-xs capitalize text-label-secondary">
-          {selectedDay === todayKey
-            ? "oggi"
-            : format(new Date(`${selectedDay}T12:00:00`), "d MMMM", { locale: it })}
-        </span>
-      </div>
-      {active.size === 0 ? (
-        <p className="py-4 text-center text-sm text-label-secondary">
-          Nessun muscolo registrato in questo giorno.
-        </p>
-      ) : (
-        <>
-          <MuscleSilhouette active={active} />
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {Array.from(active).map((g) => (
-              <span
-                key={g}
-                className="rounded-full px-2.5 py-1 text-[11px] font-medium text-accent"
-                style={{ background: "var(--color-accent-soft)" }}
-              >
-                {MUSCLE_LABELS[g]}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-      <div className="mt-4 flex items-center justify-between">
-        {days.map((d) => {
-          const key = format(d, "yyyy-MM-dd");
-          const has = sessionDays.has(key);
-          const isToday = isSameDay(d, new Date());
-          return (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setSelectedDay(key)}
-              aria-label={`Mostra i muscoli allenati ${format(d, "EEEE d MMMM", { locale: it })}`}
-              aria-pressed={selectedDay === key}
-              className="flex flex-col items-center gap-1"
-            >
-              <span className="text-[10px] font-medium uppercase text-label-tertiary">
-                {format(d, "EEEEEE", { locale: it })}
-              </span>
-              <span
-                className={
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold " +
-                  (selectedDay === key
-                    ? "bg-accent text-accent-foreground"
-                    : has
-                      ? "bg-accent/20 text-accent"
-                      : isToday
-                        ? "border border-accent text-accent"
-                        : "bg-fill text-label-secondary")
-                }
-              >
-                {format(d, "d")}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
 }
 
 function PRsSection({
