@@ -596,7 +596,7 @@ function ProfileBanner({
           Completa il tuo profilo
         </div>
         <div className="text-xs text-label-secondary">
-          Aggiungi altezza, peso e data di nascita per calcolare le calorie.
+          Aggiungi peso, data di nascita e sesso per stime più precise.
         </div>
       </div>
       <ChevronRight className="h-4 w-4 text-label-tertiary" />
@@ -623,11 +623,12 @@ function CaloriesCard({
     );
   }
   const since = new Date();
-  since.setDate(since.getDate() - 7);
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - 6);
   const sum =
     (sessions ?? [])
-      .filter((s) => new Date(s.started_at) >= since)
-      .reduce((a, s) => a + (Number((s as unknown as { calories_burned: number | null }).calories_burned) || 0), 0) +
+      .filter((s) => s.ended_at && new Date(s.started_at) >= since)
+      .reduce((a, s) => a + (Number(s.calories_burned) || 0), 0) +
     (tests ?? [])
       .filter((t) => new Date(t.date) >= since)
       .reduce((a, t) => a + (Number(t.calories_burned) || 0), 0) +
@@ -647,7 +648,7 @@ function CaloriesCard({
         <div className="text-xs font-medium uppercase text-label-tertiary">
           Calorie bruciate · 7 giorni
         </div>
-        {profileComplete ? (
+        {profileComplete || sum > 0 ? (
           <div className="text-2xl font-bold tabular-nums text-label">
             {Math.round(sum)} kcal
           </div>

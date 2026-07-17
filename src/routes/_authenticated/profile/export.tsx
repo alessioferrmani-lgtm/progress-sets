@@ -27,7 +27,7 @@ function ExportPage() {
       if (result.empty) {
         toast.error("Nessun dato nel periodo selezionato");
       } else {
-        toast.success("File generato");
+        toast.success(result.delivery === "shared" ? "File pronto per la condivisione" : "File scaricato");
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore durante l'esportazione");
@@ -55,6 +55,8 @@ function ExportPage() {
         </h2>
         <div className="grid grid-cols-2 gap-2">
           <button
+            type="button"
+            disabled={busy}
             onClick={() => setFormat("xlsx")}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
@@ -65,6 +67,8 @@ function ExportPage() {
             <span className="text-sm font-semibold text-label">Excel</span>
           </button>
           <button
+            type="button"
+            disabled={busy}
             onClick={() => setFormat("pdf")}
             className={
               "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
@@ -84,6 +88,8 @@ function ExportPage() {
         <div className="ios-card divide-y divide-separator">
           {PERIODS.map((p) => (
             <button
+              type="button"
+              disabled={busy}
               key={p.id}
               onClick={() => setPeriod(p.id)}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
@@ -103,12 +109,13 @@ function ExportPage() {
       </section>
 
       <button
+        type="button"
         onClick={run}
         disabled={busy}
         className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97] disabled:opacity-50"
       >
         <Download className="h-4 w-4" />
-        {busy ? "Generazione in corso…" : "Scarica"}
+        {busy ? "Generazione in corso…" : "Esporta"}
       </button>
     </div>
   );

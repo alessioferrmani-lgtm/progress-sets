@@ -218,7 +218,7 @@ function ProfilePage() {
       <button
         onClick={async () => {
           await supabase.auth.signOut();
-          navigate({ to: "/auth" });
+          navigate({ to: "/auth", search: { next: undefined } });
         }}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-base font-semibold text-danger active:scale-[0.97]"
       >
