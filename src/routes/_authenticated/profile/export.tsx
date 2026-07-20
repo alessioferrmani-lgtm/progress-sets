@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  buildTextPreviewHtml,
   deliverExportFile,
   prepareExcelExport,
   preparePDFExport,
@@ -22,8 +21,16 @@ import {
 } from "@/lib/export-progress";
 
 export const Route = createFileRoute("/_authenticated/profile/export")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: search.view === "text" ? ("text" as const) : undefined,
+    period: isExportPeriod(search.period) ? search.period : ("all" as ExportPeriod),
+  }),
   component: ExportPage,
 });
+
+function isExportPeriod(value: unknown): value is ExportPeriod {
+  return value === "1m" || value === "3m" || value === "1y" || value === "all";
+}
 
 const PERIODS: Array<{ id: ExportPeriod; label: string }> = [
   { id: "1m", label: "Ultimo mese" },
@@ -33,8 +40,9 @@ const PERIODS: Array<{ id: ExportPeriod; label: string }> = [
 ];
 
 function ExportPage() {
+  const search = Route.useSearch();
   const [format, setFormat] = useState<"pdf" | "xlsx" | "txt">("txt");
-  const [period, setPeriod] = useState<ExportPeriod>("3m");
+  const [period, setPeriod] = useState<ExportPeriod>("all");
   const [busy, setBusy] = useState(false);
   const [prepared, setPrepared] = useState<PreparedExport | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -50,15 +58,6 @@ function ExportPage() {
   }, [prepared]);
 
   const prepare = async () => {
-    // Safari allows a new tab only while the original tap is still running.
-    // Open it before starting the asynchronous database queries, then fill it.
-    const previewWindow = format === "txt" ? window.open("about:blank", "_blank") : null;
-    if (previewWindow) {
-      previewWindow.document.write(
-        '<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#fff;font-family:-apple-system;padding:24px">Preparazione del riepilogo…</body>',
-      );
-      previewWindow.document.close();
-    }
     setBusy(true);
     setPrepared(null);
     try {
@@ -69,23 +68,12 @@ function ExportPage() {
             ? await preparePDFExport(period)
             : await prepareTextExport(period);
       if (result.empty) {
-        previewWindow?.close();
         toast.error("Nessun dato nel periodo selezionato");
       } else {
         setPrepared(result.prepared ?? null);
-        if (previewWindow && result.prepared?.format === "txt") {
-          const report = await result.prepared.file.text();
-          previewWindow.document.open();
-          previewWindow.document.write(buildTextPreviewHtml(report));
-          previewWindow.document.close();
-          previewWindow.opener = null;
-        } else if (format === "txt") {
-          toast.error("Il browser ha bloccato la nuova scheda. Abilita i popup e riprova.");
-        }
         toast.success("Riepilogo pronto");
       }
     } catch (e) {
-      previewWindow?.close();
       toast.error(e instanceof Error ? e.message : "Errore durante l'esportazione");
     } finally {
       setBusy(false);
@@ -113,6 +101,8 @@ function ExportPage() {
       toast.error("Apri il file di testo e seleziona Copia tutto");
     }
   };
+
+  if (search.view === "text") return <TextExportView period={search.period} />;
 
   return (
     <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
@@ -255,6 +245,16 @@ function ExportPage() {
             Su iPhone scegli “Salva su File” dal menu di condivisione.
           </p>
         </div>
+      ) : format === "txt" ? (
+        <a
+          href={`/profile/export?view=text&period=${period}`}
+          target="_blank"
+          rel="noopener"
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground active:scale-[0.97]"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Esporta e apri tutti i progressi
+        </a>
       ) : (
         <button
           type="button"
@@ -267,5 +267,72 @@ function ExportPage() {
         </button>
       )}
     </div>
+  );
+}
+
+function TextExportView({ period }: { period: ExportPeriod }) {
+  const [report, setReport] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    prepareTextExport(period)
+      .then(async (result) => {
+        if (cancelled) return;
+        if (result.empty || !result.prepared) {
+          setError("Nessun progresso disponibile nel periodo selezionato.");
+          return;
+        }
+        setReport(await result.prepared.file.text());
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setError(reason instanceof Error ? reason.message : "Impossibile generare il riepilogo");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [period]);
+
+  const copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(report);
+      toast.success("Tutti i progressi sono stati copiati");
+    } catch {
+      toast.error("Tieni premuto sul testo, scegli Seleziona tutto e poi Copia");
+    }
+  };
+
+  return (
+    <main className="mx-auto min-h-screen max-w-2xl bg-background px-4 pb-10 pt-[calc(env(safe-area-inset-top)+20px)]">
+      <h1 className="text-2xl font-bold text-label">Tutti i tuoi progressi</h1>
+      <p className="mt-1 text-sm text-label-secondary">
+        Copia questo testo e incollalo in ChatGPT per creare grafici, confronti e analisi.
+      </p>
+      {error ? (
+        <div className="ios-card mt-6 p-5 text-sm text-danger">{error}</div>
+      ) : report ? (
+        <>
+          <button
+            type="button"
+            onClick={copyReport}
+            className="sticky top-[calc(env(safe-area-inset-top)+8px)] z-10 mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 font-semibold text-accent-foreground shadow-lg"
+          >
+            <Copy className="size-4" /> Copia tutti i progressi
+          </button>
+          <textarea
+            readOnly
+            aria-label="Riepilogo completo dei progressi"
+            value={report}
+            className="mt-4 min-h-[70vh] w-full resize-none rounded-2xl border border-separator bg-fill p-4 font-mono text-xs leading-relaxed text-label outline-none"
+          />
+        </>
+      ) : (
+        <div className="ios-card mt-6 animate-pulse p-6 text-center text-sm text-label-secondary">
+          Preparazione di tutti i progressi…
+        </div>
+      )}
+    </main>
   );
 }

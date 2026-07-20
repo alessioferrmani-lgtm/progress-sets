@@ -105,7 +105,7 @@ test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
     new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(home, /Calorie bruciate oggi/);
+  assert.match(home, /Kcal bruciate oggi/);
   assert.doesNotMatch(home, /Calorie bruciate · 7 giorni/);
   assert.match(home, /raceDays\.add\(race\.date\)/);
   assert.match(home, /🔥/);
@@ -128,11 +128,11 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
   ]) {
     assert.match(exporter, new RegExp(section));
   }
-  assert.match(page, /Apri testo in un'altra scheda/);
-  assert.match(page, /Copia tutto/);
-  assert.match(page, /window\.open\("about:blank", "_blank"\)/);
-  assert.match(page, /buildTextPreviewHtml/);
-  assert.match(exporter, /Seleziona e copia tutto il testo/);
+  assert.match(page, /href=\{`\/profile\/export\?view=text&period=\$\{period\}`\}/);
+  assert.match(page, /target="_blank"/);
+  assert.match(page, /TextExportView/);
+  assert.match(page, /Riepilogo completo dei progressi/);
+  assert.doesNotMatch(page, /window\.open\("about:blank"/);
 });
 
 test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () => {
@@ -140,9 +140,26 @@ test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () 
     new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(home, /Aggiorna il tuo peso/);
-  assert.match(home, /Ultimo peso registrato:/);
+  assert.match(home, /grid grid-cols-2 gap-3/);
+  assert.match(home, /Aggiorna peso/);
+  assert.match(home, /Tocca per cambiare/);
   assert.match(home, /Peso precedente:/);
   assert.match(home, /upsertMyProfile\(\{ weight_kg: weightKg \}\)/);
   assert.match(home, /Inserisci un peso valido tra 25 e 400 kg/);
+});
+
+test("Atletica azzera i riepiloghi a mezzanotte e permette di eliminare le ripetute", () => {
+  const athletics = readFileSync(
+    new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(athletics, /session\.date === todayKey/);
+  assert.match(athletics, /nextMidnight\.setHours\(24, 0, 0, 100\)/);
+  assert.match(athletics, /Distanza oggi/);
+  assert.match(athletics, /Ripetute oggi/);
+  assert.match(athletics, /kcal oggi/);
+  assert.match(athletics, /from\("interval_sessions"\)/);
+  assert.match(athletics, /\.delete\(\)/);
+  assert.match(athletics, /from\("performance_log"\)/);
+  assert.match(athletics, /Sessione di ripetute eliminata/);
 });

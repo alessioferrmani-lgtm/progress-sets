@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
@@ -11,17 +12,23 @@ import {
   Repeat2,
   Route as RouteIcon,
   Timer,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { fetchIntervalSessions, formatDistance, formatTime } from "@/lib/athletics-queries";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/athletics/")({
   component: AthleticsOverview,
 });
 
 function AthleticsOverview() {
+  const queryClient = useQueryClient();
   const sessionsQ = useQuery({ queryKey: ["interval_sessions"], queryFn: fetchIntervalSessions });
   const sessions = sessionsQ.data ?? [];
-  const totals = sessions.reduce(
+  const todayKey = useTodayKey();
+  const todaySessions = sessions.filter((session) => session.date === todayKey);
+  const totals = todaySessions.reduce(
     (sum, session) => {
       sum.distance += session.interval_reps.reduce((n, rep) => n + rep.distance_m, 0);
       sum.reps += session.interval_reps.length;
@@ -30,6 +37,37 @@ function AthleticsOverview() {
     },
     { distance: 0, reps: 0, calories: 0 },
   );
+  const removeSession = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const session = sessions.find((item) => item.id === sessionId);
+      const repIds = session?.interval_reps.map((rep) => rep.id) ?? [];
+      if (repIds.length) {
+        const { error: performanceError } = await supabase
+          .from("performance_log")
+          .delete()
+          .eq("source", "TRAINING_REP")
+          .in("source_id", repIds);
+        if (performanceError) throw performanceError;
+      }
+      const { error } = await supabase.from("interval_sessions").delete().eq("id", sessionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["interval_sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["performance_log"] });
+      toast.success("Sessione di ripetute eliminata");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Impossibile eliminare la sessione"),
+  });
+
+  const confirmDelete = (sessionId: string) => {
+    if (
+      window.confirm("Eliminare questa sessione di ripetute? L'operazione non si può annullare.")
+    ) {
+      removeSession.mutate(sessionId);
+    }
+  };
 
   return (
     <div className="pb-24">
@@ -41,9 +79,9 @@ function AthleticsOverview() {
       </Link>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <Stat icon={RouteIcon} value={formatDistance(totals.distance)} label="Distanza" />
-        <Stat icon={Repeat2} value={String(totals.reps)} label="Ripetute" />
-        <Stat icon={Flame} value={String(Math.round(totals.calories))} label="kcal" />
+        <Stat icon={RouteIcon} value={formatDistance(totals.distance)} label="Distanza oggi" />
+        <Stat icon={Repeat2} value={String(totals.reps)} label="Ripetute oggi" />
+        <Stat icon={Flame} value={String(Math.round(totals.calories))} label="kcal oggi" />
       </div>
 
       <h2 className="mt-6 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
@@ -84,6 +122,15 @@ function AthleticsOverview() {
                     {Math.round(session.calories_burned)} kcal
                   </span>
                 )}
+                <button
+                  type="button"
+                  aria-label={`Elimina ${session.signature || "sessione ripetute"}`}
+                  disabled={removeSession.isPending}
+                  onClick={() => confirmDelete(session.id)}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger active:scale-95 disabled:opacity-40"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </li>
             );
           })}
@@ -109,6 +156,21 @@ function AthleticsOverview() {
       </div>
     </div>
   );
+}
+
+function useTodayKey() {
+  const [todayKey, setTodayKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 100);
+    const timer = window.setTimeout(
+      () => setTodayKey(format(new Date(), "yyyy-MM-dd")),
+      +nextMidnight - +now,
+    );
+    return () => window.clearTimeout(timer);
+  }, [todayKey]);
+  return todayKey;
 }
 
 function Stat({
