@@ -1,16 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-
-type QueryResult<T> = { data: T | null; error: { message: string } | null };
-
-function rowsOrThrow<T>(result: QueryResult<T[]>, label: string): T[] {
-  if (result.error) throw new Error(`${label}: ${result.error.message}`);
-  return result.data ?? [];
-}
-
-function oneOrNull<T>(result: QueryResult<T>, label: string): T | null {
-  if (result.error) throw new Error(`${label}: ${result.error.message}`);
-  return result.data ?? null;
-}
+import { safeExportOne, safeExportRows } from "@/lib/progress-export-safety";
 
 function unique(values: Array<string | null | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value)))];
@@ -22,6 +11,8 @@ export async function loadProgressExport() {
   const userId = auth.data.user?.id;
   if (!userId) throw new Error("Sessione scaduta: accedi di nuovo");
 
+  const warnings: string[] = [];
+
   const [
     profileResult,
     weightResult,
@@ -32,24 +23,56 @@ export async function loadProgressExport() {
     intervalsResult,
     performanceResult,
   ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-    supabase.from("weight_logs").select("*").eq("user_id", userId).order("logged_at"),
-    supabase.from("workout_templates").select("*").eq("user_id", userId).order("created_at"),
-    supabase.from("workout_sessions").select("*").eq("user_id", userId).order("started_at"),
-    supabase.from("tests").select("*").eq("user_id", userId).order("date"),
-    supabase.from("races").select("*").eq("user_id", userId).order("date"),
-    supabase.from("interval_sessions").select("*").eq("user_id", userId).order("date"),
-    supabase.from("performance_log").select("*").eq("user_id", userId).order("date"),
+    safeExportOne(
+      supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+      "Profilo",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("weight_logs").select("*").eq("user_id", userId).order("logged_at"),
+      "Storico peso",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("workout_templates").select("*").eq("user_id", userId).order("created_at"),
+      "Schede palestra",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("workout_sessions").select("*").eq("user_id", userId).order("started_at"),
+      "Allenamenti palestra",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("tests").select("*").eq("user_id", userId).order("date"),
+      "Test atletici",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("races").select("*").eq("user_id", userId).order("date"),
+      "Gare",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("interval_sessions").select("*").eq("user_id", userId).order("date"),
+      "Sessioni di ripetute",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("performance_log").select("*").eq("user_id", userId).order("date"),
+      "Registro prestazioni",
+      warnings,
+    ),
   ]);
 
-  const profile = oneOrNull(profileResult, "Profilo");
-  const weightHistory = rowsOrThrow(weightResult, "Storico peso");
-  const workoutTemplates = rowsOrThrow(templatesResult, "Schede palestra");
-  const workoutSessions = rowsOrThrow(sessionsResult, "Allenamenti palestra");
-  const tests = rowsOrThrow(testsResult, "Test atletici");
-  const races = rowsOrThrow(racesResult, "Gare");
-  const intervalSessions = rowsOrThrow(intervalsResult, "Sessioni di ripetute");
-  const performanceLog = rowsOrThrow(performanceResult, "Registro prestazioni");
+  const profile = profileResult;
+  const weightHistory = weightResult;
+  const workoutTemplates = templatesResult;
+  const workoutSessions = sessionsResult;
+  const tests = testsResult;
+  const races = racesResult;
+  const intervalSessions = intervalsResult;
+  const performanceLog = performanceResult;
 
   const templateIds = workoutTemplates.map((row) => row.id);
   const sessionIds = workoutSessions.map((row) => row.id);
@@ -59,44 +82,61 @@ export async function loadProgressExport() {
   const [templateExercisesResult, loggedSetsResult, intervalRepsResult, testTypesResult] =
     await Promise.all([
       templateIds.length
-        ? supabase
-            .from("template_exercises")
-            .select("*")
-            .in("template_id", templateIds)
-            .order("order_index")
-        : Promise.resolve({ data: [], error: null }),
+        ? safeExportRows(
+            supabase
+              .from("template_exercises")
+              .select("*")
+              .in("template_id", templateIds)
+              .order("order_index"),
+            "Esercizi delle schede",
+            warnings,
+          )
+        : [],
       sessionIds.length
-        ? supabase
-            .from("logged_sets")
-            .select("*")
-            .in("session_id", sessionIds)
-            .order("completed_at")
-        : Promise.resolve({ data: [], error: null }),
+        ? safeExportRows(
+            supabase
+              .from("logged_sets")
+              .select("*")
+              .in("session_id", sessionIds)
+              .order("completed_at"),
+            "Serie palestra",
+            warnings,
+          )
+        : [],
       intervalSessionIds.length
-        ? supabase
-            .from("interval_reps")
-            .select("*")
-            .in("session_id", intervalSessionIds)
-            .order("rep_number")
-        : Promise.resolve({ data: [], error: null }),
+        ? safeExportRows(
+            supabase
+              .from("interval_reps")
+              .select("*")
+              .in("session_id", intervalSessionIds)
+              .order("rep_number"),
+            "Ripetute atletica",
+            warnings,
+          )
+        : [],
       testTypeIds.length
-        ? supabase.from("test_types").select("*").in("id", testTypeIds)
-        : Promise.resolve({ data: [], error: null }),
+        ? safeExportRows(
+            supabase.from("test_types").select("*").in("id", testTypeIds),
+            "Tipi di test",
+            warnings,
+          )
+        : [],
     ]);
 
-  const templateExercises = rowsOrThrow(templateExercisesResult, "Esercizi delle schede");
-  const loggedSets = rowsOrThrow(loggedSetsResult, "Serie palestra");
-  const intervalReps = rowsOrThrow(intervalRepsResult, "Ripetute atletica");
-  const testTypes = rowsOrThrow(testTypesResult, "Tipi di test");
+  const templateExercises = templateExercisesResult;
+  const loggedSets = loggedSetsResult;
+  const intervalReps = intervalRepsResult;
+  const testTypes = testTypesResult;
 
   const exerciseIds = unique([
     ...templateExercises.map((row) => row.exercise_id),
     ...loggedSets.map((row) => row.exercise_id),
   ]);
   const exercises = exerciseIds.length
-    ? rowsOrThrow(
-        await supabase.from("exercises").select("*").in("id", exerciseIds).order("name"),
+    ? await safeExportRows(
+        supabase.from("exercises").select("*").in("id", exerciseIds).order("name"),
         "Catalogo esercizi utilizzati",
+        warnings,
       )
     : [];
 
@@ -104,6 +144,8 @@ export async function loadProgressExport() {
     schema_version: 1,
     application: "Progress Sets",
     exported_at: new Date().toISOString(),
+    export_complete: warnings.length === 0,
+    export_warnings: warnings,
     profile,
     weight_history: weightHistory,
     gym: {

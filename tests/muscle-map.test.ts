@@ -142,9 +142,12 @@ test("l'esportazione JSON legge direttamente tutti i dati e si può copiare", ()
     assert.match(exporter, new RegExp(`from\\("${table}"\\)`));
   }
   assert.match(exporter, /schema_version: 1/);
+  assert.match(exporter, /export_complete: warnings\.length === 0/);
+  assert.match(exporter, /export_warnings: warnings/);
   assert.match(exporter, /JSON\.stringify\(await loadProgressExport\(\), null, 2\)/);
   assert.doesNotMatch(exporter, /xlsx|jsPDF|new File|Blob/);
   assert.match(page, /loadProgressExportJson\(\)/);
+  assert.match(page, /document\.execCommand\("copy"\)/);
   assert.match(page, /aria-label="Tutti i dati salvati in formato JSON"/);
   assert.match(page, /Copia tutto/);
   assert.doesNotMatch(page, /window\.open|target="_blank"|Formato|Periodo/);
