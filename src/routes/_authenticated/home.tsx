@@ -87,15 +87,16 @@ function HomePage() {
       <div className="space-y-4">
         <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
 
-        <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />
-
-        <CaloriesCard
-          profileComplete={isProfileComplete(profileQ.data ?? null)}
-          sessions={sessionsQ.data}
-          tests={testsQ.data}
-          races={racesQ.data}
-          loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />
+          <CaloriesCard
+            profileComplete={isProfileComplete(profileQ.data ?? null)}
+            sessions={sessionsQ.data}
+            tests={testsQ.data}
+            races={racesQ.data}
+            loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
+          />
+        </div>
 
         <MonthCalendarSection
           sessions={sessionsQ.data}
@@ -484,21 +485,26 @@ function WeightReminder({
       <button
         type="button"
         onClick={showEditor}
-        className="ios-card flex w-full items-center gap-3 p-4 text-left active:scale-[0.99]"
+        className="ios-card flex min-h-28 w-full flex-col items-start justify-between p-3 text-left active:scale-[0.98]"
         style={{ background: "var(--color-accent-soft)" }}
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-          <Scale className="size-5" />
+        <div className="flex w-full items-start justify-between">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+            <Scale className="size-4" />
+          </div>
+          <ChevronRight className="size-4 text-label-tertiary" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-label">Aggiorna il tuo peso</div>
-          <div className="text-xs text-label-secondary">
-            {oldWeight
-              ? `Ultimo peso registrato: ${oldWeight} kg`
-              : "Nessun peso ancora registrato"}
+        <div className="mt-3 min-w-0">
+          <div className="text-[10px] font-semibold uppercase leading-tight text-label-tertiary">
+            Aggiorna peso
+          </div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-label">
+            {oldWeight ? `${oldWeight} kg` : "—"}
+          </div>
+          <div className="mt-0.5 text-[10px] leading-tight text-label-secondary">
+            Tocca per cambiare
           </div>
         </div>
-        <ChevronRight className="size-4 text-label-tertiary" />
       </button>
 
       {open && (
@@ -567,7 +573,7 @@ function CaloriesCard({
   loading: boolean;
 }) {
   if (loading) {
-    return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: 88 }} />;
+    return <div className="ios-card min-h-28 animate-pulse bg-fill-secondary" />;
   }
   const since = new Date();
   since.setHours(0, 0, 0, 0);
@@ -583,23 +589,20 @@ function CaloriesCard({
       .reduce((a, r) => a + (Number(r.calories_burned) || 0), 0);
 
   return (
-    <section className="ios-card flex items-center gap-3 p-4">
-      <div
-        className="flex h-12 w-12 items-center justify-center rounded-full"
-        style={{ background: "var(--color-accent-soft)" }}
-      >
-        <Flame className="h-6 w-6 text-warning" />
+    <section className="ios-card flex min-h-28 flex-col items-start justify-between p-3">
+      <div className="flex size-9 items-center justify-center rounded-full bg-warning/15">
+        <Flame className="size-4 text-warning" />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-xs font-medium uppercase text-label-tertiary">
-          Calorie bruciate oggi
+      <div className="mt-3 min-w-0">
+        <div className="text-[10px] font-semibold uppercase leading-tight text-label-tertiary">
+          Kcal bruciate oggi
         </div>
         {profileComplete || sum > 0 ? (
-          <div className="text-2xl font-bold tabular-nums text-label">{Math.round(sum)} kcal</div>
-        ) : (
-          <div className="text-sm text-label-secondary">
-            Completa il profilo per vedere le calorie
+          <div className="mt-1 text-xl font-bold tabular-nums text-label">
+            {Math.round(sum)} kcal
           </div>
+        ) : (
+          <div className="mt-1 text-xs leading-tight text-label-secondary">Completa il profilo</div>
         )}
       </div>
     </section>
