@@ -330,13 +330,17 @@ function MonthCalendarSection({
 
   const gymDays = new Set<string>();
   const runDays = new Set<string>();
+  const raceDays = new Set<string>();
   sessions.forEach((s) => {
     const key = format(new Date(s.started_at), "yyyy-MM-dd");
     gymDays.add(key);
   });
   intervals.forEach((session) => runDays.add(session.date));
   tests.forEach((test) => runDays.add(test.date));
-  races.forEach((race) => runDays.add(race.date));
+  races.forEach((race) => {
+    runDays.add(race.date);
+    raceDays.add(race.date);
+  });
 
   return (
     <section className="ios-card p-4">
@@ -369,6 +373,7 @@ function MonthCalendarSection({
           const key = format(d, "yyyy-MM-dd");
           const hasGym = gymDays.has(key);
           const hasRun = runDays.has(key);
+          const hasRace = raceDays.has(key);
           const isToday = isSameDay(d, new Date());
           return (
             <div key={key} className="flex flex-col items-center gap-0.5 py-1">
@@ -388,7 +393,13 @@ function MonthCalendarSection({
               >
                 {format(d, "d")}
               </span>
-              {(hasGym || hasRun) && <span className="size-1 rounded-full bg-label-tertiary" />}
+              {hasRace ? (
+                <span className="-mt-0.5 text-[10px] leading-none" aria-label="Gara">
+                  🔥
+                </span>
+              ) : (
+                (hasGym || hasRun) && <span className="size-1 rounded-full bg-label-tertiary" />
+              )}
             </div>
           );
         })}
@@ -442,7 +453,6 @@ function CaloriesCard({
   }
   const since = new Date();
   since.setHours(0, 0, 0, 0);
-  since.setDate(since.getDate() - 6);
   const sum =
     (sessions ?? [])
       .filter((s) => s.ended_at && new Date(s.started_at) >= since)
@@ -464,7 +474,7 @@ function CaloriesCard({
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium uppercase text-label-tertiary">
-          Calorie bruciate · 7 giorni
+          Calorie bruciate oggi
         </div>
         {profileComplete || sum > 0 ? (
           <div className="text-2xl font-bold tabular-nums text-label">{Math.round(sum)} kcal</div>

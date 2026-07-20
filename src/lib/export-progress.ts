@@ -6,7 +6,7 @@ import { format, subMonths, subYears } from "date-fns";
 import { it } from "date-fns/locale";
 
 export type ExportPeriod = "1m" | "3m" | "1y" | "all";
-export type PreparedExport = { file: File; format: "xlsx" | "pdf" };
+export type PreparedExport = { file: File; format: "xlsx" | "pdf" | "txt" };
 export type PrepareExportResult = { empty: boolean; prepared?: PreparedExport };
 
 export function periodStart(period: ExportPeriod, now = new Date()): Date | null {
@@ -616,4 +616,85 @@ export async function preparePDFExport(period: ExportPeriod): Promise<PrepareExp
   const blob = buildPDF(data).output("blob");
   const file = new File([blob], filename("pdf"), { type: "application/pdf" });
   return { empty: false, prepared: { file, format: "pdf" } };
+}
+
+export function buildTextReport(data: ExportData): string {
+  const lines: string[] = [
+    "PROGRESS SETS - RIEPILOGO COMPLETO",
+    `Periodo: ${data.summary.period}`,
+    `Generato: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+    "",
+    "RIEPILOGO",
+    `Allenamenti palestra: ${data.summary.workout_count}`,
+    `Sessioni atletica: ${data.summary.interval_count}`,
+    `Test: ${data.summary.test_count}`,
+    `Gare: ${data.summary.race_count}`,
+    `Volume totale: ${data.summary.total_volume_kg} kg`,
+    `Calorie totali: ${data.summary.total_calories} kcal`,
+  ];
+
+  const section = (title: string, rows: string[]) => {
+    lines.push("", title, ...(rows.length ? rows : ["Nessun dato"]));
+  };
+
+  section(
+    "ALLENAMENTI PALESTRA",
+    data.sessions.map(
+      (session) =>
+        `${session.date} | ${session.template} | ${session.duration_min ?? "-"} min | ${session.calories ?? "-"} kcal`,
+    ),
+  );
+  section(
+    "SERIE PALESTRA",
+    data.workouts.map(
+      (set) =>
+        `${set.date} | ${set.template} | ${set.exercise} | serie ${set.set_number} | ${set.weight_kg} kg x ${set.reps} | recupero ${set.rest_taken_sec ?? "-"} s`,
+    ),
+  );
+  section(
+    "SESSIONI ATLETICA - RIPETUTE",
+    data.intervals.map(
+      (session) =>
+        `${session.date} | ${session.signature} | ${session.repetitions} ripetute | ${session.distance_m} m | ${fmtTime(session.active_time_sec)} | ${session.calories ?? "-"} kcal${session.notes ? ` | note: ${session.notes}` : ""}`,
+    ),
+  );
+  section(
+    "TEST ATLETICI",
+    data.tests.map(
+      (test) =>
+        `${test.date} | ${test.type} | ${test.result} | FC ${test.avg_hr ?? "-"} | ${test.calories ?? "-"} kcal${test.notes ? ` | note: ${test.notes}` : ""}`,
+    ),
+  );
+  section(
+    "GARE",
+    data.races.map(
+      (race) =>
+        `${race.date} | ${race.name} | ${race.distance_m} m | ${fmtTime(race.time_sec)} | posizione ${race.placement ?? "-"} | ${race.calories ?? "-"} kcal${race.notes ? ` | note: ${race.notes}` : ""}`,
+    ),
+  );
+  section(
+    "RECORD PALESTRA",
+    data.personalRecordsGym.map(
+      (record) => `${record.date} | ${record.exercise} | ${record.weight_kg} kg x ${record.reps}`,
+    ),
+  );
+  section(
+    "RECORD ATLETICA",
+    data.personalRecordsAthletics.map(
+      (record) =>
+        `${record.date} | ${record.distance_m} m | ${fmtTime(record.time_sec)} | ${record.source}`,
+    ),
+  );
+
+  lines.push("", "FINE RIEPILOGO");
+  return lines.join("\n");
+}
+
+export async function prepareTextExport(period: ExportPeriod): Promise<PrepareExportResult> {
+  const data = await loadExportData(period);
+  if (isEmpty(data)) return { empty: true };
+  const file = new File([buildTextReport(data)], filename("txt"), {
+    type: "text/plain;charset=utf-8",
+  });
+  return { empty: false, prepared: { file, format: "txt" } };
 }

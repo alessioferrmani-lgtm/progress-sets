@@ -74,11 +74,58 @@ test("le zone bilaterali sono specchiate sugli assi centrali della sagoma", () =
 });
 
 test("la sagoma è presente nei riepiloghi allenamento ma non nella Home", () => {
-  const home = readFileSync(new URL("../src/routes/_authenticated/home.tsx", import.meta.url), "utf8");
+  const home = readFileSync(
+    new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
+    "utf8",
+  );
   const summary = readFileSync(
     new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url),
     "utf8",
   );
   assert.doesNotMatch(home, /MuscleSilhouette|MuscleSection/);
   assert.match(summary, /<MuscleSilhouette active=\{data\.activeMuscles\}/);
+});
+
+test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini muscolari", () => {
+  const component = readFileSync(
+    new URL("../src/components/dashboard/MuscleSilhouette.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(component, /getImageData/);
+  assert.match(component, /floodRecolour/);
+  assert.match(component, /putImageData/);
+  assert.doesNotMatch(component, /muscle-map\/\$\{group\}\.svg/);
+  assert.doesNotMatch(component, /<img/);
+});
+
+test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
+  const home = readFileSync(
+    new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(home, /Calorie bruciate oggi/);
+  assert.doesNotMatch(home, /Calorie bruciate · 7 giorni/);
+  assert.match(home, /raceDays\.add\(race\.date\)/);
+  assert.match(home, /🔥/);
+});
+
+test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copiare", () => {
+  const exporter = readFileSync(new URL("../src/lib/export-progress.ts", import.meta.url), "utf8");
+  const page = readFileSync(
+    new URL("../src/routes/_authenticated/profile/export.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const section of [
+    "ALLENAMENTI PALESTRA",
+    "SERIE PALESTRA",
+    "SESSIONI ATLETICA - RIPETUTE",
+    "TEST ATLETICI",
+    "GARE",
+    "RECORD PALESTRA",
+    "RECORD ATLETICA",
+  ]) {
+    assert.match(exporter, new RegExp(section));
+  }
+  assert.match(page, /Apri testo in un'altra scheda/);
+  assert.match(page, /Copia tutto/);
 });
