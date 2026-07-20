@@ -9,6 +9,8 @@ import {
   Dumbbell,
   Flame,
   ListChecks,
+  Pencil,
+  Save,
   Timer,
   Trash2,
   Trophy,
@@ -67,6 +69,9 @@ function SummaryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
+  const [draftWeight, setDraftWeight] = useState("");
+  const [draftReps, setDraftReps] = useState("");
 
   const summary = useQuery({
     queryKey: ["session-summary", sessionId],
@@ -226,6 +231,42 @@ function SummaryPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const updateSet = useMutation({
+    mutationFn: async () => {
+      if (!editingSetId) throw new Error("Serie non selezionata");
+      const weightKg = Number(draftWeight.replace(",", "."));
+      const reps = Number.parseInt(draftReps, 10);
+      if (!Number.isFinite(weightKg) || weightKg < 0) throw new Error("Carico non valido");
+      if (!Number.isInteger(reps) || reps < 1) throw new Error("Ripetizioni non valide");
+
+      const { data: updated, error } = await supabase
+        .from("logged_sets")
+        .update({ weight_kg: weightKg, reps })
+        .eq("id", editingSetId)
+        .eq("session_id", sessionId)
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!updated) throw new Error("Serie non trovata");
+    },
+    onSuccess: async () => {
+      setEditingSetId(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["session-summary", sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ["dash"] }),
+        queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
+      ]);
+      toast.success("Serie aggiornata");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const startEditingSet = (set: SessionSet) => {
+    setEditingSetId(set.id);
+    setDraftWeight(String(set.weightKg));
+    setDraftReps(String(set.reps));
+  };
+
   if (summary.isLoading) {
     return (
       <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
@@ -340,23 +381,83 @@ function SummaryPage() {
                     {exercise.sets.map((set) => (
                       <li
                         key={set.id}
-                        className="grid grid-cols-[52px_1fr_auto] items-center gap-3 border-b border-separator px-4 py-3 last:border-b-0"
+                        className="border-b border-separator px-4 py-3 last:border-b-0"
                       >
-                        <span className="text-sm font-semibold text-label-secondary">
-                          Serie {set.setNumber}
-                        </span>
-                        <div>
-                          <div className="text-sm font-semibold tabular-nums text-label">
-                            {set.reps} rip. × {set.weightKg} kg
+                        {editingSetId === set.id ? (
+                          <div>
+                            <div className="mb-2 text-sm font-semibold text-label-secondary">
+                              Serie {set.setNumber}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="text-xs font-medium text-label-secondary">
+                                Carico (kg)
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  min="0"
+                                  step="0.5"
+                                  value={draftWeight}
+                                  onChange={(event) => setDraftWeight(event.target.value)}
+                                  className="mt-1 w-full rounded-xl bg-fill px-3 py-2.5 text-base font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                                />
+                              </label>
+                              <label className="text-xs font-medium text-label-secondary">
+                                Ripetizioni
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="1"
+                                  step="1"
+                                  value={draftReps}
+                                  onChange={(event) => setDraftReps(event.target.value)}
+                                  className="mt-1 w-full rounded-xl bg-fill px-3 py-2.5 text-base font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                                />
+                              </label>
+                            </div>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditingSetId(null)}
+                                disabled={updateSet.isPending}
+                                className="min-h-10 rounded-full bg-fill px-3 text-sm font-semibold text-label"
+                              >
+                                Annulla
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateSet.mutate()}
+                                disabled={updateSet.isPending}
+                                className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-accent px-3 text-sm font-semibold text-accent-foreground disabled:opacity-50"
+                              >
+                                <Save className="size-4" />
+                                {updateSet.isPending ? "Salvataggio…" : "Salva"}
+                              </button>
+                            </div>
                           </div>
-                          <div className="mt-0.5 text-xs text-label-tertiary">
-                            Recupero:{" "}
-                            {set.restTakenSec == null ? "—" : formatRest(set.restTakenSec)}
+                        ) : (
+                          <div className="grid grid-cols-[52px_1fr_auto] items-center gap-3">
+                            <span className="text-sm font-semibold text-label-secondary">
+                              Serie {set.setNumber}
+                            </span>
+                            <div>
+                              <div className="text-sm font-semibold tabular-nums text-label">
+                                {set.reps} rip. × {set.weightKg} kg
+                              </div>
+                              <div className="mt-0.5 text-xs text-label-tertiary">
+                                Recupero:{" "}
+                                {set.restTakenSec == null ? "—" : formatRest(set.restTakenSec)}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => startEditingSet(set)}
+                              className="flex min-h-9 items-center gap-1 rounded-full bg-fill px-3 text-xs font-semibold text-accent active:opacity-70"
+                              aria-label={`Modifica serie ${set.setNumber} di ${exercise.name}`}
+                            >
+                              <Pencil className="size-3.5" /> Modifica
+                            </button>
                           </div>
-                        </div>
-                        <span className="text-xs tabular-nums text-label-tertiary">
-                          {format(new Date(set.completedAt), "HH:mm")}
-                        </span>
+                        )}
                       </li>
                     ))}
                   </ul>

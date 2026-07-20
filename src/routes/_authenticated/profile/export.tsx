@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { prepareTextExport } from "@/lib/export-progress";
+import { prepareJsonExport } from "@/lib/export-progress";
 
 export const Route = createFileRoute("/_authenticated/profile/export")({
   component: CompleteTextExportPage,
@@ -18,7 +18,7 @@ function CompleteTextExportPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await prepareTextExport("all");
+      const result = await prepareJsonExport("all");
       if (result.empty || !result.prepared) {
         setError("Non ci sono ancora dati salvati da esportare.");
         setReport("");
@@ -59,9 +59,9 @@ function CompleteTextExportPage() {
       </Link>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-label">Esporta dati</h1>
       <p className="mt-1 text-sm leading-relaxed text-label-secondary">
-        Qui trovi tutto ciò che hai salvato: profilo e peso, schede e allenamenti palestra,
-        ripetute, test, gare e record. Copialo e incollalo nella chat per creare PDF, grafici e
-        analisi.
+        Qui trovi tutto ciò che hai salvato in formato JSON strutturato: profilo e peso, schede e
+        allenamenti palestra, ripetute, test, gare e record. Copialo e incollalo nella chat per
+        creare PDF, grafici e analisi senza perdere dettagli.
       </p>
 
       {loading ? (
@@ -91,7 +91,7 @@ function CompleteTextExportPage() {
           <textarea
             ref={textRef}
             readOnly
-            aria-label="Tutti i dati salvati in formato testo"
+            aria-label="Tutti i dati salvati in formato JSON"
             value={report}
             className="mt-4 min-h-[72vh] w-full resize-none rounded-2xl border border-separator bg-fill p-4 font-mono text-xs leading-relaxed text-label outline-none"
           />
