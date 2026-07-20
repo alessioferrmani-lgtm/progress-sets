@@ -82,7 +82,9 @@ function ProfilePage() {
           {initial}
         </div>
         <div className="min-w-0">
-          <div className="truncate text-base font-semibold text-label">{profile?.display_name || email}</div>
+          <div className="truncate text-base font-semibold text-label">
+            {profile?.display_name || email}
+          </div>
           <div className="text-xs text-label-secondary">
             {complete ? "Profilo completo" : "Profilo incompleto"}
           </div>
@@ -155,7 +157,9 @@ function ProfilePage() {
             >
               <option value="">—</option>
               {(Object.keys(SEX_LABELS) as Sex[]).map((k) => (
-                <option key={k} value={k}>{SEX_LABELS[k]}</option>
+                <option key={k} value={k}>
+                  {SEX_LABELS[k]}
+                </option>
               ))}
             </select>
           </Field>
@@ -167,15 +171,16 @@ function ProfilePage() {
             >
               <option value="">—</option>
               {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((k) => (
-                <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>
+                <option key={k} value={k}>
+                  {ACTIVITY_LABELS[k]}
+                </option>
               ))}
             </select>
           </Field>
         </div>
         <p className="mt-2 px-1 text-[11px] leading-snug text-label-tertiary">
-          Questi dati servono per calcolare le calorie bruciate in allenamenti,
-          test e gare. Il peso viene salvato automaticamente in uno storico ad
-          ogni modifica.
+          Questi dati servono per calcolare le calorie bruciate in allenamenti, test e gare. Il peso
+          viene salvato automaticamente in uno storico ad ogni modifica.
         </p>
         <button
           onClick={() => save.mutate()}
@@ -202,7 +207,7 @@ function ProfilePage() {
         </li>
         <li>
           <Link to="/profile/export" className="ios-list-row">
-            <span className="min-w-0 flex-1 text-sm text-label">Esporta i miei progressi</span>
+            <span className="min-w-0 flex-1 text-sm text-label">Esporta dati</span>
             <ChevronRight className="h-4 w-4 text-label-tertiary" />
           </Link>
         </li>
