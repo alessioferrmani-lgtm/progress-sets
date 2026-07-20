@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,15 @@ import { ChevronRight, LogOut, Mail, Check, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  component: ProfilePage,
+  component: ProfileRoute,
 });
+
+function ProfileRoute() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isProfilePage = pathname === "/profile" || pathname === "/profile/";
+
+  return isProfilePage ? <ProfilePage /> : <Outlet />;
+}
 
 function ProfilePage() {
   const { user } = useAuth();
