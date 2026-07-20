@@ -69,16 +69,20 @@ function SummaryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [editingSetId, setEditingSetId] = useState<string | null>(null);
-  const [draftWeight, setDraftWeight] = useState("");
-  const [draftReps, setDraftReps] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftDurationMin, setDraftDurationMin] = useState("");
+  const [draftSets, setDraftSets] = useState<
+    Record<string, { weightKg: string; reps: string; restTakenSec: string }>
+  >({});
 
   const summary = useQuery({
     queryKey: ["session-summary", sessionId],
     queryFn: async () => {
       const { data: session, error: sessionError } = await supabase
         .from("workout_sessions")
-        .select("id,user_id,started_at,ended_at,calories_burned,template:workout_templates(name)")
+        .select(
+          "id,user_id,started_at,ended_at,calories_burned,avg_hr,rpe,template:workout_templates(name)",
+        )
         .eq("id", sessionId)
         .single();
       if (sessionError) throw sessionError;
@@ -196,6 +200,8 @@ function SummaryPage() {
         durationSec,
         totalRestSec,
         calories: session.calories_burned == null ? null : Number(session.calories_burned),
+        avgHr: session.avg_hr,
+        rpe: session.rpe,
         totalVolumeKg,
         activeMuscles,
         totalSets: sets.length,
@@ -231,40 +237,96 @@ function SummaryPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const updateSet = useMutation({
+  const saveEdits = useMutation({
     mutationFn: async () => {
-      if (!editingSetId) throw new Error("Serie non selezionata");
-      const weightKg = Number(draftWeight.replace(",", "."));
-      const reps = Number.parseInt(draftReps, 10);
-      if (!Number.isFinite(weightKg) || weightKg < 0) throw new Error("Carico non valido");
-      if (!Number.isInteger(reps) || reps < 1) throw new Error("Ripetizioni non valide");
+      if (!summary.data) throw new Error("Allenamento non disponibile");
+      const durationMin = Number(draftDurationMin.replace(",", "."));
+      if (!Number.isFinite(durationMin) || durationMin <= 0 || durationMin > 1440)
+        throw new Error("Inserisci una durata valida tra 1 e 1440 minuti");
 
-      const { data: updated, error } = await supabase
-        .from("logged_sets")
-        .update({ weight_kg: weightKg, reps })
-        .eq("id", editingSetId)
-        .eq("session_id", sessionId)
-        .select("id")
-        .single();
-      if (error) throw error;
-      if (!updated) throw new Error("Serie non trovata");
+      const sets = summary.data.exercises.flatMap((exercise) => exercise.sets);
+      const updates = sets.map((set) => {
+        const draft = draftSets[set.id];
+        const weightKg = Number(draft?.weightKg.replace(",", "."));
+        const reps = Number.parseInt(draft?.reps ?? "", 10);
+        const restTakenSec = draft?.restTakenSec.trim()
+          ? Number.parseInt(draft.restTakenSec, 10)
+          : null;
+        if (!Number.isFinite(weightKg) || weightKg < 0)
+          throw new Error(`Carico non valido nella serie ${set.setNumber}`);
+        if (!Number.isInteger(reps) || reps < 1)
+          throw new Error(`Ripetizioni non valide nella serie ${set.setNumber}`);
+        if (restTakenSec !== null && (!Number.isInteger(restTakenSec) || restTakenSec < 0))
+          throw new Error(`Recupero non valido nella serie ${set.setNumber}`);
+        return { id: set.id, weightKg, reps, restTakenSec };
+      });
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("logged_sets")
+          .update({
+            weight_kg: update.weightKg,
+            reps: update.reps,
+            rest_taken_sec: update.restTakenSec,
+          })
+          .eq("id", update.id)
+          .eq("session_id", sessionId);
+        if (error) throw error;
+      }
+
+      const endedAt = new Date(new Date(summary.data.startedAt).getTime() + durationMin * 60_000);
+      let calories: number | null = null;
+      try {
+        const { fetchMyProfile } = await import("@/lib/profile-queries");
+        const { computeCaloriesForSession } = await import("@/lib/calories");
+        const profile = await fetchMyProfile();
+        if (profile) {
+          calories = computeCaloriesForSession(profile, {
+            duration_min: durationMin,
+            avg_hr: summary.data.avgHr,
+            rpe: summary.data.rpe,
+          });
+        }
+      } catch {
+        calories = summary.data.calories;
+      }
+
+      const { error: sessionError } = await supabase
+        .from("workout_sessions")
+        .update({ ended_at: endedAt.toISOString(), calories_burned: calories })
+        .eq("id", sessionId);
+      if (sessionError) throw sessionError;
     },
     onSuccess: async () => {
-      setEditingSetId(null);
+      setIsEditing(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["session-summary", sessionId] }),
         queryClient.invalidateQueries({ queryKey: ["dash"] }),
         queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
       ]);
-      toast.success("Serie aggiornata");
+      toast.success("Allenamento aggiornato");
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const startEditingSet = (set: SessionSet) => {
-    setEditingSetId(set.id);
-    setDraftWeight(String(set.weightKg));
-    setDraftReps(String(set.reps));
+  const startEditing = () => {
+    if (!summary.data) return;
+    setDraftDurationMin(String(Math.max(1, Math.round(summary.data.durationSec / 60))));
+    setDraftSets(
+      Object.fromEntries(
+        summary.data.exercises.flatMap((exercise) =>
+          exercise.sets.map((set) => [
+            set.id,
+            {
+              weightKg: String(set.weightKg),
+              reps: String(set.reps),
+              restTakenSec: set.restTakenSec == null ? "" : String(set.restTakenSec),
+            },
+          ]),
+        ),
+      ),
+    );
+    setIsEditing(true);
   };
 
   if (summary.isLoading) {
@@ -308,13 +370,48 @@ function SummaryPage() {
           >
             <ArrowLeft className="size-5" />
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-2xl font-bold text-label">{data.name}</h1>
             <p className="text-sm capitalize text-label-secondary">
               {format(new Date(data.startedAt), "EEEE d MMMM · HH:mm", { locale: it })}
             </p>
           </div>
+          {!isEditing && (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
+            >
+              <Pencil className="size-4" /> Modifica
+            </button>
+          )}
         </header>
+
+        {isEditing && (
+          <section className="ios-card mt-5 p-4" aria-label="Modifica allenamento">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-label">Modalità modifica</h2>
+                <p className="mt-0.5 text-xs text-label-secondary">
+                  Correggi durata, carichi, ripetizioni e recuperi, poi salva tutto insieme.
+                </p>
+              </div>
+              <label className="w-28 shrink-0 text-xs font-medium text-label-secondary">
+                Durata (min)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="1"
+                  max="1440"
+                  step="1"
+                  value={draftDurationMin}
+                  onChange={(event) => setDraftDurationMin(event.target.value)}
+                  className="mt-1 w-full rounded-xl bg-fill px-3 py-2.5 text-center text-base font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                />
+              </label>
+            </div>
+          </section>
+        )}
 
         <section className="ios-card mt-5 overflow-hidden p-3" aria-label="Riepilogo principale">
           <div className="grid grid-cols-2 gap-2 pb-3">
@@ -383,59 +480,71 @@ function SummaryPage() {
                         key={set.id}
                         className="border-b border-separator px-4 py-3 last:border-b-0"
                       >
-                        {editingSetId === set.id ? (
-                          <div>
-                            <div className="mb-2 text-sm font-semibold text-label-secondary">
-                              Serie {set.setNumber}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <label className="text-xs font-medium text-label-secondary">
-                                Carico (kg)
-                                <input
-                                  type="number"
-                                  inputMode="decimal"
-                                  min="0"
-                                  step="0.5"
-                                  value={draftWeight}
-                                  onChange={(event) => setDraftWeight(event.target.value)}
-                                  className="mt-1 w-full rounded-xl bg-fill px-3 py-2.5 text-base font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
-                                />
-                              </label>
-                              <label className="text-xs font-medium text-label-secondary">
-                                Ripetizioni
-                                <input
-                                  type="number"
-                                  inputMode="numeric"
-                                  min="1"
-                                  step="1"
-                                  value={draftReps}
-                                  onChange={(event) => setDraftReps(event.target.value)}
-                                  className="mt-1 w-full rounded-xl bg-fill px-3 py-2.5 text-base font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
-                                />
-                              </label>
-                            </div>
-                            <div className="mt-3 grid grid-cols-2 gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setEditingSetId(null)}
-                                disabled={updateSet.isPending}
-                                className="min-h-10 rounded-full bg-fill px-3 text-sm font-semibold text-label"
-                              >
-                                Annulla
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => updateSet.mutate()}
-                                disabled={updateSet.isPending}
-                                className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-accent px-3 text-sm font-semibold text-accent-foreground disabled:opacity-50"
-                              >
-                                <Save className="size-4" />
-                                {updateSet.isPending ? "Salvataggio…" : "Salva"}
-                              </button>
-                            </div>
+                        {isEditing ? (
+                          <div className="grid grid-cols-[42px_1fr_1fr_1fr] items-end gap-2">
+                            <span className="pb-2.5 text-sm font-semibold text-label-secondary">
+                              S{set.setNumber}
+                            </span>
+                            <label className="text-[10px] font-semibold uppercase text-label-tertiary">
+                              Kg
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.5"
+                                value={draftSets[set.id]?.weightKg ?? ""}
+                                onChange={(event) =>
+                                  setDraftSets((current) => ({
+                                    ...current,
+                                    [set.id]: {
+                                      ...current[set.id],
+                                      weightKg: event.target.value,
+                                    },
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl bg-fill px-2 py-2.5 text-center text-sm font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                              />
+                            </label>
+                            <label className="text-[10px] font-semibold uppercase text-label-tertiary">
+                              Rip.
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min="1"
+                                step="1"
+                                value={draftSets[set.id]?.reps ?? ""}
+                                onChange={(event) =>
+                                  setDraftSets((current) => ({
+                                    ...current,
+                                    [set.id]: { ...current[set.id], reps: event.target.value },
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl bg-fill px-2 py-2.5 text-center text-sm font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                              />
+                            </label>
+                            <label className="text-[10px] font-semibold uppercase text-label-tertiary">
+                              Rec. sec
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min="0"
+                                step="1"
+                                value={draftSets[set.id]?.restTakenSec ?? ""}
+                                onChange={(event) =>
+                                  setDraftSets((current) => ({
+                                    ...current,
+                                    [set.id]: {
+                                      ...current[set.id],
+                                      restTakenSec: event.target.value,
+                                    },
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl bg-fill px-2 py-2.5 text-center text-sm font-semibold text-label outline-none focus:ring-2 focus:ring-accent"
+                              />
+                            </label>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[52px_1fr_auto] items-center gap-3">
+                          <div className="grid grid-cols-[52px_1fr] items-center gap-3">
                             <span className="text-sm font-semibold text-label-secondary">
                               Serie {set.setNumber}
                             </span>
@@ -448,14 +557,6 @@ function SummaryPage() {
                                 {set.restTakenSec == null ? "—" : formatRest(set.restTakenSec)}
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => startEditingSet(set)}
-                              className="flex min-h-9 items-center gap-1 rounded-full bg-fill px-3 text-xs font-semibold text-accent active:opacity-70"
-                              aria-label={`Modifica serie ${set.setNumber} di ${exercise.name}`}
-                            >
-                              <Pencil className="size-3.5" /> Modifica
-                            </button>
                           </div>
                         )}
                       </li>
@@ -466,6 +567,28 @@ function SummaryPage() {
             </div>
           )}
         </section>
+
+        {isEditing && (
+          <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+12px)] z-10 mt-5 grid grid-cols-2 gap-3 rounded-3xl border border-separator bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              disabled={saveEdits.isPending}
+              className="min-h-12 rounded-full bg-fill px-4 font-semibold text-label"
+            >
+              Annulla
+            </button>
+            <button
+              type="button"
+              onClick={() => saveEdits.mutate()}
+              disabled={saveEdits.isPending}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-4 font-semibold text-accent-foreground disabled:opacity-50"
+            >
+              <Save className="size-4" />
+              {saveEdits.isPending ? "Salvataggio…" : "Salva modifiche"}
+            </button>
+          </div>
+        )}
 
         <section className="ios-card mt-5 overflow-hidden">
           <div className="flex items-center gap-2 border-b border-separator px-4 py-3">

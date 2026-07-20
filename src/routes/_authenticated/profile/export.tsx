@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { prepareJsonExport } from "@/lib/export-progress";
+import { loadProgressExportJson } from "@/lib/progress-json-export";
 
 export const Route = createFileRoute("/_authenticated/profile/export")({
   component: CompleteTextExportPage,
@@ -18,13 +18,7 @@ function CompleteTextExportPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await prepareJsonExport("all");
-      if (result.empty || !result.prepared) {
-        setError("Non ci sono ancora dati salvati da esportare.");
-        setReport("");
-        return;
-      }
-      setReport(await result.prepared.file.text());
+      setReport(await loadProgressExportJson());
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Impossibile caricare i dati salvati");
       setReport("");
