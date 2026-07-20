@@ -139,12 +139,25 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
   assert.match(exporter, /from\("workout_templates"\)/);
   assert.match(exporter, /rep_number,distance_m,time_sec,rest_sec/);
   assert.match(exporter, /Ripetuta \$\{rep\.rep_number\}/);
-  assert.match(page, /prepareTextExport\("all"\)/);
-  assert.match(page, /aria-label="Tutti i dati salvati in formato testo"/);
+  assert.match(exporter, /buildJsonReport/);
+  assert.match(exporter, /schema_version: 1/);
+  assert.match(page, /prepareJsonExport\("all"\)/);
+  assert.match(page, /aria-label="Tutti i dati salvati in formato JSON"/);
   assert.match(page, /Copia tutto/);
   assert.doesNotMatch(page, /window\.open|target="_blank"|Formato|Periodo/);
   assert.match(profile, /<Link to="\/profile\/export"/);
   assert.match(profile, />Esporta dati</);
+});
+
+test("Il riepilogo consente di correggere carico e ripetizioni dopo l'allenamento", () => {
+  const summary = readFileSync(
+    new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(summary, /Modifica serie/);
+  assert.match(summary, /\.update\(\{ weight_kg: weightKg, reps \}\)/);
+  assert.match(summary, /Serie aggiornata/);
+  assert.match(summary, /queryKey: \["session-summary", sessionId\]/);
 });
 
 test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () => {

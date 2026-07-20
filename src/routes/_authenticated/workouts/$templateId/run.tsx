@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
 import { X, Check, Plus, Minus } from "lucide-react";
+import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 
 export const Route = createFileRoute("/_authenticated/workouts/$templateId/run")({
   component: RunPage,
@@ -317,9 +318,11 @@ function RunPage() {
                           onChange={(v) =>
                             setRowsByExercise((c) => {
                               const next = { ...c };
-                              const list = [...(next[activeEx.id] ?? [])];
-                              list[i] = { ...list[i], weight: v };
-                              next[activeEx.id] = list;
+                              next[activeEx.id] = updateWeightAndPropagate(
+                                next[activeEx.id] ?? [],
+                                i,
+                                v,
+                              );
                               return next;
                             })
                           }

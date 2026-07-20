@@ -6,7 +6,7 @@ import { format, subMonths, subYears } from "date-fns";
 import { it } from "date-fns/locale";
 
 export type ExportPeriod = "1m" | "3m" | "1y" | "all";
-export type PreparedExport = { file: File; format: "xlsx" | "pdf" | "txt" };
+export type PreparedExport = { file: File; format: "xlsx" | "pdf" | "txt" | "json" };
 export type PrepareExportResult = { empty: boolean; prepared?: PreparedExport };
 
 export function periodStart(period: ExportPeriod, now = new Date()): Date | null {
@@ -31,6 +31,8 @@ function periodLabel(period: ExportPeriod): string {
 type Session = {
   id: string;
   date: string;
+  started_at: string;
+  ended_at: string | null;
   template: string;
   duration_min: number | null;
   calories: number | null;
@@ -46,11 +48,15 @@ type WorkoutSet = {
   weight_kg: number;
   reps: number;
   rest_taken_sec: number | null;
+  completed_at: string;
 };
 type Test = {
   date: string;
   type: string;
+  result_type: string;
   result: string;
+  time_sec: number | null;
+  distance_covered_m: number | null;
   avg_hr: number | null;
   calories: number | null;
   notes: string | null;
@@ -216,6 +222,8 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
     return {
       id: s.id,
       date: format(new Date(s.started_at), "yyyy-MM-dd HH:mm"),
+      started_at: s.started_at,
+      ended_at: s.ended_at,
       template: tpl?.name ?? "—",
       duration_min:
         duration !== null && Number.isFinite(duration) && duration >= 0
@@ -253,6 +261,7 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
         weight_kg: Number(r.weight_kg ?? 0),
         reps: r.reps,
         rest_taken_sec: r.rest_taken_sec,
+        completed_at: r.completed_at,
       };
     });
   }
@@ -279,7 +288,10 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
     return {
       date: t.date,
       type: type?.name ?? "—",
+      result_type: type?.result_type ?? "—",
       result: value,
+      time_sec: t.time_sec == null ? null : Number(t.time_sec),
+      distance_covered_m: t.distance_covered_m == null ? null : Number(t.distance_covered_m),
       avg_hr: t.avg_hr,
       calories: t.calories_burned == null ? null : Number(t.calories_burned),
       notes: t.notes,
@@ -846,6 +858,19 @@ export function buildTextPreviewHtml(report: string): string {
 </head><body><main><h1>I tuoi progressi</h1><p>Seleziona e copia tutto il testo qui sotto, poi incollalo in ChatGPT per creare grafici e analisi.</p><pre>${escaped}</pre></main></body></html>`;
 }
 
+export function buildJsonReport(data: ExportData): string {
+  return JSON.stringify(
+    {
+      schema_version: 1,
+      exported_at: new Date().toISOString(),
+      application: "Progress Sets",
+      ...data,
+    },
+    null,
+    2,
+  );
+}
+
 export async function prepareTextExport(period: ExportPeriod): Promise<PrepareExportResult> {
   const data = await loadExportData(period);
   if (isEmpty(data)) return { empty: true };
@@ -853,4 +878,13 @@ export async function prepareTextExport(period: ExportPeriod): Promise<PrepareEx
     type: "text/plain;charset=utf-8",
   });
   return { empty: false, prepared: { file, format: "txt" } };
+}
+
+export async function prepareJsonExport(period: ExportPeriod): Promise<PrepareExportResult> {
+  const data = await loadExportData(period);
+  if (isEmpty(data)) return { empty: true };
+  const file = new File([buildJsonReport(data)], filename("json"), {
+    type: "application/json;charset=utf-8",
+  });
+  return { empty: false, prepared: { file, format: "json" } };
 }
