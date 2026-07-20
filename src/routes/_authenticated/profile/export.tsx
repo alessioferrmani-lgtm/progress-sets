@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  buildTextPreviewHtml,
   deliverExportFile,
   prepareExcelExport,
   preparePDFExport,
@@ -49,6 +50,15 @@ function ExportPage() {
   }, [prepared]);
 
   const prepare = async () => {
+    // Safari allows a new tab only while the original tap is still running.
+    // Open it before starting the asynchronous database queries, then fill it.
+    const previewWindow = format === "txt" ? window.open("about:blank", "_blank") : null;
+    if (previewWindow) {
+      previewWindow.document.write(
+        '<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#000;color:#fff;font-family:-apple-system;padding:24px">Preparazione del riepilogo…</body>',
+      );
+      previewWindow.document.close();
+    }
     setBusy(true);
     setPrepared(null);
     try {
@@ -59,12 +69,23 @@ function ExportPage() {
             ? await preparePDFExport(period)
             : await prepareTextExport(period);
       if (result.empty) {
+        previewWindow?.close();
         toast.error("Nessun dato nel periodo selezionato");
       } else {
         setPrepared(result.prepared ?? null);
+        if (previewWindow && result.prepared?.format === "txt") {
+          const report = await result.prepared.file.text();
+          previewWindow.document.open();
+          previewWindow.document.write(buildTextPreviewHtml(report));
+          previewWindow.document.close();
+          previewWindow.opener = null;
+        } else if (format === "txt") {
+          toast.error("Il browser ha bloccato la nuova scheda. Abilita i popup e riprova.");
+        }
         toast.success("Riepilogo pronto");
       }
     } catch (e) {
+      previewWindow?.close();
       toast.error(e instanceof Error ? e.message : "Errore durante l'esportazione");
     } finally {
       setBusy(false);

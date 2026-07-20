@@ -94,6 +94,8 @@ test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini m
   assert.match(component, /getImageData/);
   assert.match(component, /floodRecolour/);
   assert.match(component, /putImageData/);
+  assert.match(component, /softenActiveEdges/);
+  assert.match(component, /imageRendering: "auto"/);
   assert.doesNotMatch(component, /muscle-map\/\$\{group\}\.svg/);
   assert.doesNotMatch(component, /<img/);
 });
@@ -128,4 +130,19 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
   }
   assert.match(page, /Apri testo in un'altra scheda/);
   assert.match(page, /Copia tutto/);
+  assert.match(page, /window\.open\("about:blank", "_blank"\)/);
+  assert.match(page, /buildTextPreviewHtml/);
+  assert.match(exporter, /Seleziona e copia tutto il testo/);
+});
+
+test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () => {
+  const home = readFileSync(
+    new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(home, /Aggiorna il tuo peso/);
+  assert.match(home, /Ultimo peso registrato:/);
+  assert.match(home, /Peso precedente:/);
+  assert.match(home, /upsertMyProfile\(\{ weight_kg: weightKg \}\)/);
+  assert.match(home, /Inserisci un peso valido tra 25 e 400 kg/);
 });

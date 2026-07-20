@@ -690,6 +690,15 @@ export function buildTextReport(data: ExportData): string {
   return lines.join("\n");
 }
 
+export function buildTextPreviewHtml(report: string): string {
+  const escaped = report.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return `<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Progress Sets - Riepilogo progressi</title>
+<style>body{margin:0;background:#000;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}main{max-width:760px;margin:auto;padding:calc(env(safe-area-inset-top) + 24px) 18px 48px}h1{font-size:24px;margin:0 0 8px}p{color:#a1a1a6;line-height:1.45}pre{margin-top:20px;padding:18px;border-radius:18px;background:#1c1c1e;border:1px solid #38383a;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;user-select:text;-webkit-user-select:text}</style>
+</head><body><main><h1>I tuoi progressi</h1><p>Seleziona e copia tutto il testo qui sotto, poi incollalo in ChatGPT per creare grafici e analisi.</p><pre>${escaped}</pre></main></body></html>`;
+}
+
 export async function prepareTextExport(period: ExportPeriod): Promise<PrepareExportResult> {
   const data = await loadExportData(period);
   if (isEmpty(data)) return { empty: true };

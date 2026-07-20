@@ -85,7 +85,12 @@ const MUSCLE_SEEDS: Record<MuscleGroup, readonly Point[]> = {
   ],
 };
 
-function floodRecolour(data: Uint8ClampedArray, seedX: number, seedY: number) {
+function floodRecolour(
+  data: Uint8ClampedArray,
+  activeMask: Uint8Array,
+  seedX: number,
+  seedY: number,
+) {
   const seedIndex = (seedY * WIDTH + seedX) * 4;
   const sr = data[seedIndex];
   const sg = data[seedIndex + 1];
@@ -107,6 +112,7 @@ function floodRecolour(data: Uint8ClampedArray, seedX: number, seedY: number) {
     data[offset] = ACTIVE_RGB[0];
     data[offset + 1] = ACTIVE_RGB[1];
     data[offset + 2] = ACTIVE_RGB[2];
+    activeMask[pixel] = 1;
 
     const x = pixel % WIDTH;
     const y = Math.floor(pixel / WIDTH);
@@ -114,6 +120,26 @@ function floodRecolour(data: Uint8ClampedArray, seedX: number, seedY: number) {
     if (x < WIDTH - 1) stack.push(pixel + 1);
     if (y > 0) stack.push(pixel - WIDTH);
     if (y < HEIGHT - 1) stack.push(pixel + WIDTH);
+  }
+}
+
+// Blend only the grey anti-aliased pixels touching a selected muscle. The
+// anatomical outlines and neighbouring areas remain unchanged.
+function softenActiveEdges(data: Uint8ClampedArray, original: Uint8ClampedArray, mask: Uint8Array) {
+  const neighbours = [-WIDTH - 1, -WIDTH, -WIDTH + 1, -1, 1, WIDTH - 1, WIDTH, WIDTH + 1];
+  for (let pixel = WIDTH + 1; pixel < WIDTH * (HEIGHT - 1) - 1; pixel++) {
+    if (mask[pixel]) continue;
+    const offset = pixel * 4;
+    const r = original[offset];
+    const g = original[offset + 1];
+    const b = original[offset + 2];
+    if (r < 38 || r > 112 || Math.max(Math.abs(r - g), Math.abs(r - b)) > 10) continue;
+    const touching = neighbours.reduce((sum, delta) => sum + mask[pixel + delta], 0);
+    if (!touching) continue;
+    const blend = Math.min(0.58, 0.16 + touching * 0.07);
+    data[offset] = Math.round(r + (ACTIVE_RGB[0] - r) * blend);
+    data[offset + 1] = Math.round(g + (ACTIVE_RGB[1] - g) * blend);
+    data[offset + 2] = Math.round(b + (ACTIVE_RGB[2] - b) * blend);
   }
 }
 
@@ -134,9 +160,12 @@ export function MuscleSilhouette({ active }: Props) {
       context.clearRect(0, 0, WIDTH, HEIGHT);
       context.drawImage(image, 0, 0, WIDTH, HEIGHT);
       const pixels = context.getImageData(0, 0, WIDTH, HEIGHT);
+      const original = new Uint8ClampedArray(pixels.data);
+      const activeMask = new Uint8Array(WIDTH * HEIGHT);
       (activeKey ? (activeKey.split(",") as MuscleGroup[]) : []).forEach((group) => {
-        MUSCLE_SEEDS[group].forEach(([x, y]) => floodRecolour(pixels.data, x, y));
+        MUSCLE_SEEDS[group].forEach(([x, y]) => floodRecolour(pixels.data, activeMask, x, y));
       });
+      softenActiveEdges(pixels.data, original, activeMask);
       context.putImageData(pixels, 0, 0);
     };
     return () => {
@@ -153,6 +182,7 @@ export function MuscleSilhouette({ active }: Props) {
         role="img"
         aria-label="Sagoma anatomica con i muscoli allenati colorati"
         className="mx-auto block h-[18rem] max-w-full object-contain"
+        style={{ imageRendering: "auto" }}
       />
     </div>
   );
