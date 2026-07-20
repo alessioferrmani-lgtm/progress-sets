@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import {
   fetchAllTimePRs,
   fetchRecentSessions,
@@ -11,7 +11,7 @@ import {
 } from "@/lib/dashboard-queries";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMyProfile } from "@/lib/profile-queries";
+import { fetchMyProfile, upsertMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
 import { fetchAllTests, fetchIntervalSessions, fetchRaces } from "@/lib/athletics-queries";
 import {
@@ -22,7 +22,10 @@ import {
   Calendar as CalendarIcon,
   History,
   UserCog,
+  Scale,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   subDays,
   format,
@@ -83,6 +86,8 @@ function HomePage() {
 
       <div className="space-y-4">
         <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
+
+        <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />
 
         <CaloriesCard
           profileComplete={isProfileComplete(profileQ.data ?? null)}
@@ -432,6 +437,119 @@ function ProfileBanner({
       </div>
       <ChevronRight className="h-4 w-4 text-label-tertiary" />
     </Link>
+  );
+}
+
+function WeightReminder({
+  profile,
+  loading,
+  userId,
+}: {
+  profile: import("@/lib/profile-queries").Profile | null | undefined;
+  loading: boolean;
+  userId: string;
+}) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [weight, setWeight] = useState("");
+  const updateWeight = useMutation({
+    mutationFn: (weightKg: number) => upsertMyProfile({ weight_kg: weightKg }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["profile", userId], updated);
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      setOpen(false);
+      toast.success("Peso aggiornato");
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Impossibile aggiornare il peso"),
+  });
+
+  if (loading) return null;
+  const oldWeight = profile?.weight_kg;
+  const showEditor = () => {
+    setWeight(oldWeight ? String(oldWeight) : "");
+    setOpen(true);
+  };
+  const saveWeight = () => {
+    const value = Number(weight.replace(",", "."));
+    if (!Number.isFinite(value) || value < 25 || value > 400) {
+      toast.error("Inserisci un peso valido tra 25 e 400 kg");
+      return;
+    }
+    updateWeight.mutate(Math.round(value * 10) / 10);
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={showEditor}
+        className="ios-card flex w-full items-center gap-3 p-4 text-left active:scale-[0.99]"
+        style={{ background: "var(--color-accent-soft)" }}
+      >
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <Scale className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-label">Aggiorna il tuo peso</div>
+          <div className="text-xs text-label-secondary">
+            {oldWeight
+              ? `Ultimo peso registrato: ${oldWeight} kg`
+              : "Nessun peso ancora registrato"}
+          </div>
+        </div>
+        <ChevronRight className="size-4 text-label-tertiary" />
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full rounded-t-[28px] bg-background px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-fill" />
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-label">Aggiorna peso</h2>
+                {oldWeight && (
+                  <p className="text-sm text-label-secondary">Peso precedente: {oldWeight} kg</p>
+                )}
+              </div>
+              <button
+                type="button"
+                aria-label="Chiudi"
+                onClick={() => setOpen(false)}
+                className="flex size-8 items-center justify-center rounded-full bg-fill text-label-secondary"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <label className="mt-5 block text-xs font-semibold uppercase text-label-secondary">
+              Nuovo peso (kg)
+              <input
+                autoFocus
+                inputMode="decimal"
+                value={weight}
+                onChange={(event) => setWeight(event.target.value)}
+                className="mt-2 w-full rounded-xl bg-fill px-4 py-3 text-2xl font-semibold text-label outline-none ring-accent focus:ring-2"
+                placeholder="75,0"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={updateWeight.isPending}
+              onClick={saveWeight}
+              className="mt-5 w-full rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground disabled:opacity-50"
+            >
+              {updateWeight.isPending ? "Salvataggio…" : "Salva nuovo peso"}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
