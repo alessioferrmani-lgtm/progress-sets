@@ -8,12 +8,14 @@ import {
   FileText,
   Share2,
   CheckCircle2,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   deliverExportFile,
   prepareExcelExport,
   preparePDFExport,
+  prepareTextExport,
   type ExportPeriod,
   type PreparedExport,
 } from "@/lib/export-progress";
@@ -30,7 +32,7 @@ const PERIODS: Array<{ id: ExportPeriod; label: string }> = [
 ];
 
 function ExportPage() {
-  const [format, setFormat] = useState<"pdf" | "xlsx">("pdf");
+  const [format, setFormat] = useState<"pdf" | "xlsx" | "txt">("txt");
   const [period, setPeriod] = useState<ExportPeriod>("3m");
   const [busy, setBusy] = useState(false);
   const [prepared, setPrepared] = useState<PreparedExport | null>(null);
@@ -51,7 +53,11 @@ function ExportPage() {
     setPrepared(null);
     try {
       const result =
-        format === "xlsx" ? await prepareExcelExport(period) : await preparePDFExport(period);
+        format === "xlsx"
+          ? await prepareExcelExport(period)
+          : format === "pdf"
+            ? await preparePDFExport(period)
+            : await prepareTextExport(period);
       if (result.empty) {
         toast.error("Nessun dato nel periodo selezionato");
       } else {
@@ -77,6 +83,16 @@ function ExportPage() {
     }
   };
 
+  const copyText = async () => {
+    if (!prepared || prepared.format !== "txt") return;
+    try {
+      await navigator.clipboard.writeText(await prepared.file.text());
+      toast.success("Testo copiato: ora puoi incollarlo nella chat");
+    } catch {
+      toast.error("Apri il file di testo e seleziona Copia tutto");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
       <Link to="/profile" className="mb-2 inline-flex items-center gap-1 text-sm text-accent">
@@ -91,7 +107,22 @@ function ExportPage() {
         <h2 className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
           Formato
         </h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setFormat("txt");
+              setPrepared(null);
+            }}
+            className={
+              "ios-card flex flex-col items-center gap-2 p-4 transition-colors " +
+              (format === "txt" ? "ring-2 ring-accent" : "")
+            }
+          >
+            <Copy className="h-6 w-6 text-accent" />
+            <span className="text-sm font-semibold text-label">Testo</span>
+          </button>
           <button
             type="button"
             disabled={busy}
@@ -179,6 +210,25 @@ function ExportPage() {
             >
               <ExternalLink className="h-4 w-4" /> Apri PDF
             </a>
+          )}
+          {prepared.format === "txt" && fileUrl && (
+            <>
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
+              >
+                <ExternalLink className="h-4 w-4" /> Apri testo in un'altra scheda
+              </a>
+              <button
+                type="button"
+                onClick={copyText}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
+              >
+                <Copy className="h-4 w-4" /> Copia tutto
+              </button>
+            </>
           )}
           <p className="mt-2 text-center text-[11px] text-label-tertiary">
             Su iPhone scegli “Salva su File” dal menu di condivisione.
