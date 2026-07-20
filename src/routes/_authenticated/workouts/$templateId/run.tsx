@@ -116,7 +116,36 @@ function RunPage() {
   const confirmSet = async (rowIdx: number) => {
     if (!sessionId || !activeEx) return;
     const row = rows[rowIdx];
-    if (row.completed) return;
+    if (row.completed) {
+      if (!row.logId) {
+        toast.error("Serie non ancora sincronizzata");
+        return;
+      }
+      const { error } = await supabase
+        .from("logged_sets")
+        .delete()
+        .eq("id", row.logId)
+        .eq("session_id", sessionId);
+      if (error) {
+        toast.error(`Impossibile annullare la serie: ${error.message}`);
+        return;
+      }
+      setRowsByExercise((current) => {
+        const next = { ...current };
+        const list = [...(next[activeEx.id] ?? [])];
+        list[rowIdx] = {
+          ...list[rowIdx],
+          completed: false,
+          completedAt: undefined,
+          logId: undefined,
+        };
+        next[activeEx.id] = list;
+        return next;
+      });
+      timer.skip();
+      toast.success("Spunta rimossa: ora puoi correggere la serie");
+      return;
+    }
     const weight = Number(row.weight || 0);
     const isCount = activeEx.reps_type === "count";
     // For time/distance/unspecified sets we don't require a numeric rep count.
@@ -350,14 +379,13 @@ function RunPage() {
                         )}
                         <button
                           onClick={() => confirmSet(i)}
-                          disabled={r.completed}
                           className={
                             "flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
                             (r.completed
                               ? "bg-success text-white"
                               : "bg-fill text-label active:bg-accent active:text-accent-foreground")
                           }
-                          aria-label="Conferma serie"
+                          aria-label={r.completed ? "Rimuovi spunta serie" : "Conferma serie"}
                         >
                           <Check className="h-4 w-4" />
                         </button>

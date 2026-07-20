@@ -111,8 +111,11 @@ test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
   assert.match(home, /🔥/);
 });
 
-test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copiare", () => {
-  const exporter = readFileSync(new URL("../src/lib/export-progress.ts", import.meta.url), "utf8");
+test("l'esportazione JSON legge direttamente tutti i dati e si può copiare", () => {
+  const exporter = readFileSync(
+    new URL("../src/lib/progress-json-export.ts", import.meta.url),
+    "utf8",
+  );
   const page = readFileSync(
     new URL("../src/routes/_authenticated/profile/export.tsx", import.meta.url),
     "utf8",
@@ -121,27 +124,27 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
     new URL("../src/routes/_authenticated/profile.tsx", import.meta.url),
     "utf8",
   );
-  for (const section of [
-    "PROFILO",
-    "STORICO PESO",
-    "SCHEDE PALESTRA SALVATE",
-    "ALLENAMENTI PALESTRA",
-    "SERIE PALESTRA",
-    "SESSIONI ATLETICA - RIPETUTE",
-    "TEST ATLETICI",
-    "GARE",
-    "RECORD PALESTRA",
-    "RECORD ATLETICA",
+  for (const table of [
+    "profiles",
+    "weight_logs",
+    "workout_templates",
+    "template_exercises",
+    "workout_sessions",
+    "logged_sets",
+    "exercises",
+    "tests",
+    "test_types",
+    "races",
+    "interval_sessions",
+    "interval_reps",
+    "performance_log",
   ]) {
-    assert.match(exporter, new RegExp(section));
+    assert.match(exporter, new RegExp(`from\\("${table}"\\)`));
   }
-  assert.match(exporter, /from\("weight_logs"\)/);
-  assert.match(exporter, /from\("workout_templates"\)/);
-  assert.match(exporter, /rep_number,distance_m,time_sec,rest_sec/);
-  assert.match(exporter, /Ripetuta \$\{rep\.rep_number\}/);
-  assert.match(exporter, /buildJsonReport/);
   assert.match(exporter, /schema_version: 1/);
-  assert.match(page, /prepareJsonExport\("all"\)/);
+  assert.match(exporter, /JSON\.stringify\(await loadProgressExport\(\), null, 2\)/);
+  assert.doesNotMatch(exporter, /xlsx|jsPDF|new File|Blob/);
+  assert.match(page, /loadProgressExportJson\(\)/);
   assert.match(page, /aria-label="Tutti i dati salvati in formato JSON"/);
   assert.match(page, /Copia tutto/);
   assert.doesNotMatch(page, /window\.open|target="_blank"|Formato|Periodo/);
@@ -149,15 +152,32 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
   assert.match(profile, />Esporta dati</);
 });
 
-test("Il riepilogo consente di correggere carico e ripetizioni dopo l'allenamento", () => {
+test("Il riepilogo usa una modalità unica per modificare tutto l'allenamento", () => {
   const summary = readFileSync(
     new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(summary, /Modifica serie/);
-  assert.match(summary, /\.update\(\{ weight_kg: weightKg, reps \}\)/);
-  assert.match(summary, /Serie aggiornata/);
+  assert.match(summary, /Modalità modifica/);
+  assert.match(summary, /startEditing/);
+  assert.match(summary, /draftDurationMin/);
+  assert.match(summary, /rest_taken_sec: update\.restTakenSec/);
+  assert.match(summary, /ended_at: endedAt\.toISOString\(\)/);
+  assert.match(summary, /computeCaloriesForSession/);
+  assert.match(summary, /Salva modifiche/);
+  assert.doesNotMatch(summary, /aria-label=\{`Modifica serie/);
   assert.match(summary, /queryKey: \["session-summary", sessionId\]/);
+});
+
+test("Durante l'allenamento la spunta di una serie è reversibile", () => {
+  const run = readFileSync(
+    new URL("../src/routes/_authenticated/workouts/$templateId/run.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(run, /if \(row\.completed\)/);
+  assert.match(run, /from\("logged_sets"\)[\s\S]*?\.delete\(\)/);
+  assert.match(run, /completed: false/);
+  assert.match(run, /Rimuovi spunta serie/);
+  assert.match(run, /Spunta rimossa: ora puoi correggere la serie/);
 });
 
 test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () => {
