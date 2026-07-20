@@ -34,6 +34,8 @@ type Session = {
   template: string;
   duration_min: number | null;
   calories: number | null;
+  avg_hr: number | null;
+  rpe: number | null;
 };
 type WorkoutSet = {
   session_id: string;
@@ -52,6 +54,8 @@ type Test = {
   avg_hr: number | null;
   calories: number | null;
   notes: string | null;
+  weather: string | null;
+  observations: string | null;
 };
 type Race = {
   date: string;
@@ -61,6 +65,15 @@ type Race = {
   placement: number | null;
   calories: number | null;
   notes: string | null;
+  location: string | null;
+  category: string | null;
+  avg_hr: number | null;
+};
+type IntervalRep = {
+  rep_number: number;
+  distance_m: number;
+  time_sec: number;
+  rest_sec: number | null;
 };
 type IntervalSession = {
   date: string;
@@ -70,9 +83,35 @@ type IntervalSession = {
   active_time_sec: number;
   calories: number | null;
   notes: string | null;
+  reps: IntervalRep[];
+};
+type WeightLog = { date: string; weight_kg: number };
+type SavedTemplate = {
+  name: string;
+  created_at: string;
+  exercises: Array<{
+    name: string;
+    order_index: number;
+    target_sets: number;
+    target_reps: number | null;
+    reps_type: string;
+    reps_display: string | null;
+    target_weight_kg: number | null;
+    rest_seconds: number;
+  }>;
 };
 
 export type ExportData = {
+  profile: {
+    display_name: string | null;
+    height_cm: number | null;
+    weight_kg: number | null;
+    date_of_birth: string | null;
+    sex: string | null;
+    activity_level: string | null;
+  } | null;
+  weightLogs: WeightLog[];
+  templates: SavedTemplate[];
   sessions: Session[];
   workouts: WorkoutSet[];
   tests: Test[];
@@ -114,9 +153,55 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
   const startISO = start?.toISOString() ?? null;
   const startDate = startISO?.slice(0, 10) ?? null;
 
+  const profile = assertQuery(
+    await supabase
+      .from("profiles")
+      .select("display_name,height_cm,weight_kg,date_of_birth,sex,activity_level")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    "Profilo",
+  );
+  let weightsQ = supabase
+    .from("weight_logs")
+    .select("weight_kg,logged_at")
+    .eq("user_id", userId)
+    .order("logged_at", { ascending: false });
+  if (startISO) weightsQ = weightsQ.gte("logged_at", startISO);
+  const weightLogs: WeightLog[] = assertQuery(await weightsQ, "Storico peso").map((row) => ({
+    date: format(new Date(row.logged_at), "yyyy-MM-dd HH:mm"),
+    weight_kg: Number(row.weight_kg),
+  }));
+
+  const templatesRaw = assertQuery(
+    await supabase
+      .from("workout_templates")
+      .select(
+        "name,created_at,template_exercises(order_index,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercises(name))",
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true }),
+    "Schede palestra",
+  );
+  const templates: SavedTemplate[] = templatesRaw.map((template) => ({
+    name: template.name,
+    created_at: template.created_at,
+    exercises: [...(template.template_exercises ?? [])]
+      .map((row) => ({
+        name: (row.exercises as { name?: string } | null)?.name ?? "—",
+        order_index: row.order_index,
+        target_sets: row.target_sets,
+        target_reps: row.target_reps,
+        reps_type: row.reps_type,
+        reps_display: row.reps_display,
+        target_weight_kg: row.target_weight_kg == null ? null : Number(row.target_weight_kg),
+        rest_seconds: row.rest_seconds,
+      }))
+      .sort((a, b) => a.order_index - b.order_index),
+  }));
+
   let sessQ = supabase
     .from("workout_sessions")
-    .select("id,started_at,ended_at,calories_burned,workout_templates(name)")
+    .select("id,started_at,ended_at,calories_burned,avg_hr,rpe,workout_templates(name)")
     .eq("user_id", userId)
     .not("ended_at", "is", null)
     .order("started_at", { ascending: false });
@@ -137,6 +222,8 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
           ? Math.round(duration)
           : null,
       calories: s.calories_burned == null ? null : Number(s.calories_burned),
+      avg_hr: s.avg_hr,
+      rpe: s.rpe,
     };
   });
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
@@ -173,7 +260,7 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
   let testQ = supabase
     .from("tests")
     .select(
-      "date,time_sec,distance_covered_m,avg_hr,notes,calories_burned,test_types(name,result_type)",
+      "date,time_sec,distance_covered_m,avg_hr,weather,notes,observations,calories_burned,test_types(name,result_type)",
     )
     .eq("user_id", userId)
     .order("date", { ascending: false });
@@ -196,12 +283,16 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
       avg_hr: t.avg_hr,
       calories: t.calories_burned == null ? null : Number(t.calories_burned),
       notes: t.notes,
+      weather: t.weather,
+      observations: t.observations,
     };
   });
 
   let raceQ = supabase
     .from("races")
-    .select("date,name,distance_m,time_sec,placement,notes,calories_burned")
+    .select(
+      "date,name,location,distance_m,time_sec,placement,category,avg_hr,notes,calories_burned",
+    )
     .eq("user_id", userId)
     .order("date", { ascending: false });
   if (startDate) raceQ = raceQ.gte("date", startDate);
@@ -213,13 +304,22 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
 
   let intervalQ = supabase
     .from("interval_sessions")
-    .select("date,signature,notes,calories_burned,interval_reps(distance_m,time_sec)")
+    .select(
+      "date,signature,notes,calories_burned,interval_reps(rep_number,distance_m,time_sec,rest_sec)",
+    )
     .eq("user_id", userId)
     .order("date", { ascending: false });
   if (startDate) intervalQ = intervalQ.gte("date", startDate);
   const intervalsRaw = assertQuery(await intervalQ, "Ripetute");
   const intervals: IntervalSession[] = intervalsRaw.map((session) => {
-    const reps = (session.interval_reps ?? []) as Array<{ distance_m: number; time_sec: number }>;
+    const reps = [...(session.interval_reps ?? [])]
+      .map((rep) => ({
+        rep_number: rep.rep_number,
+        distance_m: Number(rep.distance_m),
+        time_sec: Number(rep.time_sec),
+        rest_sec: rep.rest_sec,
+      }))
+      .sort((a, b) => a.rep_number - b.rep_number);
     return {
       date: session.date,
       signature: session.signature || "Sessione ripetute",
@@ -228,6 +328,7 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
       active_time_sec: reps.reduce((sum, rep) => sum + Number(rep.time_sec), 0),
       calories: session.calories_burned == null ? null : Number(session.calories_burned),
       notes: session.notes,
+      reps,
     };
   });
 
@@ -271,6 +372,15 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
     ...intervals.map((session) => session.calories),
   ].reduce<number>((sum, value) => sum + (Number.isFinite(value) ? Number(value) : 0), 0);
   return {
+    profile: profile
+      ? {
+          ...profile,
+          height_cm: profile.height_cm == null ? null : Number(profile.height_cm),
+          weight_kg: profile.weight_kg == null ? null : Number(profile.weight_kg),
+        }
+      : null,
+    weightLogs,
+    templates,
     sessions,
     workouts,
     tests,
@@ -296,7 +406,13 @@ async function loadExportData(period: ExportPeriod): Promise<ExportData> {
 
 function isEmpty(data: ExportData): boolean {
   return (
-    !data.sessions.length && !data.tests.length && !data.races.length && !data.intervals.length
+    !data.profile &&
+    !data.weightLogs.length &&
+    !data.templates.length &&
+    !data.sessions.length &&
+    !data.tests.length &&
+    !data.races.length &&
+    !data.intervals.length
   );
 }
 function filename(ext: string): string {
@@ -638,10 +754,38 @@ export function buildTextReport(data: ExportData): string {
   };
 
   section(
+    "PROFILO",
+    data.profile
+      ? [
+          `Nome: ${data.profile.display_name ?? "-"}`,
+          `Altezza: ${data.profile.height_cm ?? "-"} cm`,
+          `Peso attuale: ${data.profile.weight_kg ?? "-"} kg`,
+          `Data di nascita: ${data.profile.date_of_birth ?? "-"}`,
+          `Sesso: ${data.profile.sex ?? "-"}`,
+          `Livello attività: ${data.profile.activity_level ?? "-"}`,
+        ]
+      : [],
+  );
+  section(
+    "STORICO PESO",
+    data.weightLogs.map((entry) => `${entry.date} | ${entry.weight_kg} kg`),
+  );
+  section(
+    "SCHEDE PALESTRA SALVATE",
+    data.templates.flatMap((template) => [
+      `SCHEDA: ${template.name} | creata ${format(new Date(template.created_at), "yyyy-MM-dd")}`,
+      ...template.exercises.map(
+        (exercise) =>
+          `  ${exercise.order_index + 1}. ${exercise.name} | ${exercise.target_sets} serie | obiettivo ${exercise.reps_display ?? exercise.target_reps ?? "-"} (${exercise.reps_type}) | ${exercise.target_weight_kg ?? "-"} kg | recupero ${exercise.rest_seconds} s`,
+      ),
+    ]),
+  );
+
+  section(
     "ALLENAMENTI PALESTRA",
     data.sessions.map(
       (session) =>
-        `${session.date} | ${session.template} | ${session.duration_min ?? "-"} min | ${session.calories ?? "-"} kcal`,
+        `${session.date} | ${session.template} | ${session.duration_min ?? "-"} min | ${session.calories ?? "-"} kcal | FC media ${session.avg_hr ?? "-"} | RPE ${session.rpe ?? "-"}`,
     ),
   );
   section(
@@ -653,23 +797,26 @@ export function buildTextReport(data: ExportData): string {
   );
   section(
     "SESSIONI ATLETICA - RIPETUTE",
-    data.intervals.map(
-      (session) =>
-        `${session.date} | ${session.signature} | ${session.repetitions} ripetute | ${session.distance_m} m | ${fmtTime(session.active_time_sec)} | ${session.calories ?? "-"} kcal${session.notes ? ` | note: ${session.notes}` : ""}`,
-    ),
+    data.intervals.flatMap((session) => [
+      `${session.date} | ${session.signature} | ${session.repetitions} ripetute | distanza totale ${session.distance_m} m | tempo attivo ${fmtTime(session.active_time_sec)} | ${session.calories ?? "-"} kcal${session.notes ? ` | note: ${session.notes}` : ""}`,
+      ...session.reps.map(
+        (rep) =>
+          `  Ripetuta ${rep.rep_number}: ${rep.distance_m} m | ${fmtTime(rep.time_sec)} | recupero ${rep.rest_sec ?? "-"} s`,
+      ),
+    ]),
   );
   section(
     "TEST ATLETICI",
     data.tests.map(
       (test) =>
-        `${test.date} | ${test.type} | ${test.result} | FC ${test.avg_hr ?? "-"} | ${test.calories ?? "-"} kcal${test.notes ? ` | note: ${test.notes}` : ""}`,
+        `${test.date} | ${test.type} | ${test.result} | FC ${test.avg_hr ?? "-"} | meteo ${test.weather ?? "-"} | ${test.calories ?? "-"} kcal${test.notes ? ` | note: ${test.notes}` : ""}${test.observations ? ` | osservazioni: ${test.observations}` : ""}`,
     ),
   );
   section(
     "GARE",
     data.races.map(
       (race) =>
-        `${race.date} | ${race.name} | ${race.distance_m} m | ${fmtTime(race.time_sec)} | posizione ${race.placement ?? "-"} | ${race.calories ?? "-"} kcal${race.notes ? ` | note: ${race.notes}` : ""}`,
+        `${race.date} | ${race.name} | luogo ${race.location ?? "-"} | ${race.distance_m} m | ${fmtTime(race.time_sec)} | posizione ${race.placement ?? "-"} | categoria ${race.category ?? "-"} | FC ${race.avg_hr ?? "-"} | ${race.calories ?? "-"} kcal${race.notes ? ` | note: ${race.notes}` : ""}`,
     ),
   );
   section(

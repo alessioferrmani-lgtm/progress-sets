@@ -117,7 +117,14 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
     new URL("../src/routes/_authenticated/profile/export.tsx", import.meta.url),
     "utf8",
   );
+  const profile = readFileSync(
+    new URL("../src/routes/_authenticated/profile.tsx", import.meta.url),
+    "utf8",
+  );
   for (const section of [
+    "PROFILO",
+    "STORICO PESO",
+    "SCHEDE PALESTRA SALVATE",
     "ALLENAMENTI PALESTRA",
     "SERIE PALESTRA",
     "SESSIONI ATLETICA - RIPETUTE",
@@ -128,11 +135,16 @@ test("l'esportazione testuale contiene tutte le sezioni e si può aprire e copia
   ]) {
     assert.match(exporter, new RegExp(section));
   }
-  assert.match(page, /href=\{`\/profile\/export\?view=text&period=\$\{period\}`\}/);
-  assert.match(page, /target="_blank"/);
-  assert.match(page, /TextExportView/);
-  assert.match(page, /Riepilogo completo dei progressi/);
-  assert.doesNotMatch(page, /window\.open\("about:blank"/);
+  assert.match(exporter, /from\("weight_logs"\)/);
+  assert.match(exporter, /from\("workout_templates"\)/);
+  assert.match(exporter, /rep_number,distance_m,time_sec,rest_sec/);
+  assert.match(exporter, /Ripetuta \$\{rep\.rep_number\}/);
+  assert.match(page, /prepareTextExport\("all"\)/);
+  assert.match(page, /aria-label="Tutti i dati salvati in formato testo"/);
+  assert.match(page, /Copia tutto/);
+  assert.doesNotMatch(page, /window\.open|target="_blank"|Formato|Periodo/);
+  assert.match(profile, /<Link to="\/profile\/export"/);
+  assert.match(profile, />Esporta dati</);
 });
 
 test("Home mostra il promemoria del peso e permette l'aggiornamento rapido", () => {
