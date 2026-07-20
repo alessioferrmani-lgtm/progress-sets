@@ -1,11 +1,8 @@
-import {
-  Outlet,
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { RestTimerBar } from "@/components/RestTimerBar";
 import { BottomTabBar } from "@/components/BottomTabBar";
+import { InterruptedWorkoutPrompt } from "@/components/InterruptedWorkoutPrompt";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -28,6 +25,7 @@ function AuthedLayout() {
       <Outlet />
       <RestTimerBar />
       <BottomTabBar />
+      <InterruptedWorkoutPrompt />
     </div>
   );
 }

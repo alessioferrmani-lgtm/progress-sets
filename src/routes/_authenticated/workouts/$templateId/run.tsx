@@ -1,12 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchPreviousSets, fetchTemplate, type TemplateExercise } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
 import { X, Check, Plus, Minus } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
+import {
+  ensureActiveWorkout,
+  finishActiveWorkout,
+  readActiveWorkoutDraft,
+  saveActiveWorkoutDraft,
+} from "@/lib/active-workout";
 
 export const Route = createFileRoute("/_authenticated/workouts/$templateId/run")({
   component: RunPage,
@@ -24,13 +30,14 @@ type Row = {
 function RunPage() {
   const { templateId } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: templateData } = useQuery({
     queryKey: ["template", templateId],
     queryFn: () => fetchTemplate(templateId),
   });
 
-  const exercises = templateData?.exercises ?? [];
+  const exercises = useMemo(() => templateData?.exercises ?? [], [templateData?.exercises]);
   const exerciseIds = useMemo(() => exercises.map((e) => e.exercise_id), [exercises]);
 
   const { data: previous } = useQuery({
@@ -39,76 +46,156 @@ function RunPage() {
     enabled: exerciseIds.length > 0,
   });
 
-  // Create session on mount
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [startedAt, setStartedAt] = useState<number>(Date.now());
+  const activeWorkout = useQuery({
+    queryKey: ["active-workout-bootstrap", templateId],
+    queryFn: () => ensureActiveWorkout(templateId),
+    staleTime: Infinity,
+    retry: 1,
+  });
+  const activeWorkoutData = activeWorkout.data;
+  const sessionId = activeWorkoutData?.session.id ?? null;
+  const [timerStartedAt, setTimerStartedAt] = useState(Date.now());
+  const [restoredTimerSessionId, setRestoredTimerSessionId] = useState<string | null>(null);
+
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .insert({ user_id: u.user!.id, template_id: templateId })
-        .select("id,started_at")
-        .single();
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      if (mounted) {
-        setSessionId(data.id);
-        setStartedAt(new Date(data.started_at).getTime());
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [templateId]);
+    if (!activeWorkoutData) return;
+    setTimerStartedAt(Date.now() - activeWorkoutData.draft.elapsedSec * 1000);
+    setRestoredTimerSessionId(activeWorkoutData.session.id);
+  }, [activeWorkoutData]);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, Row[]>>({});
+  const [rowsInitialized, setRowsInitialized] = useState(false);
 
-  // Initialize rows once template + previous loaded
+  // Rebuild both completed sets (database) and unconfirmed fields (local draft).
   useEffect(() => {
-    if (!templateData || !previous) return;
-    setRowsByExercise((current) => {
-      if (Object.keys(current).length > 0) return current;
-      const next: Record<string, Row[]> = {};
-      templateData.exercises.forEach((ex) => {
-        const prevMap = previous.get(ex.exercise_id);
-        const firstPrevious = prevMap?.get(1);
-        next[ex.id] = Array.from({ length: ex.target_sets }, (_, i) => {
-          const setNum = i + 1;
-          const p = prevMap?.get(setNum);
-          const kg = p?.weight_kg ?? firstPrevious?.weight_kg ?? ex.target_weight_kg ?? 0;
-          const reps = p?.reps ?? firstPrevious?.reps ?? ex.target_reps ?? null;
-          return {
-            set_number: setNum,
-            weight: kg ? String(kg) : "",
-            reps: reps ? String(reps) : "",
-            completed: false,
-          };
-        });
-      });
-      return next;
+    if (!templateData || !previous || !activeWorkoutData || rowsInitialized) return;
+    const completedByKey = new Map<string, (typeof activeWorkoutData.loggedSets)[number]>();
+    activeWorkoutData.loggedSets.forEach((set) => {
+      completedByKey.set(`${set.exercise_id}:${set.set_number}`, set);
     });
-  }, [templateData, previous]);
+    const next: Record<string, Row[]> = {};
+    templateData.exercises.forEach((ex) => {
+      const prevMap = previous.get(ex.exercise_id);
+      const firstPrevious = prevMap?.get(1);
+      const savedRows = activeWorkoutData.draft.rowsByExercise[ex.id] ?? [];
+      const completedSetNumbers = activeWorkoutData.loggedSets
+        .filter((set) => set.exercise_id === ex.exercise_id)
+        .map((set) => set.set_number);
+      const rowCount = Math.max(ex.target_sets, savedRows.length, ...completedSetNumbers, 0);
+      next[ex.id] = Array.from({ length: rowCount }, (_, i) => {
+        const setNum = i + 1;
+        const p = prevMap?.get(setNum);
+        const completed = completedByKey.get(`${ex.exercise_id}:${setNum}`);
+        const saved = savedRows[i];
+        const kg =
+          completed?.weight_kg ??
+          saved?.weight ??
+          p?.weight_kg ??
+          firstPrevious?.weight_kg ??
+          ex.target_weight_kg ??
+          0;
+        const reps =
+          completed?.reps ??
+          saved?.reps ??
+          p?.reps ??
+          firstPrevious?.reps ??
+          ex.target_reps ??
+          null;
+        return {
+          set_number: setNum,
+          weight: kg ? String(kg) : "",
+          reps: reps ? String(reps) : "",
+          completed: Boolean(completed),
+          completedAt: completed ? new Date(completed.completed_at).getTime() : undefined,
+          logId: completed?.id,
+        };
+      });
+    });
+    setRowsByExercise(next);
+    setActiveIdx(
+      Math.min(activeWorkoutData.draft.activeIdx, Math.max(templateData.exercises.length - 1, 0)),
+    );
+    setRowsInitialized(true);
+  }, [activeWorkoutData, previous, rowsInitialized, templateData]);
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const elapsed = Math.floor((now - startedAt) / 1000);
+  const elapsed = Math.max(0, Math.floor((now - timerStartedAt) / 1000));
   const em = Math.floor(elapsed / 60);
   const es = String(elapsed % 60).padStart(2, "0");
+  const persistTick = Math.floor(now / 5000);
+
+  const persistWorkout = useCallback(() => {
+    const bootstrap = activeWorkoutData;
+    if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
+    saveActiveWorkoutDraft({
+      version: 1,
+      sessionId: bootstrap.session.id,
+      templateId,
+      sessionStartedAt: bootstrap.session.startedAt,
+      elapsedSec: Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
+      activeIdx,
+      rowsByExercise: Object.fromEntries(
+        Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
+          exerciseId,
+          exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+        ]),
+      ),
+      updatedAt: new Date().toISOString(),
+    });
+  }, [
+    activeIdx,
+    activeWorkoutData,
+    restoredTimerSessionId,
+    rowsInitialized,
+    rowsByExercise,
+    templateId,
+    timerStartedAt,
+  ]);
+
+  useEffect(() => {
+    if (typeof document === "undefined" || document.visibilityState !== "visible") return;
+    persistWorkout();
+  }, [persistTick, persistWorkout]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        persistWorkout();
+        return;
+      }
+      const stored = readActiveWorkoutDraft();
+      if (stored?.sessionId === sessionId) {
+        setTimerStartedAt(Date.now() - stored.elapsedSec * 1000);
+      }
+    };
+    const handleUnload = () => persistWorkout();
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", handleUnload);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [persistWorkout, sessionId]);
 
   const timer = useRestTimer();
 
   const activeEx = exercises[activeIdx];
   const rows = activeEx ? (rowsByExercise[activeEx.id] ?? []) : [];
 
-  const totalSets = exercises.reduce((s, e) => s + e.target_sets, 0);
+  const initializedSetCount = Object.values(rowsByExercise).reduce(
+    (total, exerciseRows) => total + exerciseRows.length,
+    0,
+  );
+  const totalSets =
+    initializedSetCount || exercises.reduce((total, exercise) => total + exercise.target_sets, 0);
   const completedSets = Object.values(rowsByExercise)
     .flat()
     .filter((r) => r.completed).length;
@@ -206,48 +293,42 @@ function RunPage() {
   };
 
   const finish = async () => {
-    if (!sessionId) return;
-    const endedAt = new Date();
-    // Compute calories from profile + duration (MET-based for gym)
-    let calories: number | null = null;
+    if (!sessionId || !activeWorkout.data) return;
+    persistWorkout();
     try {
-      const { fetchMyProfile } = await import("@/lib/profile-queries");
-      const { computeCaloriesForSession } = await import("@/lib/calories");
-      const profile = await fetchMyProfile();
-      if (profile) {
-        const durationMin = (endedAt.getTime() - startedAt) / 60000;
-        calories = computeCaloriesForSession(profile, {
-          duration_min: durationMin,
-        });
-      }
-    } catch {
-      // ignore, calories stays null
-    }
-    const { error } = await supabase
-      .from("workout_sessions")
-      .update({ ended_at: endedAt.toISOString(), calories_burned: calories })
-      .eq("id", sessionId);
-    if (error) {
-      toast.error(`Impossibile salvare l'allenamento: ${error.message}`);
+      await finishActiveWorkout(activeWorkout.data.session, elapsed);
+    } catch (reason) {
+      toast.error(
+        `Impossibile salvare l'allenamento: ${reason instanceof Error ? reason.message : "errore sconosciuto"}`,
+      );
       return;
     }
     timer.skip();
+    queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", templateId] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["active-workout"] }),
+      queryClient.invalidateQueries({ queryKey: ["dash"] }),
+      queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
+    ]);
     navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
   };
 
   const cancel = async () => {
-    if (!confirm("Uscire dall'allenamento? La sessione verrà chiusa.")) return;
-    if (sessionId) {
-      await supabase
-        .from("workout_sessions")
-        .update({ ended_at: new Date().toISOString() })
-        .eq("id", sessionId);
-    }
+    if (!confirm("Uscire dall’allenamento? Potrai continuarlo senza perdere i dati.")) return;
+    persistWorkout();
     timer.skip();
     navigate({ to: "/workouts" });
   };
 
-  if (!templateData) {
+  if (activeWorkout.isError) {
+    return (
+      <div className="p-6 text-center text-danger">
+        Impossibile recuperare l’allenamento: {activeWorkout.error.message}
+      </div>
+    );
+  }
+
+  if (!templateData || activeWorkout.isPending) {
     return <div className="p-6 text-center text-label-tertiary">Caricamento…</div>;
   }
 
