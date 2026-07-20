@@ -12,13 +12,18 @@ function CompleteTextExportPage() {
   const [report, setReport] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [warningCount, setWarningCount] = useState(0);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const loadReport = useCallback(async () => {
     setLoading(true);
     setError("");
+    setWarningCount(0);
     try {
-      setReport(await loadProgressExportJson());
+      const json = await loadProgressExportJson();
+      const parsed = JSON.parse(json) as { export_warnings?: unknown[] };
+      setWarningCount(parsed.export_warnings?.length ?? 0);
+      setReport(json);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Impossibile caricare i dati salvati");
       setReport("");
@@ -41,6 +46,16 @@ function CompleteTextExportPage() {
         field.focus();
         field.select();
         field.setSelectionRange(0, field.value.length);
+        let copied = false;
+        try {
+          copied = document.execCommand("copy");
+        } catch {
+          copied = false;
+        }
+        if (copied) {
+          toast.success("Tutti i dati sono stati copiati");
+          return;
+        }
       }
       toast.info("Testo selezionato: scegli Copia dal menu del telefono");
     }
@@ -75,6 +90,12 @@ function CompleteTextExportPage() {
         </div>
       ) : (
         <>
+          {warningCount > 0 && (
+            <div className="ios-card mt-5 border border-warning/40 p-4 text-sm text-label-secondary">
+              Il JSON è stato creato. {warningCount} sezioni non erano accessibili: trovi i dettagli
+              nel campo <span className="font-mono text-label">export_warnings</span>.
+            </div>
+          )}
           <button
             type="button"
             onClick={copyAll}
