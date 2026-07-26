@@ -12,7 +12,29 @@ export type MuscleGroup =
   | "tibialis"
   | "forearms";
 
+const ANKLE_PATTERN =
+  /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba/i;
+
 const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
+  {
+    match: ANKLE_PATTERN,
+    groups: ["tibialis", "calves"],
+  },
+  { match: /wrist curl|reverse wrist curl|wrist roller|plate pinch|pinch grip/i, groups: ["forearms"] },
+  { match: /curl alla panca scott/i, groups: ["biceps"] },
+  { match: /rematore chest.?supported|chest.?supported row/i, groups: ["back", "biceps"] },
+  { match: /iperestension|reverse hyper|back extension 45/i, groups: ["back", "hamstrings", "glutes"] },
+  { match: /pullover con manubrio/i, groups: ["back", "chest"] },
+  { match: /vogatore|rower/i, groups: ["back", "biceps", "quads", "hamstrings", "glutes"] },
+  { match: /rack pull/i, groups: ["back", "hamstrings", "glutes"] },
+  { match: /straight.?arm pulldown/i, groups: ["back"] },
+  { match: /pallof|woodchop|hollow body|v.?up|toes to bar|rollout|copenhagen plank/i, groups: ["abs"] },
+  { match: /plank shoulder tap|bear crawl/i, groups: ["abs", "shoulders"] },
+  { match: /crossover|floor press|svend press|hex press|landmine chest/i, groups: ["chest", "triceps"] },
+  { match: /cuban press|rear delt row|band pull.?apart|scaption|y raise/i, groups: ["shoulders"] },
+  { match: /external rotation/i, groups: ["shoulders"] },
+  { match: /pike push.?up|landmine shoulder press/i, groups: ["shoulders", "triceps"] },
+  { match: /jm press|tate press|rolling dumbbell triceps|triceps extension machine/i, groups: ["triceps"] },
   { match: /panca stretta|close.grip|dip tricip/i, groups: ["triceps", "chest"] },
   {
     match: /panca|bench|push[- ]?up|chest|pettoral|croci|fly|dip alle/i,
@@ -68,6 +90,8 @@ const STORED_GROUPS: Record<string, MuscleGroup[]> = {
   tibiali: ["tibialis"],
   "tibiali (stinchi)": ["tibialis"],
   avambracci: ["forearms"],
+  caviglia: ["tibialis", "calves"],
+  caviglie: ["tibialis", "calves"],
   gambe: ["quads", "hamstrings", "glutes", "calves"],
   cardio: ["quads", "hamstrings", "glutes", "calves"],
   atletica: ["quads", "hamstrings", "glutes", "calves"],
@@ -83,6 +107,11 @@ export function musclesFor(exerciseName: string, storedGroup?: string | null): M
 
 /** Value stored for custom imported exercises, derived from the same central mapping. */
 export function storedMuscleGroupFor(exerciseName: string): string | null {
+  if (
+    ANKLE_PATTERN.test(exerciseName)
+  ) {
+    return "Caviglia";
+  }
   const primary = musclesFor(exerciseName)[0];
   return primary
     ? (
