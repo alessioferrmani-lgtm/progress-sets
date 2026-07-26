@@ -301,7 +301,7 @@ function FreeWorkoutPage() {
     setIsFinishing(true);
     persistWorkout();
     try {
-      await finishActiveWorkout(session, elapsed);
+      await finishActiveWorkout(session, elapsed, completedSets > 0);
       timer.skip();
       queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", "free"] });
       await Promise.all([
@@ -347,14 +347,16 @@ function FreeWorkoutPage() {
             {elapsedMinutes}:{elapsedSeconds} · {completedSets}/{totalSets || 0} serie
           </div>
         </div>
-        <button
-          type="button"
-          onClick={finish}
-          className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
-          aria-label="Termina allenamento"
-        >
-          Termina allenamento
-        </button>
+        {selectedIds.length > 0 && (
+          <button
+            type="button"
+            onClick={finish}
+            className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
+            aria-label="Termina allenamento"
+          >
+            Termina allenamento
+          </button>
+        )}
       </header>
 
       {selectedIds.length > 0 && (

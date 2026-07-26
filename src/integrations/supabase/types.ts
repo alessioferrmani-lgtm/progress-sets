@@ -23,6 +23,7 @@ export type Database = {
           is_default: boolean
           muscle_group: string | null
           name: string
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -32,6 +33,7 @@ export type Database = {
           is_default?: boolean
           muscle_group?: string | null
           name: string
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           is_default?: boolean
           muscle_group?: string | null
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -305,6 +308,7 @@ export type Database = {
           target_sets: number
           target_weight_kg: number | null
           template_id: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -318,6 +322,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -331,6 +336,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id?: string
+          user_id?: string
         }
         Relationships: [
           {

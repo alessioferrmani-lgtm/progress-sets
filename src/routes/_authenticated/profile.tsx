@@ -219,7 +219,10 @@ function ProfilePage() {
           </Link>
         </li>
         <li>
-          <a href="mailto:?subject=Feedback" className="ios-list-row">
+          <a
+            href="mailto:alessioferrmani@gmail.com?subject=Progress%20Sets%20Feedback"
+            className="ios-list-row"
+          >
             <Mail className="h-4 w-4 text-label-secondary" />
             <span className="min-w-0 flex-1 text-sm text-label">Feedback</span>
             <ChevronRight className="h-4 w-4 text-label-tertiary" />

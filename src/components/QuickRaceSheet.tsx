@@ -65,8 +65,6 @@ export function QuickRaceSheet({
         notes: sensations.trim() || null,
         calories_burned: calories,
       };
-      // eslint-disable-next-line no-console
-      console.log("[QuickRaceSheet] insert payload", payload);
       const { error } = await supabase.from("races").insert(payload);
       if (error) throw error;
     },

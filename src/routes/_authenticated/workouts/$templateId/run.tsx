@@ -308,7 +308,7 @@ function RunPage() {
     setIsFinishing(true);
     persistWorkout();
     try {
-      await finishActiveWorkout(activeWorkout.data.session, elapsed);
+      await finishActiveWorkout(activeWorkout.data.session, elapsed, completedSets > 0);
     } catch (reason) {
       toast.error(
         `Impossibile salvare l'allenamento: ${reason instanceof Error ? reason.message : "errore sconosciuto"}`,
