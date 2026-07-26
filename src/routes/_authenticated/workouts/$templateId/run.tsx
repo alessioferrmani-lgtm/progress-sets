@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchPreviousSets, fetchTemplate, type TemplateExercise } from "@/lib/workout-queries";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
 import { X, Check, Plus, Minus } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
+import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
@@ -64,6 +65,7 @@ function RunPage() {
   }, [activeWorkoutData]);
 
   const [activeIdx, setActiveIdx] = useState(0);
+  const [activeSetIdx, setActiveSetIdx] = useState(0);
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, Row[]>>({});
   const [rowsInitialized, setRowsInitialized] = useState(false);
 
@@ -116,6 +118,7 @@ function RunPage() {
     setActiveIdx(
       Math.min(activeWorkoutData.draft.activeIdx, Math.max(templateData.exercises.length - 1, 0)),
     );
+    setActiveSetIdx(0);
     setRowsInitialized(true);
   }, [activeWorkoutData, previous, rowsInitialized, templateData]);
 
@@ -189,6 +192,7 @@ function RunPage() {
 
   const activeEx = exercises[activeIdx];
   const rows = activeEx ? (rowsByExercise[activeEx.id] ?? []) : [];
+  const activeRow = rows[activeSetIdx] ?? rows[0];
 
   const initializedSetCount = Object.values(rowsByExercise).reduce(
     (total, exerciseRows) => total + exerciseRows.length,
@@ -250,9 +254,15 @@ function RunPage() {
       : null;
     const restTaken = lastTs ? Math.round((Date.now() - lastTs) / 1000) : null;
 
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      toast.error("Sessione scaduta: accedi di nuovo");
+      return;
+    }
     const { data, error } = await supabase
       .from("logged_sets")
       .insert({
+        user_id: userData.user.id,
         session_id: sessionId,
         exercise_id: activeEx.exercise_id,
         set_number: row.set_number,
@@ -288,6 +298,7 @@ function RunPage() {
       });
       if (anyIncomplete && activeIdx < exercises.length - 1) {
         setActiveIdx(activeIdx + 1);
+        setActiveSetIdx(0);
       }
     }
   };
@@ -368,7 +379,10 @@ function RunPage() {
           return (
             <button
               key={ex.id}
-              onClick={() => setActiveIdx(i)}
+              onClick={() => {
+                setActiveIdx(i);
+                setActiveSetIdx(0);
+              }}
               className={
                 "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors " +
                 (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
@@ -381,103 +395,122 @@ function RunPage() {
       </div>
 
       {activeEx &&
+        activeRow &&
         (() => {
           const isCount = activeEx.reps_type === "count";
+          const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
-            <div className="px-4">
-              <div className="ios-card overflow-hidden">
-                <div className="border-b border-separator px-4 py-3">
-                  <div className="text-base font-semibold text-label">{activeEx.exercise.name}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-label-secondary">
-                    <span>Recupero target: {activeEx.rest_seconds}s</span>
-                    {!isCount && activeEx.reps_display && (
-                      <span className="rounded-full bg-fill px-2 py-0.5 text-[10px] font-semibold uppercase text-label">
-                        {activeEx.reps_display}
-                      </span>
+            <div className="space-y-3 px-4 pb-6">
+              <div className="ios-card overflow-hidden p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-2xl font-bold text-label">{activeEx.exercise.name}</div>
+                    <div className="mt-1 text-xs text-label-secondary">
+                      Recupero target: {activeEx.rest_seconds}s
+                      {!isCount && activeEx.reps_display ? ` · ${activeEx.reps_display}` : ""}
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-fill px-3 py-1.5 text-sm font-semibold text-label-secondary">
+                    Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
+                  </span>
+                </div>
+
+                <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+                  {rows.map((row, index) => (
+                    <button
+                      key={row.set_number}
+                      type="button"
+                      onClick={() => setActiveSetIdx(index)}
+                      className={
+                        "flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold " +
+                        (index === activeSetIdx
+                          ? "border-accent bg-accent text-accent-foreground"
+                          : row.completed
+                            ? "border-success bg-success/15 text-success"
+                            : "border-separator bg-fill text-label-secondary")
+                      }
+                      aria-label={`Seleziona serie ${row.set_number}`}
+                    >
+                      {row.set_number}
+                    </button>
+                  ))}
+                </div>
+
+                {previousSet && (
+                  <div className="mt-4 rounded-xl bg-fill-secondary px-3 py-2 text-center text-xs text-label-secondary">
+                    Precedente: {previousSet.weight_kg} kg × {previousSet.reps}
+                  </div>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-fill-secondary p-3 text-center">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-label-tertiary">
+                      Carico kg
+                    </div>
+                    <NumberCell
+                      value={activeRow.weight}
+                      disabled={activeRow.completed}
+                      large
+                      step={2.5}
+                      onChange={(value) =>
+                        setRowsByExercise((current) => ({
+                          ...current,
+                          [activeEx.id]: updateWeightAndPropagate(
+                            current[activeEx.id] ?? [],
+                            activeSetIdx,
+                            value,
+                          ),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="rounded-2xl bg-fill-secondary p-3 text-center">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-label-tertiary">
+                      {isCount ? "Ripetizioni" : "Target"}
+                    </div>
+                    {isCount ? (
+                      <NumberCell
+                        value={activeRow.reps}
+                        disabled={activeRow.completed}
+                        large
+                        step={1}
+                        integer
+                        onChange={(value) =>
+                          setRowsByExercise((current) => {
+                            const next = { ...current };
+                            const list = [...(next[activeEx.id] ?? [])];
+                            list[activeSetIdx] = { ...list[activeSetIdx], reps: value };
+                            next[activeEx.id] = list;
+                            return next;
+                          })
+                        }
+                      />
+                    ) : (
+                      <div className="mt-4 text-3xl font-semibold text-label">
+                        {activeEx.reps_display ?? "—"}
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator bg-fill-secondary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-label-tertiary">
-                  <div>Serie</div>
-                  <div>Precedente</div>
-                  <div className="text-center">Kg</div>
-                  <div className="text-center">{isCount ? "Rep" : "Target"}</div>
-                  <div />
-                </div>
-                <ul>
-                  {rows.map((r, i) => {
-                    const prev = previous?.get(activeEx.exercise_id)?.get(r.set_number);
-                    return (
-                      <li
-                        key={r.set_number}
-                        className={
-                          "grid grid-cols-[36px_1fr_1fr_1fr_44px] items-center gap-2 border-b border-separator px-3 py-2 last:border-b-0 " +
-                          (r.completed ? "bg-row-completed" : "")
-                        }
-                      >
-                        <div className="text-center text-sm font-semibold text-label">
-                          {r.set_number}
-                        </div>
-                        <div className="text-xs text-label-secondary">
-                          {prev ? `${prev.weight_kg}kg × ${prev.reps}` : "-"}
-                        </div>
-                        <NumberCell
-                          value={r.weight}
-                          disabled={r.completed}
-                          step={2.5}
-                          onChange={(v) =>
-                            setRowsByExercise((c) => {
-                              const next = { ...c };
-                              next[activeEx.id] = updateWeightAndPropagate(
-                                next[activeEx.id] ?? [],
-                                i,
-                                v,
-                              );
-                              return next;
-                            })
-                          }
-                        />
-                        {isCount ? (
-                          <NumberCell
-                            value={r.reps}
-                            disabled={r.completed}
-                            step={1}
-                            integer
-                            onChange={(v) =>
-                              setRowsByExercise((c) => {
-                                const next = { ...c };
-                                const list = [...(next[activeEx.id] ?? [])];
-                                list[i] = { ...list[i], reps: v };
-                                next[activeEx.id] = list;
-                                return next;
-                              })
-                            }
-                          />
-                        ) : (
-                          <div className="text-center text-xs font-medium text-label-secondary">
-                            {activeEx.reps_display ?? "-"}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => confirmSet(i)}
-                          className={
-                            "flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
-                            (r.completed
-                              ? "bg-success text-white"
-                              : "bg-fill text-label active:bg-accent active:text-accent-foreground")
-                          }
-                          aria-label={r.completed ? "Rimuovi spunta serie" : "Conferma serie"}
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+
                 <button
-                  onClick={() =>
-                    setRowsByExercise((c) => {
-                      const list = [...(c[activeEx.id] ?? [])];
+                  type="button"
+                  onClick={() => confirmSet(activeSetIdx)}
+                  aria-label={activeRow.completed ? "Rimuovi spunta serie" : "Conferma serie"}
+                  className={
+                    "mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white active:scale-[0.99] " +
+                    (activeRow.completed ? "bg-success" : "bg-accent")
+                  }
+                >
+                  <Check className="size-5" />
+                  {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRowsByExercise((current) => {
+                      const list = [...(current[activeEx.id] ?? [])];
                       const nextNum = list.length + 1;
                       const prev = previous?.get(activeEx.exercise_id)?.get(nextNum);
                       const reference = list[list.length - 1] ?? list[0];
@@ -489,14 +522,16 @@ function RunPage() {
                         reps: String(prev?.reps ?? reference?.reps ?? activeEx.target_reps ?? ""),
                         completed: false,
                       });
-                      return { ...c, [activeEx.id]: list };
-                    })
-                  }
-                  className="flex w-full items-center justify-center gap-1 py-2.5 text-sm font-medium text-accent active:opacity-70"
+                      return { ...current, [activeEx.id]: list };
+                    });
+                    setActiveSetIdx(rows.length);
+                  }}
+                  className="mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-medium text-accent active:opacity-70"
                 >
-                  <Plus className="h-4 w-4" /> Aggiungi serie
+                  <Plus className="size-4" /> Aggiungi serie
                 </button>
               </div>
+              <WorkoutRecoveryCard />
             </div>
           );
         })()}
@@ -510,12 +545,14 @@ function NumberCell({
   disabled,
   step,
   integer,
+  large,
 }: {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
   step: number;
   integer?: boolean;
+  large?: boolean;
 }) {
   const inc = (dir: 1 | -1) => {
     const n = Number(value || 0) + dir * step;
@@ -523,12 +560,18 @@ function NumberCell({
     onChange(integer ? String(Math.round(n)) : String(Math.round(n * 100) / 100));
   };
   return (
-    <div className="flex items-center gap-1">
+    <div
+      className={large ? "mt-3 flex items-center justify-center gap-2" : "flex items-center gap-1"}
+    >
       <button
         type="button"
         disabled={disabled}
         onClick={() => inc(-1)}
-        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
+        className={
+          large
+            ? "flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label active:opacity-70 disabled:opacity-40"
+            : "flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
+        }
         aria-label="Diminuisci"
       >
         <Minus className="h-3 w-3" />
@@ -540,13 +583,21 @@ function NumberCell({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={(e) => e.target.select()}
-        className="w-full min-w-0 rounded-md bg-fill-secondary py-1.5 text-center text-sm font-medium text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+        className={
+          large
+            ? "w-full min-w-0 bg-transparent py-1 text-center text-4xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+            : "w-full min-w-0 rounded-md bg-fill-secondary py-1.5 text-center text-sm font-medium text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+        }
       />
       <button
         type="button"
         disabled={disabled}
         onClick={() => inc(1)}
-        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
+        className={
+          large
+            ? "flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label active:opacity-70 disabled:opacity-40"
+            : "flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
+        }
         aria-label="Aumenta"
       >
         <Plus className="h-3 w-3" />

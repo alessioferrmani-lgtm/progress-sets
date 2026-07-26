@@ -1,13 +1,16 @@
 import { useRestTimer } from "@/lib/rest-timer-store";
+import { useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { Bell, Plus, Minus, X } from "lucide-react";
 
 export function RestTimerBar() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported"
   >(() => (typeof Notification === "undefined" ? "unsupported" : Notification.permission));
   const { running, endsAt, duration, exerciseName, now, addSeconds, skip } = useRestTimer();
-  if (!running) return null;
+  const immersiveWorkout = /^\/workouts\/(?:free|[^/]+\/run)\/?$/.test(pathname);
+  if (!running || immersiveWorkout) return null;
   const remainingMs = Math.max(0, endsAt - now);
   const remaining = Math.ceil(remainingMs / 1000);
   const pct = Math.max(0, Math.min(100, (remainingMs / (duration * 1000)) * 100));

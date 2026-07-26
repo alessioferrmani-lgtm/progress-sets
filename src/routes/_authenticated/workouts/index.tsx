@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTemplates } from "@/lib/workout-queries";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Dumbbell, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -30,6 +30,13 @@ function WorkoutsIndex() {
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
       >
         <Plus className="h-4 w-4" /> Nuova sessione ripetute
+      </Link>
+
+      <Link
+        to="/workouts/free"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-fill py-3 text-sm font-semibold text-accent active:opacity-70"
+      >
+        <Dumbbell className="h-4 w-4" /> Allenamento libero
       </Link>
 
       <div className="mt-5 space-y-2">

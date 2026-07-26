@@ -18,6 +18,7 @@ import { Route as AuthenticatedAthleticsRouteRouteImport } from './routes/_authe
 import { Route as AuthenticatedWorkoutsIndexRouteImport } from './routes/_authenticated/workouts/index'
 import { Route as AuthenticatedAthleticsIndexRouteImport } from './routes/_authenticated/athletics/index'
 import { Route as AuthenticatedWorkoutsNewRouteImport } from './routes/_authenticated/workouts/new'
+import { Route as AuthenticatedWorkoutsFreeRouteImport } from './routes/_authenticated/workouts/free'
 import { Route as AuthenticatedProfileExportRouteImport } from './routes/_authenticated/profile/export'
 import { Route as AuthenticatedAthleticsTestsRouteImport } from './routes/_authenticated/athletics/tests'
 import { Route as AuthenticatedAthleticsRacesRouteImport } from './routes/_authenticated/athletics/races'
@@ -75,6 +76,12 @@ const AuthenticatedWorkoutsNewRoute =
   AuthenticatedWorkoutsNewRouteImport.update({
     id: '/workouts/new',
     path: '/workouts/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWorkoutsFreeRoute =
+  AuthenticatedWorkoutsFreeRouteImport.update({
+    id: '/workouts/free',
+    path: '/workouts/free',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedProfileExportRoute =
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/profile/export': typeof AuthenticatedProfileExportRoute
+  '/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/athletics/': typeof AuthenticatedAthleticsIndexRoute
   '/workouts/': typeof AuthenticatedWorkoutsIndexRoute
@@ -166,6 +174,7 @@ export interface FileRoutesByTo {
   '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/profile/export': typeof AuthenticatedProfileExportRoute
+  '/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/athletics': typeof AuthenticatedAthleticsIndexRoute
   '/workouts': typeof AuthenticatedWorkoutsIndexRoute
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/_authenticated/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/_authenticated/profile/export': typeof AuthenticatedProfileExportRoute
+  '/_authenticated/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/_authenticated/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/_authenticated/athletics/': typeof AuthenticatedAthleticsIndexRoute
   '/_authenticated/workouts/': typeof AuthenticatedWorkoutsIndexRoute
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/athletics/races'
     | '/athletics/tests'
     | '/profile/export'
+    | '/workouts/free'
     | '/workouts/new'
     | '/athletics/'
     | '/workouts/'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/athletics/races'
     | '/athletics/tests'
     | '/profile/export'
+    | '/workouts/free'
     | '/workouts/new'
     | '/athletics'
     | '/workouts'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/athletics/races'
     | '/_authenticated/athletics/tests'
     | '/_authenticated/profile/export'
+    | '/_authenticated/workouts/free'
     | '/_authenticated/workouts/new'
     | '/_authenticated/athletics/'
     | '/_authenticated/workouts/'
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/workouts/new'
       fullPath: '/workouts/new'
       preLoaderRoute: typeof AuthenticatedWorkoutsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/workouts/free': {
+      id: '/_authenticated/workouts/free'
+      path: '/workouts/free'
+      fullPath: '/workouts/free'
+      preLoaderRoute: typeof AuthenticatedWorkoutsFreeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile/export': {
@@ -470,6 +490,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAthleticsRouteRoute: typeof AuthenticatedAthleticsRouteRouteWithChildren
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRouteWithChildren
+  AuthenticatedWorkoutsFreeRoute: typeof AuthenticatedWorkoutsFreeRoute
   AuthenticatedWorkoutsNewRoute: typeof AuthenticatedWorkoutsNewRoute
   AuthenticatedWorkoutsIndexRoute: typeof AuthenticatedWorkoutsIndexRoute
   AuthenticatedSessionsSessionIdSummaryRoute: typeof AuthenticatedSessionsSessionIdSummaryRoute
@@ -484,6 +505,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAthleticsRouteRouteWithChildren,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRouteWithChildren,
+  AuthenticatedWorkoutsFreeRoute: AuthenticatedWorkoutsFreeRoute,
   AuthenticatedWorkoutsNewRoute: AuthenticatedWorkoutsNewRoute,
   AuthenticatedWorkoutsIndexRoute: AuthenticatedWorkoutsIndexRoute,
   AuthenticatedSessionsSessionIdSummaryRoute:

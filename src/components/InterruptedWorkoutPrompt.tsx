@@ -16,7 +16,8 @@ export function InterruptedWorkoutPrompt() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [confirmDelete, setConfirmDelete] = useState(false);
   const timer = useRestTimer();
-  const isRunningWorkout = /^\/workouts\/[^/]+\/run\/?$/.test(pathname);
+  const isRunningWorkout =
+    pathname === "/workouts/free" || /^\/workouts\/[^/]+\/run\/?$/.test(pathname);
 
   const activeWorkout = useQuery({
     queryKey: ["active-workout"],
@@ -135,12 +136,16 @@ export function InterruptedWorkoutPrompt() {
             <button
               type="button"
               disabled={isPending}
-              onClick={() =>
-                navigate({
-                  to: "/workouts/$templateId/run",
-                  params: { templateId: workout.templateId },
-                })
-              }
+              onClick={() => {
+                if (workout.templateId) {
+                  navigate({
+                    to: "/workouts/$templateId/run",
+                    params: { templateId: workout.templateId },
+                  });
+                } else {
+                  navigate({ to: "/workouts/free" });
+                }
+              }}
               className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-5 font-semibold text-accent-foreground active:scale-[0.99] disabled:opacity-50"
             >
               <Play className="size-5 fill-current" /> Continua allenamento

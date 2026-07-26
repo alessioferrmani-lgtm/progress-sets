@@ -14,17 +14,21 @@ export type ActiveWorkoutRowDraft = {
 export type ActiveWorkoutDraft = {
   version: 1;
   sessionId: string;
-  templateId: string;
+  /** Null identifies a free workout without a saved template. */
+  templateId: string | null;
   sessionStartedAt: string;
   elapsedSec: number;
   activeIdx: number;
+  /** Exercise ids selected during a free workout. */
+  exerciseIds?: string[];
   rowsByExercise: Record<string, ActiveWorkoutRowDraft[]>;
   updatedAt: string;
 };
 
 export type ActiveWorkoutSession = {
   id: string;
-  templateId: string;
+  /** Null identifies a free workout without a saved template. */
+  templateId: string | null;
   templateName: string;
   startedAt: string;
   completedSets: number;
@@ -52,7 +56,7 @@ function isDraft(value: unknown): value is ActiveWorkoutDraft {
   return (
     draft.version === 1 &&
     typeof draft.sessionId === "string" &&
-    typeof draft.templateId === "string" &&
+    (typeof draft.templateId === "string" || draft.templateId === null) &&
     typeof draft.sessionStartedAt === "string" &&
     typeof draft.elapsedSec === "number" &&
     Number.isFinite(draft.elapsedSec) &&
@@ -137,7 +141,6 @@ async function hydrateSession(row: {
   started_at: string;
   template: unknown;
 }): Promise<ActiveWorkoutSession | null> {
-  if (!row.template_id) return null;
   const [{ count, error: countError }, { data: lastSet, error: lastSetError }] = await Promise.all([
     supabase
       .from("logged_sets")
@@ -158,7 +161,7 @@ async function hydrateSession(row: {
   return {
     id: row.id,
     templateId: row.template_id,
-    templateName: templateName || "Allenamento",
+    templateName: templateName || (row.template_id ? "Allenamento" : "Allenamento libero"),
     startedAt: row.started_at,
     completedSets: count ?? 0,
     lastCompletedAt: lastSet?.completed_at ?? null,
@@ -177,16 +180,16 @@ async function findOpenSessionById(userId: string, sessionId: string) {
   return data ? hydrateSession(data) : null;
 }
 
-async function findLatestOpenSession(userId: string, templateId?: string) {
+async function findLatestOpenSession(userId: string, templateId?: string | null) {
   let query = supabase
     .from("workout_sessions")
     .select("id,template_id,started_at,template:workout_templates(name)")
     .eq("user_id", userId)
     .is("ended_at", null)
-    .not("template_id", "is", null)
     .order("started_at", { ascending: false })
     .limit(1);
-  if (templateId) query = query.eq("template_id", templateId);
+  if (templateId === null) query = query.is("template_id", null);
+  else if (templateId) query = query.eq("template_id", templateId);
   const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data ? hydrateSession(data) : null;
@@ -241,6 +244,51 @@ export function ensureActiveWorkout(templateId: string): Promise<ActiveWorkoutBo
     };
   })().finally(() => bootstrapPromises.delete(templateId));
   bootstrapPromises.set(templateId, promise);
+  return promise;
+}
+
+/**
+ * Start or resume a workout that is built while the user trains.
+ *
+ * Free workouts intentionally use the existing nullable template_id column;
+ * this keeps them visible to the same dashboard, summary, export and RLS
+ * queries as guided sessions without creating a second session table.
+ */
+export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
+  const key = "free";
+  const existing = bootstrapPromises.get(key);
+  if (existing) return existing;
+  const promise = (async () => {
+    const userId = await getUserId();
+    const stored = readActiveWorkoutDraft();
+    let session =
+      stored?.templateId === null ? await findOpenSessionById(userId, stored.sessionId) : null;
+    if (!session) session = await findLatestOpenSession(userId, null);
+    if (!session) {
+      const { data, error } = await supabase
+        .from("workout_sessions")
+        .insert({ user_id: userId, template_id: null })
+        .select("id,template_id,started_at,template:workout_templates(name)")
+        .single();
+      if (error) throw error;
+      session = await hydrateSession(data);
+    }
+    if (!session) throw new Error("Impossibile iniziare l'allenamento libero");
+    const { data: loggedSets, error: setsError } = await supabase
+      .from("logged_sets")
+      .select("id,exercise_id,set_number,weight_kg,reps,completed_at")
+      .eq("session_id", session.id)
+      .order("completed_at");
+    if (setsError) throw setsError;
+    const draft = makeDraft(session);
+    saveActiveWorkoutDraft(draft);
+    return {
+      session,
+      draft,
+      loggedSets: (loggedSets ?? []) as RecoveredLoggedSet[],
+    };
+  })().finally(() => bootstrapPromises.delete(key));
+  bootstrapPromises.set(key, promise);
   return promise;
 }
 

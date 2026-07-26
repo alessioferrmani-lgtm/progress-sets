@@ -13,7 +13,7 @@ test("un allenamento aperto viene riutilizzato invece di creare duplicati", () =
   assert.match(recovery, /findLatestOpenSession/);
   assert.match(recovery, /\.is\("ended_at", null\)/);
   assert.match(run, /ensureActiveWorkout\(templateId\)/);
-  assert.doesNotMatch(run, /\.insert\(\{ user_id:/);
+  assert.match(run, /user_id: userData\.user\.id/);
   assert.doesNotMatch(recovery, /RECENT_WORKOUT_WINDOW_MS/);
 });
 
@@ -40,4 +40,23 @@ test("il salvataggio dopo uno spegnimento usa anche l'ultima attività confermat
   assert.match(recovery, /const storedElapsed =/);
   assert.match(recovery, /const recoveredElapsed = estimateElapsedSeconds/);
   assert.match(recovery, /Math\.max\(storedElapsed, recoveredElapsed\)/);
+});
+
+test("un allenamento libero usa una sessione senza template ed Ã¨ recuperabile", () => {
+  assert.match(recovery, /templateId: string \\| null/);
+  assert.match(recovery, /export function ensureFreeWorkout\(\)/);
+  assert.match(recovery, /template_id: null/);
+  assert.match(recovery, /findLatestOpenSession\(userId, null\)/);
+  assert.match(recovery, /Allenamento libero/);
+});
+
+test("la schermata libera permette di aggiungere esercizi e usa il recupero condiviso", () => {
+  const free = readFileSync("src/routes/_authenticated/workouts/free.tsx", "utf8");
+  const recoveryCard = readFileSync("src/components/WorkoutRecoveryCard.tsx", "utf8");
+  assert.match(free, /ensureFreeWorkout/);
+  assert.match(free, /Aggiungi esercizio/);
+  assert.match(free, /user_id: auth\.user\.id/);
+  assert.match(free, /WorkoutRecoveryCard/);
+  assert.match(recoveryCard, /addSeconds\(-15\)/);
+  assert.match(recoveryCard, /addSeconds\(15\)/);
 });
