@@ -8,7 +8,9 @@ import { toast } from "sonner";
 import { X, Check, Plus, Minus } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
+import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { insertLoggedSet } from "@/lib/logged-sets";
+import { findNextUncompletedSet } from "@/lib/workout-navigation";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
@@ -69,6 +71,8 @@ function RunPage() {
   const [activeSetIdx, setActiveSetIdx] = useState(0);
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, Row[]>>({});
   const [rowsInitialized, setRowsInitialized] = useState(false);
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   // Rebuild both completed sets (database) and unconfirmed fields (local draft).
   useEffect(() => {
@@ -261,14 +265,14 @@ function RunPage() {
       return;
     }
     const { data, error } = await insertLoggedSet({
-        user_id: userData.user.id,
-        session_id: sessionId,
-        exercise_id: activeEx.exercise_id,
-        set_number: row.set_number,
-        weight_kg: weight,
-        reps,
-        rest_taken_sec: restTaken,
-      });
+      user_id: userData.user.id,
+      session_id: sessionId,
+      exercise_id: activeEx.exercise_id,
+      set_number: row.set_number,
+      weight_kg: weight,
+      reps,
+      rest_taken_sec: restTaken,
+    });
     if (error) {
       toast.error(error.message);
       return;
@@ -281,27 +285,27 @@ function RunPage() {
       next[activeEx.id] = list;
       return next;
     });
-    // Start rest timer
-    timer.start(activeEx.rest_seconds, activeEx.exercise_id, activeEx.exercise.name);
-
-    // Focus next: same exercise next uncompleted, else next exercise
-    const nextInSame = rows.findIndex((r, i) => i > rowIdx && !r.completed);
-    if (nextInSame === -1) {
-      // Check if any other exercise still has uncompleted rows
-      const anyIncomplete = exercises.some((ex, idx) => {
-        if (idx <= activeIdx) return false;
-        const list = rowsByExercise[ex.id] ?? [];
-        return list.some((r) => !r.completed);
-      });
-      if (anyIncomplete && activeIdx < exercises.length - 1) {
-        setActiveIdx(activeIdx + 1);
-        setActiveSetIdx(0);
-      }
+    const next = findNextUncompletedSet(
+      exercises.map((ex) => ex.id),
+      rowsByExercise,
+      {
+        exerciseIndex: activeIdx,
+        setIndex: rowIdx,
+      },
+    );
+    if (next) {
+      timer.start(activeEx.rest_seconds, activeEx.exercise_id, activeEx.exercise.name);
+      setActiveIdx(next.exerciseIndex);
+      setActiveSetIdx(next.setIndex);
+    } else {
+      timer.skip();
+      setShowCompletionPrompt(true);
     }
   };
 
   const finish = async () => {
-    if (!sessionId || !activeWorkout.data) return;
+    if (!sessionId || !activeWorkout.data || isFinishing) return;
+    setIsFinishing(true);
     persistWorkout();
     try {
       await finishActiveWorkout(activeWorkout.data.session, elapsed);
@@ -309,6 +313,7 @@ function RunPage() {
       toast.error(
         `Impossibile salvare l'allenamento: ${reason instanceof Error ? reason.message : "errore sconosciuto"}`,
       );
+      setIsFinishing(false);
       return;
     }
     timer.skip();
@@ -319,6 +324,7 @@ function RunPage() {
       queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
     ]);
     navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
+    setIsFinishing(false);
   };
 
   const cancel = async () => {
@@ -532,6 +538,13 @@ function RunPage() {
             </div>
           );
         })()}
+      {showCompletionPrompt && (
+        <WorkoutCompletionPrompt
+          isFinishing={isFinishing}
+          onContinue={() => setShowCompletionPrompt(false)}
+          onFinish={finish}
+        />
+      )}
     </div>
   );
 }

@@ -13,8 +13,10 @@ import {
 import { fetchExercises, fetchPreviousSets, type Exercise } from "@/lib/workout-queries";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
+import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { insertLoggedSet } from "@/lib/logged-sets";
+import { findNextUncompletedSet } from "@/lib/workout-navigation";
 
 export const Route = createFileRoute("/_authenticated/workouts/free")({
   component: FreeWorkoutPage,
@@ -43,6 +45,8 @@ function FreeWorkoutPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [now, setNow] = useState(Date.now());
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const activeWorkout = useQuery({
     queryKey: ["active-workout-bootstrap", "free"],
@@ -223,14 +227,14 @@ function FreeWorkoutPage() {
       ? Math.max(...completedRows.map((row) => row.completedAt!))
       : null;
     const { data, error } = await insertLoggedSet({
-        user_id: auth.user.id,
-        session_id: sessionId,
-        exercise_id: activeExercise.id,
-        set_number: activeRow.set_number,
-        weight_kg: weight,
-        reps,
-        rest_taken_sec: last ? Math.round((Date.now() - last) / 1000) : null,
-      });
+      user_id: auth.user.id,
+      session_id: sessionId,
+      exercise_id: activeExercise.id,
+      set_number: activeRow.set_number,
+      weight_kg: weight,
+      reps,
+      rest_taken_sec: last ? Math.round((Date.now() - last) / 1000) : null,
+    });
     if (error) return toast.error(error.message);
     const completedAt = Date.now();
     setRowsByExercise((current) => ({
@@ -239,9 +243,18 @@ function FreeWorkoutPage() {
         index === activeSetIdx ? { ...row, completed: true, completedAt, logId: data.id } : row,
       ),
     }));
-    timer.start(DEFAULT_REST_SECONDS, activeExercise.id, activeExercise.name);
-    const next = rows.findIndex((row, index) => index > activeSetIdx && !row.completed);
-    if (next >= 0) setActiveSetIdx(next);
+    const next = findNextUncompletedSet(selectedIds, rowsByExercise, {
+      exerciseIndex: activeIdx,
+      setIndex: activeSetIdx,
+    });
+    if (next) {
+      timer.start(DEFAULT_REST_SECONDS, activeExercise.id, activeExercise.name);
+      setActiveIdx(next.exerciseIndex);
+      setActiveSetIdx(next.setIndex);
+    } else {
+      timer.skip();
+      setShowCompletionPrompt(true);
+    }
   };
 
   const addExercise = (exercise: Exercise) => {
@@ -284,7 +297,8 @@ function FreeWorkoutPage() {
   };
 
   const finish = async () => {
-    if (!session) return;
+    if (!session || isFinishing) return;
+    setIsFinishing(true);
     persistWorkout();
     try {
       await finishActiveWorkout(session, elapsed);
@@ -298,6 +312,7 @@ function FreeWorkoutPage() {
       navigate({ to: "/sessions/$sessionId/summary", params: { sessionId: session.id } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossibile salvare l'allenamento");
+      setIsFinishing(false);
     }
   };
 
@@ -489,6 +504,13 @@ function FreeWorkoutPage() {
             </div>
           </section>
         </div>
+      )}
+      {showCompletionPrompt && (
+        <WorkoutCompletionPrompt
+          isFinishing={isFinishing}
+          onContinue={() => setShowCompletionPrompt(false)}
+          onFinish={finish}
+        />
       )}
     </main>
   );
