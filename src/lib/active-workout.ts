@@ -292,23 +292,31 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
   return promise;
 }
 
-export async function finishActiveWorkout(session: ActiveWorkoutSession, elapsedSec?: number) {
+export async function finishActiveWorkout(
+  session: ActiveWorkoutSession,
+  elapsedSec?: number,
+  hasCompletedSets = session.completedSets > 0,
+) {
   const stored = readActiveWorkoutDraft();
   const storedElapsed =
     stored?.sessionId === session.id && Number.isFinite(stored.elapsedSec) ? stored.elapsedSec : 0;
   // Use the latest server activity as a fallback when the device was powered off
   // before the last local draft write completed.
   const recoveredElapsed = estimateElapsedSeconds(session.startedAt, session.lastCompletedAt);
-  const effectiveElapsed = Math.max(
-    60,
-    Math.min(MAX_RECOVERED_DURATION_SEC, elapsedSec ?? Math.max(storedElapsed, recoveredElapsed)),
+  const effectiveElapsed = Math.min(
+    MAX_RECOVERED_DURATION_SEC,
+    Math.max(0, elapsedSec ?? Math.max(storedElapsed, recoveredElapsed)),
   );
   const endedAt = new Date(new Date(session.startedAt).getTime() + effectiveElapsed * 1000);
-  let calories: number | null = null;
+  let calories: number | null = hasCompletedSets ? null : 0;
   try {
     const profile = await fetchMyProfile();
-    if (profile) {
-      calories = computeCaloriesForSession(profile, { duration_min: effectiveElapsed / 60 });
+    if (profile && hasCompletedSets) {
+      // Keep a just-completed set measurable without inventing a full minute
+      // of activity. The previous one-minute floor inflated empty sessions.
+      calories = computeCaloriesForSession(profile, {
+        duration_min: Math.max(1, effectiveElapsed) / 60,
+      });
     }
   } catch {
     // The workout can still be saved if calorie calculation is unavailable.

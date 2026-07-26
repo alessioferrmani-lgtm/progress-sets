@@ -57,8 +57,6 @@ export function QuickTestSheet({
         observations: sensations.trim() || null,
         calories_burned: calories,
       };
-      // eslint-disable-next-line no-console
-      console.log("[QuickTestSheet] insert payload", payload);
       const { error } = await supabase.from("tests").insert(payload);
       if (error) throw error;
     },

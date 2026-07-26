@@ -40,7 +40,7 @@ export function InterruptedWorkoutPrompt() {
   const saveWorkout = useMutation({
     mutationFn: async () => {
       if (!activeWorkout.data) throw new Error("Allenamento non disponibile");
-      await finishActiveWorkout(activeWorkout.data);
+      await finishActiveWorkout(activeWorkout.data, undefined, activeWorkout.data.completedSets > 0);
       return activeWorkout.data.id;
     },
     onSuccess: async (sessionId) => {

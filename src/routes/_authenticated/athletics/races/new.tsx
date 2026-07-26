@@ -62,8 +62,6 @@ function NewRacePage() {
         notes: notes || null,
         calories_burned: calories,
       };
-      // eslint-disable-next-line no-console
-      console.log("[races/new] insert payload", payload);
       const { error } = await supabase.from("races").insert(payload);
       if (error) throw error;
     },

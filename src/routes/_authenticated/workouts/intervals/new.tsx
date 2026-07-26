@@ -45,7 +45,8 @@ function NewIntervalPage() {
     mutationFn: async () => {
       if (reps.length === 0) throw new Error("Aggiungi almeno una ripetuta");
       const { data: u } = await supabase.auth.getUser();
-      const uid = u.user!.id;
+      const uid = u.user?.id;
+      if (!uid) throw new Error("Sessione scaduta");
 
       const totalSec = reps.reduce((s, r) => s + r.time_sec, 0);
       const totalDist = reps.reduce((s, r) => s + r.distance_m, 0);
@@ -58,29 +59,42 @@ function NewIntervalPage() {
             })
           : null;
 
-      const { data: session, error: se } = await supabase
-        .from("interval_sessions")
-        .insert({
-          user_id: uid,
-          date,
-          signature,
-          notes: notes || null,
-          calories_burned: calories,
-        })
-        .select("id")
-        .single();
-      if (se) throw se;
+      let sessionId: string | null = null;
+      try {
+        const { data: session, error: se } = await supabase
+          .from("interval_sessions")
+          .insert({
+            user_id: uid,
+            date,
+            signature,
+            notes: notes || null,
+            calories_burned: calories,
+          })
+          .select("id")
+          .single();
+        if (se) throw se;
+        sessionId = session.id;
 
-      const rows = reps.map((r, i) => ({
-        session_id: session.id,
-        user_id: uid,
-        rep_number: i + 1,
-        distance_m: r.distance_m,
-        time_sec: r.time_sec,
-        rest_sec: r.rest_sec,
-      }));
-      const { error: re } = await supabase.from("interval_reps").insert(rows);
-      if (re) throw re;
+        const rows = reps.map((r, i) => ({
+          session_id: session.id,
+          user_id: uid,
+          rep_number: i + 1,
+          distance_m: r.distance_m,
+          time_sec: r.time_sec,
+          rest_sec: r.rest_sec,
+        }));
+        const { error: re } = await supabase.from("interval_reps").insert(rows);
+        if (re) throw re;
+      } catch (error) {
+        if (sessionId) {
+          await supabase
+            .from("interval_sessions")
+            .delete()
+            .eq("id", sessionId)
+            .eq("user_id", uid);
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Ripetute salvate");

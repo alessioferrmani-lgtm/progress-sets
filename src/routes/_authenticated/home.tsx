@@ -13,6 +13,7 @@ import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile, upsertMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
+import { formatVolumeKg } from "@/lib/dashboard-format";
 import { fetchAllTests, fetchIntervalSessions, fetchRaces } from "@/lib/athletics-queries";
 import {
   Flame,
@@ -301,8 +302,7 @@ function RecentSessionsSection({
                       {format(new Date(s.started_at), "d MMM · HH:mm", { locale: it })}
                       {" · "}
                       {dur} min · {sessSets.length} serie ·{" "}
-                      {volume >= 1000 ? `${(volume / 1000).toFixed(1)}k` : Math.round(volume)}
-                      kg
+                      {formatVolumeKg(volume)}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-label-tertiary" />

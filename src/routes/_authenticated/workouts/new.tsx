@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { parseWorkoutLocally } from "../../../../supabase/functions/_shared/workout-parser";
 import { storedMuscleGroupFor } from "@/lib/muscle-map";
+import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/workouts/new")({
   component: WorkoutNewPage,
@@ -141,25 +142,36 @@ export function TemplateEditor({
     if (!name.trim()) return toast.error("Inserisci un nome");
     if (rows.length === 0) return toast.error("Aggiungi almeno un esercizio");
     setSaving(true);
+    let userId: string | null = null;
+    let createdTemplateId: string | null = null;
     try {
       const { data: u } = await supabase.auth.getUser();
-      const userId = u.user!.id;
+      const ownerId = u.user?.id;
+      if (!ownerId) throw new Error("Sessione scaduta");
+      userId = ownerId;
       let tid = templateId;
+      let previousExerciseIds: string[] = [];
       if (mode === "new") {
         const { data, error } = await supabase
           .from("workout_templates")
-          .insert({ name: name.trim(), user_id: userId })
+          .insert({ name: name.trim(), user_id: ownerId })
           .select("id")
           .single();
         if (error) throw error;
         tid = data.id;
+        createdTemplateId = data.id;
       } else {
         const { error } = await supabase
           .from("workout_templates")
           .update({ name: name.trim(), updated_at: new Date().toISOString() })
           .eq("id", tid!);
         if (error) throw error;
-        await supabase.from("template_exercises").delete().eq("template_id", tid!);
+        const { data: previousRows, error: previousRowsError } = await supabase
+          .from("template_exercises")
+          .select("id")
+          .eq("template_id", tid!);
+        if (previousRowsError) throw previousRowsError;
+        previousExerciseIds = (previousRows ?? []).map((row) => row.id);
       }
       const payload = rows.map((r, i) => ({
         template_id: tid!,
@@ -171,14 +183,38 @@ export function TemplateEditor({
         reps_display: r.reps_display,
         target_weight_kg: r.target_weight_kg,
         rest_seconds: r.rest_seconds,
+        user_id: ownerId,
       }));
-      const { error: ie } = await supabase.from("template_exercises").insert(payload);
+      const { data: insertedRows, error: ie } = await supabase
+        .from("template_exercises")
+        .insert(payload)
+        .select("id");
       if (ie) throw ie;
+      if (mode === "edit" && previousExerciseIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("template_exercises")
+          .delete()
+          .in("id", previousExerciseIds);
+        if (deleteError) {
+          const insertedIds = (insertedRows ?? []).map((row) => row.id);
+          if (insertedIds.length > 0) {
+            await supabase.from("template_exercises").delete().in("id", insertedIds);
+          }
+          throw deleteError;
+        }
+      }
       toast.success("Scheda salvata");
       qc.invalidateQueries({ queryKey: ["templates"] });
       qc.invalidateQueries({ queryKey: ["template", tid] });
       navigate({ to: "/workouts" });
     } catch (err) {
+      if (mode === "new" && createdTemplateId && userId) {
+        await supabase
+          .from("workout_templates")
+          .delete()
+          .eq("id", createdTemplateId)
+          .eq("user_id", userId);
+      }
       toast.error(err instanceof Error ? err.message : "Errore");
     } finally {
       setSaving(false);
@@ -337,6 +373,7 @@ type ImportedExercise = {
   rest_sec: number;
 };
 type ImportedTemplate = { name: string; exercises: ImportedExercise[]; _warnings?: string[] };
+type TemplateExerciseInsert = Database["public"]["Tables"]["template_exercises"]["Insert"];
 
 function WorkoutImport() {
   const navigate = useNavigate();
@@ -392,6 +429,7 @@ function WorkoutImport() {
   const save = async () => {
     if (!templates?.length) return;
     setSaving(true);
+    const createdTemplateIds: string[] = [];
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
@@ -406,7 +444,8 @@ function WorkoutImport() {
           .select("id")
           .single();
         if (templateError) throw templateError;
-        const rows: Array<Record<string, unknown>> = [];
+        createdTemplateIds.push(created.id);
+        const rows: TemplateExerciseInsert[] = [];
         for (let index = 0; index < template.exercises.length; index++) {
           const exercise = template.exercises[index];
           if (!exercise.muscle_group) {
@@ -414,24 +453,25 @@ function WorkoutImport() {
           }
           const { data: existing, error: lookupError } = await supabase
             .from("exercises")
-            .select("id,muscle_group")
+            .select("id,muscle_group,user_id")
             .ilike("name", exercise.name.trim())
             .limit(1)
             .maybeSingle();
           if (lookupError) throw lookupError;
           let exerciseId = existing?.id;
-          if (!exerciseId) {
+          if (!exerciseId || (existing && !existing.muscle_group && existing.user_id !== userId)) {
             const { data: custom, error: customError } = await supabase
               .from("exercises")
               .insert({
                 name: exercise.name.trim(),
                 muscle_group: exercise.muscle_group,
-              } as never)
+                user_id: userId,
+              })
               .select("id")
               .single();
             if (customError) throw customError;
             exerciseId = custom.id;
-          } else if (existing && !existing.muscle_group) {
+          } else if (existing && !existing.muscle_group && existing.user_id === userId) {
             const { error: groupError } = await supabase
               .from("exercises")
               .update({ muscle_group: exercise.muscle_group })
@@ -447,11 +487,10 @@ function WorkoutImport() {
             reps_type: exercise.reps_type,
             reps_display: exercise.reps_display,
             rest_seconds: exercise.rest_sec,
+            user_id: userId,
           });
         }
-        const { error: rowsError } = await supabase
-          .from("template_exercises")
-          .insert(rows as never);
+        const { error: rowsError } = await supabase.from("template_exercises").insert(rows);
         if (rowsError) throw rowsError;
       }
       toast.success("Scheda salvata");
@@ -459,6 +498,13 @@ function WorkoutImport() {
       qc.invalidateQueries({ queryKey: ["exercises"] });
       navigate({ to: "/workouts" });
     } catch (error) {
+      if (createdTemplateIds.length > 0) {
+        await supabase
+          .from("workout_templates")
+          .delete()
+          .in("id", createdTemplateIds)
+          .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "");
+      }
       toast.error(error instanceof Error ? error.message : "Impossibile salvare la scheda");
     } finally {
       setSaving(false);
