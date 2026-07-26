@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { X, Check, Plus, Minus } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
+import { insertLoggedSet } from "@/lib/logged-sets";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
@@ -259,9 +260,7 @@ function RunPage() {
       toast.error("Sessione scaduta: accedi di nuovo");
       return;
     }
-    const { data, error } = await supabase
-      .from("logged_sets")
-      .insert({
+    const { data, error } = await insertLoggedSet({
         user_id: userData.user.id,
         session_id: sessionId,
         exercise_id: activeEx.exercise_id,
@@ -269,9 +268,7 @@ function RunPage() {
         weight_kg: weight,
         reps,
         rest_taken_sec: restTaken,
-      })
-      .select("id")
-      .single();
+      });
     if (error) {
       toast.error(error.message);
       return;
