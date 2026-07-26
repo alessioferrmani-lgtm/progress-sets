@@ -14,6 +14,7 @@ import { fetchExercises, fetchPreviousSets, type Exercise } from "@/lib/workout-
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
+import { insertLoggedSet } from "@/lib/logged-sets";
 
 export const Route = createFileRoute("/_authenticated/workouts/free")({
   component: FreeWorkoutPage,
@@ -221,9 +222,7 @@ function FreeWorkoutPage() {
     const last = completedRows.length
       ? Math.max(...completedRows.map((row) => row.completedAt!))
       : null;
-    const { data, error } = await supabase
-      .from("logged_sets")
-      .insert({
+    const { data, error } = await insertLoggedSet({
         user_id: auth.user.id,
         session_id: sessionId,
         exercise_id: activeExercise.id,
@@ -231,9 +230,7 @@ function FreeWorkoutPage() {
         weight_kg: weight,
         reps,
         rest_taken_sec: last ? Math.round((Date.now() - last) / 1000) : null,
-      })
-      .select("id")
-      .single();
+      });
     if (error) return toast.error(error.message);
     const completedAt = Date.now();
     setRowsByExercise((current) => ({
