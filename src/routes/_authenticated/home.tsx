@@ -295,7 +295,7 @@ function RecentSessionsSection({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-label">
-                      {s.template_name ?? "Allenamento"}
+                      {s.template_name ?? "Allenamento libero"}
                     </div>
                     <div className="mt-0.5 text-xs text-label-secondary">
                       {format(new Date(s.started_at), "d MMM · HH:mm", { locale: it })}

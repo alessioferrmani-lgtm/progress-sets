@@ -17,6 +17,7 @@ const TABS: Tab[] = [
 
 export function BottomTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname === "/workouts/free") return null;
   if (
     pathname.includes("/workouts/") &&
     (pathname.endsWith("/run") || pathname.endsWith("/edit") || pathname.endsWith("/new"))

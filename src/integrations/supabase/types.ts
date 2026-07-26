@@ -128,6 +128,7 @@ export type Database = {
           session_id: string
           set_number: number
           weight_kg: number
+          user_id: string
         }
         Insert: {
           completed_at?: string
@@ -138,6 +139,7 @@ export type Database = {
           session_id: string
           set_number: number
           weight_kg?: number
+          user_id?: string
         }
         Update: {
           completed_at?: string
@@ -148,6 +150,7 @@ export type Database = {
           session_id?: string
           set_number?: number
           weight_kg?: number
+          user_id?: string
         }
         Relationships: [
           {

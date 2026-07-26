@@ -195,7 +195,7 @@ function SummaryPage() {
       const template = (session as unknown as { template: { name: string } | null }).template;
 
       return {
-        name: template?.name ?? "Allenamento",
+        name: template?.name ?? "Allenamento libero",
         startedAt: session.started_at,
         durationSec,
         totalRestSec,
