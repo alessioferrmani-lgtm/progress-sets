@@ -516,8 +516,12 @@ function FreeWorkoutPage() {
                   className="flex w-full items-center gap-3 rounded-2xl bg-fill px-4 py-3 text-left active:bg-fill-secondary"
                 >
                   <Dumbbell className="size-5 text-accent" />
-                  <span className="min-w-0 flex-1 truncate font-semibold text-label">
-                    {exercise.name}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold text-label">{exercise.name}</span>
+                    <span className="block truncate text-xs text-label-secondary">
+                      {exercise.muscle_group ?? "Gruppo personalizzato"}
+                      {exercise.equipment ? ` · ${exercise.equipment}` : ""}
+                    </span>
                   </span>
                   <ChevronDown className="size-4 -rotate-90 text-label-tertiary" />
                 </button>

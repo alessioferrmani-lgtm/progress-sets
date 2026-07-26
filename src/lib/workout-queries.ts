@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type Exercise = { id: string; name: string };
+export type Exercise = {
+  id: string;
+  name: string;
+  muscle_group?: string | null;
+  equipment?: string | null;
+  category?: string | null;
+};
 export type Template = {
   id: string;
   name: string;
@@ -39,7 +45,10 @@ export type LoggedSet = {
 };
 
 export async function fetchExercises(): Promise<Exercise[]> {
-  const { data, error } = await supabase.from("exercises").select("id,name").order("name");
+  const { data, error } = await supabase
+    .from("exercises")
+    .select("id,name,muscle_group,equipment,category")
+    .order("name");
   if (error) throw error;
   return data as Exercise[];
 }

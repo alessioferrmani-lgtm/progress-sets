@@ -257,7 +257,7 @@ export function TemplateEditor({
               >
                 {(allExercises ?? []).map((ex) => (
                   <option key={ex.id} value={ex.id}>
-                    {ex.name}
+                    {ex.name}{ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
                   </option>
                 ))}
               </select>
@@ -645,7 +645,7 @@ function WorkoutImport() {
                         <option value="">Seleziona</option>
                         {[
                           "Petto", "Schiena", "Spalle", "Bicipiti", "Tricipiti",
-                          "Gambe", "Glutei", "Polpacci", "Tibiali (stinchi)", "Core", "Avambracci",
+                          "Gambe", "Glutei", "Polpacci", "Caviglia", "Tibiali (stinchi)", "Core", "Avambracci",
                           "Cardio", "Atletica", "Full body",
                         ].map((group) => <option key={group}>{group}</option>)}
                       </select>
