@@ -350,19 +350,22 @@ function FreeWorkoutPage() {
         <button
           type="button"
           onClick={finish}
-          className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground"
+          className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
+          aria-label="Termina allenamento"
         >
-          Fine
+          Termina allenamento
         </button>
       </header>
 
-      <button
-        type="button"
-        onClick={() => setPickerOpen(true)}
-        className="ios-btn-primary mt-4 w-full"
-      >
-        <Plus className="size-5" /> Aggiungi esercizio
-      </button>
+      {selectedIds.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="ios-btn-primary mt-4 w-full"
+        >
+          <Plus className="size-5" /> Aggiungi esercizio
+        </button>
+      )}
 
       {selectedIds.length > 0 && (
         <div className="scrollbar-none mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -397,6 +400,22 @@ function FreeWorkoutPage() {
           <p className="mt-1 text-sm text-label-secondary">
             Aggiungi gli esercizi mentre ti alleni e registra ogni serie in tempo reale.
           </p>
+          <div className="mt-6 grid gap-3">
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="ios-btn-primary w-full"
+            >
+              <Plus className="size-5" /> Aggiungi esercizio
+            </button>
+            <button
+              type="button"
+              onClick={finish}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 font-semibold text-accent active:scale-[0.99]"
+            >
+              <Check className="size-5" /> Termina allenamento
+            </button>
+          </div>
         </section>
       ) : (
         <section className="ios-card mt-4 overflow-hidden p-4">
