@@ -55,6 +55,8 @@ test("la schermata libera permette di aggiungere esercizi e usa il recupero cond
   const recoveryCard = readFileSync("src/components/WorkoutRecoveryCard.tsx", "utf8");
   assert.match(free, /ensureFreeWorkout/);
   assert.match(free, /Aggiungi esercizio/);
+  assert.match(free, /aria-label="Termina allenamento"/);
+  assert.match(free, /<Check className="size-5" \/> Termina allenamento/);
   assert.match(free, /user_id: auth\.user\.id/);
   assert.match(free, /WorkoutRecoveryCard/);
   assert.match(recoveryCard, /addSeconds\(-15\)/);
