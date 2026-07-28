@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ensureFreeWorkout,
   finishActiveWorkout,
-  readActiveWorkoutDraft,
+  getWorkoutElapsedSeconds,
   saveActiveWorkoutDraft,
 } from "@/lib/active-workout";
 import { fetchExercises, fetchPreviousSets, type Exercise } from "@/lib/workout-queries";
@@ -43,7 +43,6 @@ function FreeWorkoutPage() {
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, FreeRow[]>>({});
   const [initialized, setInitialized] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [startedAt, setStartedAt] = useState(Date.now());
   const [now, setNow] = useState(Date.now());
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -114,7 +113,6 @@ function FreeWorkoutPage() {
     setSelectedIds(ids);
     setActiveIdx(Math.min(activeWorkout.data.draft.activeIdx, Math.max(ids.length - 1, 0)));
     setRowsByExercise(rows);
-    setStartedAt(Date.now() - activeWorkout.data.draft.elapsedSec * 1000);
     setInitialized(true);
   }, [activeWorkout.data, exerciseById, exercisesQuery.data, initialized, previous.data]);
 
@@ -129,7 +127,7 @@ function FreeWorkoutPage() {
   const activeExercise = activeExerciseId ? exerciseById.get(activeExerciseId) : undefined;
   const rows = activeExerciseId ? (rowsByExercise[activeExerciseId] ?? []) : [];
   const activeRow = rows[activeSetIdx] ?? rows[0];
-  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const elapsed = session ? getWorkoutElapsedSeconds(session.startedAt, now) : 0;
   const elapsedMinutes = Math.floor(elapsed / 60);
   const elapsedSeconds = String(elapsed % 60).padStart(2, "0");
   const completedSets = Object.values(rowsByExercise)
@@ -144,7 +142,7 @@ function FreeWorkoutPage() {
       sessionId: session.id,
       templateId: null,
       sessionStartedAt: session.startedAt,
-      elapsedSec: Math.floor((Date.now() - startedAt) / 1000),
+      elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
       activeIdx,
       exerciseIds: selectedIds,
       rowsByExercise: Object.fromEntries(
@@ -155,7 +153,7 @@ function FreeWorkoutPage() {
       ),
       updatedAt: new Date().toISOString(),
     });
-  }, [activeIdx, initialized, rowsByExercise, selectedIds, session, startedAt]);
+  }, [activeIdx, initialized, rowsByExercise, selectedIds, session]);
 
   useEffect(() => {
     if (typeof document !== "undefined" && document.visibilityState === "visible") persistWorkout();
@@ -163,14 +161,18 @@ function FreeWorkoutPage() {
 
   useEffect(() => {
     if (!sessionId) return;
-    const persistOnHide = () => {
-      if (document.visibilityState === "hidden") persistWorkout();
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        persistWorkout();
+      } else {
+        setNow(Date.now());
+      }
     };
-    document.addEventListener("visibilitychange", persistOnHide);
+    document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("pagehide", persistWorkout);
     window.addEventListener("beforeunload", persistWorkout);
     return () => {
-      document.removeEventListener("visibilitychange", persistOnHide);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("pagehide", persistWorkout);
       window.removeEventListener("beforeunload", persistWorkout);
     };
@@ -582,7 +584,7 @@ function NumberCell({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onFocus={(event) => event.target.select()}
-          className="w-full min-w-0 bg-transparent py-1 text-center text-3xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+          className="workout-number-input w-full min-w-0 bg-transparent py-1 text-center text-5xl font-bold leading-none tracking-tight tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
         />
         <button
           type="button"

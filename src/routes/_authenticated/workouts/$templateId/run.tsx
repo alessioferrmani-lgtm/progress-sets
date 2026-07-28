@@ -5,16 +5,19 @@ import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
-import { X, Check, Plus, Minus } from "lucide-react";
+import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { insertLoggedSet } from "@/lib/logged-sets";
-import { findNextUncompletedSet } from "@/lib/workout-navigation";
+import {
+  findNextUncompletedExercise,
+  findNextUncompletedSet,
+} from "@/lib/workout-navigation";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
-  readActiveWorkoutDraft,
+  getWorkoutElapsedSeconds,
   saveActiveWorkoutDraft,
 } from "@/lib/active-workout";
 
@@ -58,14 +61,6 @@ function RunPage() {
   });
   const activeWorkoutData = activeWorkout.data;
   const sessionId = activeWorkoutData?.session.id ?? null;
-  const [timerStartedAt, setTimerStartedAt] = useState(Date.now());
-  const [restoredTimerSessionId, setRestoredTimerSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!activeWorkoutData) return;
-    setTimerStartedAt(Date.now() - activeWorkoutData.draft.elapsedSec * 1000);
-    setRestoredTimerSessionId(activeWorkoutData.session.id);
-  }, [activeWorkoutData]);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeSetIdx, setActiveSetIdx] = useState(0);
@@ -132,20 +127,22 @@ function RunPage() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const elapsed = Math.max(0, Math.floor((now - timerStartedAt) / 1000));
+  const elapsed = activeWorkoutData
+    ? getWorkoutElapsedSeconds(activeWorkoutData.session.startedAt, now)
+    : 0;
   const em = Math.floor(elapsed / 60);
   const es = String(elapsed % 60).padStart(2, "0");
   const persistTick = Math.floor(now / 5000);
 
   const persistWorkout = useCallback(() => {
     const bootstrap = activeWorkoutData;
-    if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
+    if (!bootstrap || !rowsInitialized) return;
     saveActiveWorkoutDraft({
       version: 1,
       sessionId: bootstrap.session.id,
       templateId,
       sessionStartedAt: bootstrap.session.startedAt,
-      elapsedSec: Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
+      elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
       activeIdx,
       rowsByExercise: Object.fromEntries(
         Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
@@ -158,11 +155,9 @@ function RunPage() {
   }, [
     activeIdx,
     activeWorkoutData,
-    restoredTimerSessionId,
     rowsInitialized,
     rowsByExercise,
     templateId,
-    timerStartedAt,
   ]);
 
   useEffect(() => {
@@ -177,10 +172,9 @@ function RunPage() {
         persistWorkout();
         return;
       }
-      const stored = readActiveWorkoutDraft();
-      if (stored?.sessionId === sessionId) {
-        setTimerStartedAt(Date.now() - stored.elapsedSec * 1000);
-      }
+      // iOS can suspend the page while the phone is locked. Repaint from the
+      // server session timestamp immediately when the page becomes visible.
+      setNow(Date.now());
     };
     const handleUnload = () => persistWorkout();
     document.addEventListener("visibilitychange", handleVisibility);
@@ -303,6 +297,23 @@ function RunPage() {
     }
   };
 
+  const skipExercise = () => {
+    if (!activeEx) return;
+    const next = findNextUncompletedExercise(
+      exercises.map((ex) => ex.id),
+      rowsByExercise,
+      activeIdx,
+    );
+    timer.skip();
+    if (!next) {
+      setShowCompletionPrompt(true);
+      return;
+    }
+    setActiveIdx(next.exerciseIndex);
+    setActiveSetIdx(next.setIndex);
+    toast.success(`${activeEx.exercise.name} saltato. Puoi riprenderlo dalle schede sopra.`);
+  };
+
   const finish = async () => {
     if (!sessionId || !activeWorkout.data || isFinishing) return;
     setIsFinishing(true);
@@ -417,6 +428,16 @@ function RunPage() {
                     Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={skipExercise}
+                  className="mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent/60 bg-accent-soft px-4 text-sm font-semibold text-accent active:scale-[0.99]"
+                  aria-label={`Salta esercizio ${activeEx.exercise.name}`}
+                >
+                  <SkipForward className="size-4" />
+                  Salta esercizio
+                </button>
 
                 <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
                   {rows.map((row, index) => (
@@ -595,7 +616,7 @@ function NumberCell({
         onFocus={(e) => e.target.select()}
         className={
           large
-            ? "w-full min-w-0 bg-transparent py-1 text-center text-4xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+            ? "workout-number-input w-full min-w-0 bg-transparent py-1 text-center text-5xl font-bold leading-none tracking-tight tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
             : "w-full min-w-0 rounded-md bg-fill-secondary py-1.5 text-center text-sm font-medium text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
         }
       />

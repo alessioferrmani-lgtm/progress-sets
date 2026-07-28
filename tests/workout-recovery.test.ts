@@ -39,7 +39,7 @@ test("alla riapertura compaiono Continua, Salva e termina ed Elimina", () => {
 test("il salvataggio dopo uno spegnimento usa anche l'ultima attività confermata", () => {
   assert.match(recovery, /const storedElapsed =/);
   assert.match(recovery, /const recoveredElapsed = estimateElapsedSeconds/);
-  assert.match(recovery, /Math\.max\(storedElapsed, recoveredElapsed\)/);
+  assert.match(recovery, /Math\.max\(0, elapsedSec \?\? 0, storedElapsed, recoveredElapsed\)/);
 });
 
 test("un allenamento libero usa una sessione senza template ed Ã¨ recuperabile", () => {
@@ -61,4 +61,11 @@ test("la schermata libera permette di aggiungere esercizi e usa il recupero cond
   assert.match(free, /WorkoutRecoveryCard/);
   assert.match(recoveryCard, /addSeconds\(-15\)/);
   assert.match(recoveryCard, /addSeconds\(15\)/);
+});
+
+test("la schermata guidata permette di saltare l'esercizio dalla parte alta della scheda", () => {
+  assert.match(run, /findNextUncompletedExercise/);
+  assert.match(run, /const skipExercise = \(\) =>/);
+  assert.match(run, /Salta esercizio/);
+  assert.match(run, /<SkipForward className="size-4" \/>/);
 });

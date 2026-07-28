@@ -1,9 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { computeCaloriesForSession } from "@/lib/calories";
 import { fetchMyProfile } from "@/lib/profile-queries";
+import { getWorkoutElapsedSeconds, MAX_WORKOUT_DURATION_SEC } from "@/lib/workout-timer";
 
 const STORAGE_KEY = "progress_sets_active_workout_v1";
-const MAX_RECOVERED_DURATION_SEC = 4 * 60 * 60;
+const MAX_RECOVERED_DURATION_SEC = MAX_WORKOUT_DURATION_SEC;
+
+export { getWorkoutElapsedSeconds } from "@/lib/workout-timer";
 
 export type ActiveWorkoutRowDraft = {
   set_number: number;
@@ -103,14 +106,8 @@ export function clearActiveWorkoutDraft(sessionId?: string) {
   }
 }
 
-function estimateElapsedSeconds(startedAt: string, lastCompletedAt: string | null) {
-  const started = new Date(startedAt).getTime();
-  const lastActivity = lastCompletedAt ? new Date(lastCompletedAt).getTime() : Date.now();
-  if (!Number.isFinite(started) || !Number.isFinite(lastActivity)) return 0;
-  return Math.max(
-    0,
-    Math.min(MAX_RECOVERED_DURATION_SEC, Math.floor((lastActivity - started) / 1000)),
-  );
+function estimateElapsedSeconds(startedAt: string) {
+  return getWorkoutElapsedSeconds(startedAt);
 }
 
 function makeDraft(session: ActiveWorkoutSession): ActiveWorkoutDraft {
@@ -121,7 +118,7 @@ function makeDraft(session: ActiveWorkoutSession): ActiveWorkoutDraft {
     sessionId: session.id,
     templateId: session.templateId,
     sessionStartedAt: session.startedAt,
-    elapsedSec: estimateElapsedSeconds(session.startedAt, session.lastCompletedAt),
+    elapsedSec: estimateElapsedSeconds(session.startedAt),
     activeIdx: 0,
     rowsByExercise: {},
     updatedAt: new Date().toISOString(),
@@ -302,10 +299,13 @@ export async function finishActiveWorkout(
     stored?.sessionId === session.id && Number.isFinite(stored.elapsedSec) ? stored.elapsedSec : 0;
   // Use the latest server activity as a fallback when the device was powered off
   // before the last local draft write completed.
-  const recoveredElapsed = estimateElapsedSeconds(session.startedAt, session.lastCompletedAt);
+  const recoveredElapsed = estimateElapsedSeconds(session.startedAt);
   const effectiveElapsed = Math.min(
     MAX_RECOVERED_DURATION_SEC,
-    Math.max(0, elapsedSec ?? Math.max(storedElapsed, recoveredElapsed)),
+    // Prefer the greatest trustworthy value. This prevents a stale local
+    // timer (or a zero value after a background wake-up) from shortening the
+    // saved workout.
+    Math.max(0, elapsedSec ?? 0, storedElapsed, recoveredElapsed),
   );
   const endedAt = new Date(new Date(session.startedAt).getTime() + effectiveElapsed * 1000);
   let calories: number | null = hasCompletedSets ? null : 0;
