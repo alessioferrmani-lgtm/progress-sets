@@ -122,6 +122,11 @@
   input[type="number"] {
     -moz-appearance: textfield;
   }
+  .workout-number-input {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
 }
 
 /* Lovable injects this promotional control after the app has loaded. */
