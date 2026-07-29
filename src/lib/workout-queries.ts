@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+export { isAthleticsExercise, isGymExercise } from "@/lib/exercise-categories";
 
 export type Exercise = {
   id: string;
@@ -7,6 +8,7 @@ export type Exercise = {
   equipment?: string | null;
   category?: string | null;
 };
+
 export type Template = {
   id: string;
   name: string;

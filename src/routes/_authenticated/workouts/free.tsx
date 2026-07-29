@@ -10,7 +10,12 @@ import {
   readActiveWorkoutDraft,
   saveActiveWorkoutDraft,
 } from "@/lib/active-workout";
-import { fetchExercises, fetchPreviousSets, type Exercise } from "@/lib/workout-queries";
+import {
+  fetchExercises,
+  fetchPreviousSets,
+  isGymExercise,
+  type Exercise,
+} from "@/lib/workout-queries";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
@@ -83,8 +88,9 @@ function FreeWorkoutPage() {
       .toLocaleLowerCase("it")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
-    if (!query) return exercisesQuery.data ?? [];
-    return (exercisesQuery.data ?? []).filter((exercise) => {
+    const gymExercises = (exercisesQuery.data ?? []).filter(isGymExercise);
+    if (!query) return gymExercises;
+    return gymExercises.filter((exercise) => {
       const haystack = `${exercise.name} ${exercise.muscle_group ?? ""} ${exercise.category ?? ""}`
         .toLocaleLowerCase("it")
         .normalize("NFD")
