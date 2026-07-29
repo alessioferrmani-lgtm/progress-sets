@@ -6,6 +6,7 @@ import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
 const catalogMigrations = [
   "supabase/migrations/20260714080144_684ae935-69f9-4749-8b03-0b1886901d95.sql",
   "supabase/migrations/20260726150000_expand_exercise_catalog.sql",
+  "supabase/migrations/20260729100000_core_running_single_limb_catalog.sql",
 ];
 
 function readCatalog() {
@@ -43,6 +44,54 @@ test("i collegamenti ambigui e la caviglia usano le zone corrette", () => {
   assert.deepEqual(musclesFor("Rematore chest-supported", "Schiena"), ["back", "biceps"]);
   assert.deepEqual(musclesFor("Iperestensioni", "Schiena"), ["back", "hamstrings", "glutes"]);
   assert.deepEqual(musclesFor("Vogatore", "Cardio"), ["back", "biceps", "quads", "hamstrings", "glutes"]);
+});
+
+test("le varianti unilaterali attivano i muscoli corretti", () => {
+  assert.deepEqual(musclesFor("Single-Leg Squat", "Gambe"), [
+    "quads",
+    "glutes",
+    "hamstrings",
+    "calves",
+  ]);
+  assert.deepEqual(musclesFor("Pistol Squat", "Gambe"), [
+    "quads",
+    "glutes",
+    "hamstrings",
+    "calves",
+  ]);
+  assert.deepEqual(musclesFor("Single-Leg Romanian Deadlift", "Gambe"), ["hamstrings", "glutes"]);
+  assert.deepEqual(musclesFor("Single-Leg Calf Raise", "Polpacci"), ["calves"]);
+  assert.deepEqual(musclesFor("Single-Arm Farmer Carry", "Core"), [
+    "back",
+    "biceps",
+    "forearms",
+    "abs",
+  ]);
+  assert.deepEqual(musclesFor("Single-Leg Box Jump", "Atletica"), [
+    "quads",
+    "glutes",
+    "calves",
+    "tibialis",
+  ]);
+});
+
+test("l'editor manuale offre una ricerca filtrabile", () => {
+  const editor = readFileSync(
+    new URL("../src/routes/_authenticated/workouts/new.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(editor, /data-testid="exercise-search"/);
+  assert.match(editor, /filteredExercises/);
+  assert.match(editor, /Nessun esercizio corrisponde alla ricerca/);
+});
+
+test("anche l'allenamento libero filtra il catalogo", () => {
+  const freeWorkout = readFileSync(
+    new URL("../src/routes/_authenticated/workouts/free.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(freeWorkout, /data-testid="free-exercise-search"/);
+  assert.match(freeWorkout, /filteredExercises/);
 });
 
 test("la sagoma dispone di semi separati per tibiali e polpacci", () => {
