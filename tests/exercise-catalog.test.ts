@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
 import { isAthleticsExercise, isGymExercise } from "../src/lib/exercise-categories.ts";
+import { RUNNING_DRILLS } from "../src/lib/running-drills.ts";
 
 const catalogMigrations = [
   "supabase/migrations/20260714080144_684ae935-69f9-4749-8b03-0b1886901d95.sql",
@@ -126,4 +127,29 @@ test("la sagoma dispone di semi separati per tibiali e polpacci", () => {
   const silhouette = readFileSync("src/components/dashboard/MuscleSilhouette.tsx", "utf8");
   assert.match(silhouette, /calves:\s*\[/);
   assert.match(silhouette, /tibialis:\s*\[/);
+});
+
+test("Atletica espone il catalogo completo delle andature e la routine personalizzata", () => {
+  assert.equal(RUNNING_DRILLS.length, 31);
+  assert.equal(new Set(RUNNING_DRILLS.map((drill) => drill.id)).size, RUNNING_DRILLS.length);
+  assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "A-Skip"));
+  assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Wall Drill"));
+  assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Pawback Drill"));
+  assert.ok(RUNNING_DRILLS.every((drill) => drill.cue.length > 0 && drill.dosage.length > 0));
+
+  const overview = readFileSync(
+    new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(overview, /data-testid="open-running-warmup"/);
+  assert.match(overview, /<RunningWarmupSheet/);
+
+  const sheet = readFileSync(
+    new URL("../src/components/RunningWarmupSheet.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(sheet, /RunningDrillIllustration/);
+  assert.match(sheet, /localStorage/);
+  assert.match(sheet, /Salva routine/);
+  assert.match(sheet, /Sposta .* sopra/);
 });

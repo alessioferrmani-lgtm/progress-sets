@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchIntervalSessions, formatDistance, formatTime } from "@/lib/athletics-queries";
+import { RunningWarmupSheet } from "@/components/RunningWarmupSheet";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/athletics/")({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/athletics/")({
 });
 
 function AthleticsOverview() {
+  const [warmupOpen, setWarmupOpen] = useState(false);
   const queryClient = useQueryClient();
   const sessionsQ = useQuery({ queryKey: ["interval_sessions"], queryFn: fetchIntervalSessions });
   const sessions = sessionsQ.data ?? [];
@@ -85,7 +87,27 @@ function AthleticsOverview() {
         <Stat icon={Flame} value={String(Math.round(totals.calories))} label="kcal oggi" />
       </div>
 
+      <button
+        type="button"
+        onClick={() => setWarmupOpen(true)}
+        data-testid="open-running-warmup"
+        className="ios-card mt-5 flex w-full items-center gap-3 p-4 text-left active:scale-[0.98]"
+        aria-haspopup="dialog"
+      >
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15">
+          <ClipboardCheck className="size-5 text-accent" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-bold text-label">Riscaldamento</span>
+          <span className="mt-0.5 block text-xs leading-snug text-label-secondary">
+            Apri le andature, guarda le illustrazioni e crea la tua routine
+          </span>
+        </span>
+        <ChevronRight className="size-5 shrink-0 text-label-tertiary" />
+      </button>
+
       <RunningWarmupReminder />
+      <RunningWarmupSheet open={warmupOpen} onClose={() => setWarmupOpen(false)} />
 
       <h2 className="mt-6 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
         Allenamenti atletica
