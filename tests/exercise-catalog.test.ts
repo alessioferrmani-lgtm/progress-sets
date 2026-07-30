@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
+import { isAthleticsExercise, isGymExercise } from "../src/lib/exercise-categories.ts";
 
 const catalogMigrations = [
   "supabase/migrations/20260714080144_684ae935-69f9-4749-8b03-0b1886901d95.sql",
@@ -81,6 +82,7 @@ test("l'editor manuale offre una ricerca filtrabile", () => {
     "utf8",
   );
   assert.match(editor, /data-testid="exercise-search"/);
+  assert.match(editor, /isGymExercise/);
   assert.match(editor, /filteredExercises/);
   assert.match(editor, /Nessun esercizio corrisponde alla ricerca/);
 });
@@ -91,7 +93,33 @@ test("anche l'allenamento libero filtra il catalogo", () => {
     "utf8",
   );
   assert.match(freeWorkout, /data-testid="free-exercise-search"/);
+  assert.match(freeWorkout, /isGymExercise/);
   assert.match(freeWorkout, /filteredExercises/);
+});
+
+test("gli esercizi di corsa restano in Atletica e non nel picker palestra", () => {
+  assert.equal(isAthleticsExercise({ name: "A-Skip", category: "Corsa" }), true);
+  assert.equal(isAthleticsExercise({ name: "Jogging leggero", category: "Riscaldamento" }), true);
+  assert.equal(isGymExercise({ name: "Pistol Squat", category: "Forza" }), true);
+  assert.equal(isGymExercise({ name: "Pistol Squat", category: "Corsa" }), false);
+
+  const overview = readFileSync(
+    new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(overview, /data-testid="running-warmup-reminder"/);
+  assert.match(overview, /A-Skip/);
+  assert.match(overview, /localStorage/);
+
+  const recategorization = readFileSync(
+    new URL(
+      "../supabase/migrations/20260729103000_classify_running_strength_exercises.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(recategorization, /SET category = 'Forza'/);
+  assert.match(recategorization, /'single-leg squat'/);
 });
 
 test("la sagoma dispone di semi separati per tibiali e polpacci", () => {

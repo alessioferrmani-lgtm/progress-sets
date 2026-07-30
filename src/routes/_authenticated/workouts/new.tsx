@@ -1,7 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { fetchExercises, fetchTemplate, type RepsType } from "@/lib/workout-queries";
+import {
+  fetchExercises,
+  fetchTemplate,
+  isGymExercise,
+  type RepsType,
+} from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -93,6 +98,8 @@ export function TemplateEditor({
   const [saving, setSaving] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
 
+  const gymExercises = (allExercises ?? []).filter(isGymExercise);
+
   useEffect(() => {
     if (existing) {
       setName(existing.template.name);
@@ -112,7 +119,7 @@ export function TemplateEditor({
   }, [existing]);
 
   const addExercise = () => {
-    const first = allExercises?.[0];
+    const first = gymExercises[0];
     if (!first) return;
     setRows((r) => [
       ...r,
@@ -144,7 +151,7 @@ export function TemplateEditor({
     .toLocaleLowerCase("it")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
-  const filteredExercises = (allExercises ?? []).filter((exercise) => {
+  const filteredExercises = gymExercises.filter((exercise) => {
     if (!normalizedSearch) return true;
     const haystack = `${exercise.name} ${exercise.muscle_group ?? ""} ${exercise.category ?? ""}`
       .toLocaleLowerCase("it")
