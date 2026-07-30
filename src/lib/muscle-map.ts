@@ -13,12 +13,39 @@ export type MuscleGroup =
   | "forearms";
 
 const ANKLE_PATTERN =
-  /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba/i;
+  /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba|pogo jump|ankling|jump rope/i;
+
+const SINGLE_LEG_JUMP_PATTERN =
+  /single.?leg.*(?:jump|hop|bound)|(?:monopodal|a una gamba).*(?:salto|hop|jump|bound)|hurdle hop monopodal/i;
 
 const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
   {
     match: ANKLE_PATTERN,
     groups: ["tibialis", "calves"],
+  },
+  {
+    match: /single.?leg.*(?:calf|soleus)|single.?leg calf raise|soleus raise|calf raise|polpacc/i,
+    groups: ["calves"],
+  },
+  {
+    match: SINGLE_LEG_JUMP_PATTERN,
+    groups: ["quads", "glutes", "calves", "tibialis"],
+  },
+  {
+    match: /single.?leg.*(?:squat|split squat)|pistol squat|bulgarian split squat|split squat|single.?leg step/i,
+    groups: ["quads", "glutes", "hamstrings", "calves"],
+  },
+  {
+    match: /single.?leg.*(?:romanian deadlift|deadlift|good morning)|single.?leg glute bridge|single.?leg hip thrust/i,
+    groups: ["hamstrings", "glutes"],
+  },
+  {
+    match: /single.?arm.*(?:row|rematore)|one.?arm.*(?:row|rematore)|single.?arm.*carry|waiter carry a un braccio/i,
+    groups: ["back", "biceps", "forearms", "abs"],
+  },
+  {
+    match: /single.?arm.*(?:press|push)|one.?arm.*(?:press|push)/i,
+    groups: ["chest", "shoulders", "triceps"],
   },
   { match: /wrist curl|reverse wrist curl|wrist roller|plate pinch|pinch grip/i, groups: ["forearms"] },
   { match: /curl alla panca scott/i, groups: ["biceps"] },

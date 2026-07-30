@@ -91,6 +91,7 @@ export function TemplateEditor({
   const [name, setName] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [saving, setSaving] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState("");
 
   useEffect(() => {
     if (existing) {
@@ -137,6 +138,20 @@ export function TemplateEditor({
     });
   };
   const removeRow = (idx: number) => setRows((r) => r.filter((_, i) => i !== idx));
+
+  const normalizedSearch = exerciseSearch
+    .trim()
+    .toLocaleLowerCase("it")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const filteredExercises = (allExercises ?? []).filter((exercise) => {
+    if (!normalizedSearch) return true;
+    const haystack = `${exercise.name} ${exercise.muscle_group ?? ""} ${exercise.category ?? ""}`
+      .toLocaleLowerCase("it")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    return haystack.includes(normalizedSearch);
+  });
 
   const save = async () => {
     if (!name.trim()) return toast.error("Inserisci un nome");
@@ -243,6 +258,24 @@ export function TemplateEditor({
         className="mt-3 w-full rounded-xl bg-fill-secondary px-4 py-3 text-base text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
       />
 
+      <label className="mt-3 block rounded-xl bg-fill p-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-label-secondary">
+          Cerca esercizio
+        </span>
+        <input
+          type="search"
+          value={exerciseSearch}
+          onChange={(event) => setExerciseSearch(event.target.value)}
+          placeholder="Es. single-leg, squat, corsa…"
+          aria-label="Cerca esercizio"
+          data-testid="exercise-search"
+          className="mt-2 w-full rounded-lg bg-fill-secondary px-3 py-2 text-sm text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
+        />
+        <span className="mt-1 block text-[11px] text-label-tertiary">
+          {filteredExercises.length} esercizi disponibili
+        </span>
+      </label>
+
       <div className="mt-4 space-y-2">
         {rows.map((r, idx) => (
           <div key={r.key} className="ios-card p-3">
@@ -255,7 +288,13 @@ export function TemplateEditor({
                 }}
                 className="min-w-0 flex-1 rounded-lg bg-fill-secondary px-2 py-2 text-sm text-label"
               >
-                {(allExercises ?? []).map((ex) => (
+                {(filteredExercises.some((exercise) => exercise.id === r.exercise_id)
+                  ? filteredExercises
+                  : [
+                      ...(allExercises ?? []).filter((exercise) => exercise.id === r.exercise_id),
+                      ...filteredExercises,
+                    ]
+                ).map((ex) => (
                   <option key={ex.id} value={ex.id}>
                     {ex.name}{ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
                   </option>
@@ -348,6 +387,11 @@ export function TemplateEditor({
             </div>
           </div>
         ))}
+        {rows.length > 0 && filteredExercises.length === 0 && (
+          <p className="rounded-xl bg-fill p-3 text-center text-sm text-label-secondary">
+            Nessun esercizio corrisponde alla ricerca. Prova un altro termine.
+          </p>
+        )}
         <button
           onClick={addExercise}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-separator py-3 text-sm font-medium text-label-secondary active:opacity-70"

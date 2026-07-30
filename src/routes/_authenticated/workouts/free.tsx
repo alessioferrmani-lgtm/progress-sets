@@ -43,6 +43,7 @@ function FreeWorkoutPage() {
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, FreeRow[]>>({});
   const [initialized, setInitialized] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState("");
   const [startedAt, setStartedAt] = useState(Date.now());
   const [now, setNow] = useState(Date.now());
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
@@ -76,6 +77,21 @@ function FreeWorkoutPage() {
     () => new Map((exercisesQuery.data ?? []).map((exercise) => [exercise.id, exercise])),
     [exercisesQuery.data],
   );
+  const filteredExercises = useMemo(() => {
+    const query = exerciseSearch
+      .trim()
+      .toLocaleLowerCase("it")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    if (!query) return exercisesQuery.data ?? [];
+    return (exercisesQuery.data ?? []).filter((exercise) => {
+      const haystack = `${exercise.name} ${exercise.muscle_group ?? ""} ${exercise.category ?? ""}`
+        .toLocaleLowerCase("it")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      return haystack.includes(query);
+    });
+  }, [exerciseSearch, exercisesQuery.data]);
 
   useEffect(() => {
     if (!activeWorkout.data || !exercisesQuery.data || initialized) return;
@@ -261,6 +277,7 @@ function FreeWorkoutPage() {
     if (selectedIds.includes(exercise.id)) {
       setActiveIdx(selectedIds.indexOf(exercise.id));
       setPickerOpen(false);
+      setExerciseSearch("");
       return;
     }
     setSelectedIds((current) => [...current, exercise.id]);
@@ -278,6 +295,7 @@ function FreeWorkoutPage() {
     setActiveIdx(selectedIds.length);
     setActiveSetIdx(0);
     setPickerOpen(false);
+    setExerciseSearch("");
   };
 
   const addSet = () => {
@@ -500,15 +518,27 @@ function FreeWorkoutPage() {
               <h2 className="text-xl font-bold text-label">Aggiungi esercizio</h2>
               <button
                 type="button"
-                onClick={() => setPickerOpen(false)}
+                onClick={() => {
+                  setPickerOpen(false);
+                  setExerciseSearch("");
+                }}
                 className="flex size-9 items-center justify-center rounded-full bg-fill text-label"
                 aria-label="Chiudi"
               >
                 <X className="size-4" />
               </button>
             </div>
+            <input
+              type="search"
+              value={exerciseSearch}
+              onChange={(event) => setExerciseSearch(event.target.value)}
+              placeholder="Cerca esercizio…"
+              aria-label="Cerca esercizio"
+              data-testid="free-exercise-search"
+              className="mt-3 w-full rounded-xl bg-fill-secondary px-4 py-3 text-sm text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
+            />
             <div className="mt-3 max-h-[58vh] space-y-2 overflow-y-auto">
-              {(exercisesQuery.data ?? []).map((exercise) => (
+              {filteredExercises.map((exercise) => (
                 <button
                   key={exercise.id}
                   type="button"
@@ -526,6 +556,11 @@ function FreeWorkoutPage() {
                   <ChevronDown className="size-4 -rotate-90 text-label-tertiary" />
                 </button>
               ))}
+              {filteredExercises.length === 0 && (
+                <p className="rounded-xl bg-fill p-4 text-center text-sm text-label-secondary">
+                  Nessun esercizio corrisponde alla ricerca.
+                </p>
+              )}
             </div>
           </section>
         </div>
