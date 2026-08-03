@@ -103,14 +103,23 @@ export function clearActiveWorkoutDraft(sessionId?: string) {
   }
 }
 
-function estimateElapsedSeconds(startedAt: string, lastCompletedAt: string | null) {
+/**
+ * The session start stored by Supabase is the single source of truth for the
+ * workout clock. A draft can be several minutes old when iOS suspends the
+ * page, so deriving the duration from draft.elapsedSec would make the timer
+ * jump backwards after pressing "Continua allenamento".
+ */
+export function getWorkoutElapsedSeconds(startedAt: string, now = Date.now()) {
   const started = new Date(startedAt).getTime();
-  const lastActivity = lastCompletedAt ? new Date(lastCompletedAt).getTime() : Date.now();
-  if (!Number.isFinite(started) || !Number.isFinite(lastActivity)) return 0;
+  if (!Number.isFinite(started) || !Number.isFinite(now)) return 0;
   return Math.max(
     0,
-    Math.min(MAX_RECOVERED_DURATION_SEC, Math.floor((lastActivity - started) / 1000)),
+    Math.min(MAX_RECOVERED_DURATION_SEC, Math.floor((now - started) / 1000)),
   );
+}
+
+function estimateElapsedSeconds(startedAt: string, _lastCompletedAt: string | null) {
+  return getWorkoutElapsedSeconds(startedAt);
 }
 
 function makeDraft(session: ActiveWorkoutSession): ActiveWorkoutDraft {
@@ -303,9 +312,10 @@ export async function finishActiveWorkout(
   // Use the latest server activity as a fallback when the device was powered off
   // before the last local draft write completed.
   const recoveredElapsed = estimateElapsedSeconds(session.startedAt, session.lastCompletedAt);
+  const recoveredMax = Math.max(storedElapsed, recoveredElapsed);
   const effectiveElapsed = Math.min(
     MAX_RECOVERED_DURATION_SEC,
-    Math.max(0, elapsedSec ?? Math.max(storedElapsed, recoveredElapsed)),
+    Math.max(0, elapsedSec ?? 0, recoveredMax),
   );
   const endedAt = new Date(new Date(session.startedAt).getTime() + effectiveElapsed * 1000);
   let calories: number | null = hasCompletedSets ? null : 0;

@@ -40,6 +40,26 @@ test("il salvataggio dopo uno spegnimento usa anche l'ultima attività confermat
   assert.match(recovery, /const storedElapsed =/);
   assert.match(recovery, /const recoveredElapsed = estimateElapsedSeconds/);
   assert.match(recovery, /Math\.max\(storedElapsed, recoveredElapsed\)/);
+  assert.match(recovery, /Math\.max\(0, elapsedSec \?\? 0, recoveredMax\)/);
+});
+
+test("il timer recuperato resta ancorato all'orario di inizio della sessione", () => {
+  assert.match(
+    recovery,
+    /export function getWorkoutElapsedSeconds\(startedAt: string, now = Date\.now\(\)\)/,
+  );
+  assert.match(
+    run,
+    /setTimerStartedAt\(new Date\(activeWorkoutData\.session\.startedAt\)\.getTime\(\)\)/,
+  );
+  assert.match(run, /elapsedSec: getWorkoutElapsedSeconds\(bootstrap\.session\.startedAt\)/);
+  assert.match(run, /persisted session start/);
+  const free = readFileSync("src/routes/_authenticated/workouts/free.tsx", "utf8");
+  assert.match(
+    free,
+    /setStartedAt\(new Date\(activeWorkout\.data\.session\.startedAt\)\.getTime\(\)\)/,
+  );
+  assert.match(free, /elapsedSec: getWorkoutElapsedSeconds\(session\.startedAt\)/);
 });
 
 test("un allenamento libero usa una sessione senza template ed Ã¨ recuperabile", () => {

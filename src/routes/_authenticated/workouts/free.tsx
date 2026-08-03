@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ensureFreeWorkout,
   finishActiveWorkout,
-  readActiveWorkoutDraft,
+  getWorkoutElapsedSeconds,
   saveActiveWorkoutDraft,
 } from "@/lib/active-workout";
 import {
@@ -136,7 +136,7 @@ function FreeWorkoutPage() {
     setSelectedIds(ids);
     setActiveIdx(Math.min(activeWorkout.data.draft.activeIdx, Math.max(ids.length - 1, 0)));
     setRowsByExercise(rows);
-    setStartedAt(Date.now() - activeWorkout.data.draft.elapsedSec * 1000);
+    setStartedAt(new Date(activeWorkout.data.session.startedAt).getTime());
     setInitialized(true);
   }, [activeWorkout.data, exerciseById, exercisesQuery.data, initialized, previous.data]);
 
@@ -166,7 +166,7 @@ function FreeWorkoutPage() {
       sessionId: session.id,
       templateId: null,
       sessionStartedAt: session.startedAt,
-      elapsedSec: Math.floor((Date.now() - startedAt) / 1000),
+      elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
       activeIdx,
       exerciseIds: selectedIds,
       rowsByExercise: Object.fromEntries(
@@ -177,7 +177,7 @@ function FreeWorkoutPage() {
       ),
       updatedAt: new Date().toISOString(),
     });
-  }, [activeIdx, initialized, rowsByExercise, selectedIds, session, startedAt]);
+  }, [activeIdx, initialized, rowsByExercise, selectedIds, session]);
 
   useEffect(() => {
     if (typeof document !== "undefined" && document.visibilityState === "visible") persistWorkout();
@@ -186,7 +186,13 @@ function FreeWorkoutPage() {
   useEffect(() => {
     if (!sessionId) return;
     const persistOnHide = () => {
-      if (document.visibilityState === "hidden") persistWorkout();
+      if (document.visibilityState === "hidden") {
+        persistWorkout();
+        return;
+      }
+      // Re-anchor after iOS suspends timers while the app is backgrounded.
+      setStartedAt(new Date(session?.startedAt ?? "").getTime());
+      setNow(Date.now());
     };
     document.addEventListener("visibilitychange", persistOnHide);
     window.addEventListener("pagehide", persistWorkout);
@@ -196,7 +202,7 @@ function FreeWorkoutPage() {
       window.removeEventListener("pagehide", persistWorkout);
       window.removeEventListener("beforeunload", persistWorkout);
     };
-  }, [persistWorkout, sessionId]);
+  }, [persistWorkout, session?.startedAt, sessionId]);
 
   const updateRow = (field: "weight" | "reps", value: string) => {
     if (!activeExerciseId || activeRow?.completed) return;
