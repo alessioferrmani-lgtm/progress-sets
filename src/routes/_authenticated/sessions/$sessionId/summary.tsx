@@ -6,6 +6,7 @@ import { it } from "date-fns/locale";
 import {
   ArrowLeft,
   Clock,
+  Download,
   Dumbbell,
   Flame,
   ListChecks,
@@ -20,6 +21,7 @@ import { toast } from "sonner";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
 import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
+import { buildZeppTcx, zeppFilename } from "@/lib/zepp-export";
 
 export const Route = createFileRoute("/_authenticated/sessions/$sessionId/summary")({
   component: SummaryPage,
@@ -47,7 +49,7 @@ function formatDuration(totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}min`;
+  if (hours > 0) return `${hours}h ${minutes}min ${seconds}s`;
   if (minutes > 0) return `${minutes}min ${seconds}s`;
   return `${seconds}s`;
 }
@@ -197,6 +199,9 @@ function SummaryPage() {
       return {
         name: template?.name ?? "Allenamento libero",
         startedAt: session.started_at,
+        endedAt:
+          session.ended_at ??
+          new Date(new Date(session.started_at).getTime() + durationSec * 1000).toISOString(),
         durationSec,
         totalRestSec,
         calories: session.calories_burned == null ? null : Number(session.calories_burned),
@@ -329,6 +334,40 @@ function SummaryPage() {
     setIsEditing(true);
   };
 
+  const exportForZepp = () => {
+    if (!summary.data) return;
+    const sets = summary.data.exercises.flatMap((exercise) =>
+      exercise.sets.map((set) => ({
+        exerciseName: exercise.name,
+        setNumber: set.setNumber,
+        weightKg: set.weightKg,
+        reps: set.reps,
+        completedAt: set.completedAt,
+        restTakenSec: set.restTakenSec,
+      })),
+    );
+    try {
+      const tcx = buildZeppTcx({
+        name: summary.data.name,
+        startedAt: summary.data.startedAt,
+        endedAt: summary.data.endedAt,
+        calories: summary.data.calories,
+        avgHr: summary.data.avgHr,
+        sets,
+      });
+      const blob = new Blob([tcx], { type: "application/vnd.garmin.tcx+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = zeppFilename(summary.data.name, summary.data.startedAt);
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("TCX pronto per l’importazione in Zepp");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Esportazione non riuscita");
+    }
+  };
+
   if (summary.isLoading) {
     return (
       <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
@@ -377,15 +416,33 @@ function SummaryPage() {
             </p>
           </div>
           {!isEditing && (
-            <button
-              type="button"
-              onClick={startEditing}
-              className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
-            >
-              <Pencil className="size-4" /> Modifica
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={exportForZepp}
+                aria-label="Esporta allenamento per Zepp in formato TCX"
+                title="Esporta per Zepp (TCX)"
+                className="flex min-h-10 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
+              >
+                <Download className="size-4" /> Zepp
+              </button>
+              <button
+                type="button"
+                onClick={startEditing}
+                className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
+              >
+                <Pencil className="size-4" /> Modifica
+              </button>
+            </div>
           )}
         </header>
+
+        {!isEditing && (
+          <p className="mt-2 px-1 text-xs leading-relaxed text-label-tertiary">
+            Il pulsante download crea un file TCX: Zepp può importare l’attività, mentre serie,
+            carichi e ripetizioni restano nelle note e nelle estensioni del file.
+          </p>
+        )}
 
         {isEditing && (
           <section className="ios-card mt-5 p-4" aria-label="Modifica allenamento">
