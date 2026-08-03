@@ -14,7 +14,7 @@ import { findNextUncompletedSet } from "@/lib/workout-navigation";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
-  readActiveWorkoutDraft,
+  getWorkoutElapsedSeconds,
   saveActiveWorkoutDraft,
 } from "@/lib/active-workout";
 
@@ -63,7 +63,7 @@ function RunPage() {
 
   useEffect(() => {
     if (!activeWorkoutData) return;
-    setTimerStartedAt(Date.now() - activeWorkoutData.draft.elapsedSec * 1000);
+    setTimerStartedAt(new Date(activeWorkoutData.session.startedAt).getTime());
     setRestoredTimerSessionId(activeWorkoutData.session.id);
   }, [activeWorkoutData]);
 
@@ -145,7 +145,7 @@ function RunPage() {
       sessionId: bootstrap.session.id,
       templateId,
       sessionStartedAt: bootstrap.session.startedAt,
-      elapsedSec: Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
+      elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
       activeIdx,
       rowsByExercise: Object.fromEntries(
         Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
@@ -162,7 +162,6 @@ function RunPage() {
     rowsInitialized,
     rowsByExercise,
     templateId,
-    timerStartedAt,
   ]);
 
   useEffect(() => {
@@ -177,10 +176,11 @@ function RunPage() {
         persistWorkout();
         return;
       }
-      const stored = readActiveWorkoutDraft();
-      if (stored?.sessionId === sessionId) {
-        setTimerStartedAt(Date.now() - stored.elapsedSec * 1000);
-      }
+      // iOS can suspend JavaScript timers while the app is in the background.
+      // Re-anchor to the persisted session start instead of the stale draft
+      // duration, then force an immediate render with the current wall clock.
+      setTimerStartedAt(new Date(activeWorkoutData?.session.startedAt ?? "").getTime());
+      setNow(Date.now());
     };
     const handleUnload = () => persistWorkout();
     document.addEventListener("visibilitychange", handleVisibility);
@@ -191,7 +191,7 @@ function RunPage() {
       window.removeEventListener("pagehide", handleUnload);
       window.removeEventListener("beforeunload", handleUnload);
     };
-  }, [persistWorkout, sessionId]);
+  }, [activeWorkoutData?.session.startedAt, persistWorkout, sessionId]);
 
   const timer = useRestTimer();
 

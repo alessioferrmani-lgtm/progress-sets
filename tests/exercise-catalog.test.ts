@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
 import { isAthleticsExercise, isGymExercise } from "../src/lib/exercise-categories.ts";
@@ -136,6 +136,13 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Wall Drill"));
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Pawback Drill"));
   assert.ok(RUNNING_DRILLS.every((drill) => drill.cue.length > 0 && drill.dosage.length > 0));
+  for (const drill of RUNNING_DRILLS) {
+    assert.equal(
+      existsSync(`public/running-drills/${drill.id}.jpg`),
+      true,
+      `immagine mancante per ${drill.name}`,
+    );
+  }
 
   const overview = readFileSync(
     new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
@@ -152,4 +159,11 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   assert.match(sheet, /localStorage/);
   assert.match(sheet, /Salva routine/);
   assert.match(sheet, /Sposta .* sopra/);
+
+  const illustration = readFileSync(
+    new URL("../src/components/RunningDrillIllustration.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(illustration, /running-drill-image/);
+  assert.match(illustration, /\/running-drills\/\$\{drill.id\}\.jpg/);
 });
