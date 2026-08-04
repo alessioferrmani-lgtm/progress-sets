@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, SkipForward, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -159,25 +159,28 @@ function FreeWorkoutPage() {
     .filter((row) => row.completed).length;
   const totalSets = Object.values(rowsByExercise).reduce((sum, list) => sum + list.length, 0);
 
-  const persistWorkout = useCallback(() => {
-    if (!session || !initialized) return;
-    saveActiveWorkoutDraft({
-      version: 1,
-      sessionId: session.id,
-      templateId: null,
-      sessionStartedAt: session.startedAt,
-      elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
-      activeIdx,
-      exerciseIds: selectedIds,
-      rowsByExercise: Object.fromEntries(
-        Object.entries(rowsByExercise).map(([id, list]) => [
-          id,
-          list.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
-        ]),
-      ),
-      updatedAt: new Date().toISOString(),
-    });
-  }, [activeIdx, initialized, rowsByExercise, selectedIds, session]);
+  const persistWorkout = useCallback(
+    (nextActiveIdx = activeIdx) => {
+      if (!session || !initialized) return;
+      saveActiveWorkoutDraft({
+        version: 1,
+        sessionId: session.id,
+        templateId: null,
+        sessionStartedAt: session.startedAt,
+        elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
+        activeIdx: nextActiveIdx,
+        exerciseIds: selectedIds,
+        rowsByExercise: Object.fromEntries(
+          Object.entries(rowsByExercise).map(([id, list]) => [
+            id,
+            list.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+          ]),
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [activeIdx, initialized, rowsByExercise, selectedIds, session],
+  );
 
   useEffect(() => {
     if (typeof document !== "undefined" && document.visibilityState === "visible") persistWorkout();
@@ -283,6 +286,22 @@ function FreeWorkoutPage() {
       timer.skip();
       setShowCompletionPrompt(true);
     }
+  };
+
+  const skipExercise = () => {
+    if (!activeExercise) return;
+    const nextIndex = activeIdx + 1;
+    timer.skip();
+    if (nextIndex >= selectedIds.length) {
+      setShowCompletionPrompt(true);
+      return;
+    }
+    setActiveIdx(nextIndex);
+    setActiveSetIdx(0);
+    persistWorkout(nextIndex);
+    toast.success(
+      `Passato a ${exerciseById.get(selectedIds[nextIndex])?.name ?? "esercizio successivo"}`,
+    );
   };
 
   const addExercise = (exercise: Exercise) => {
@@ -460,6 +479,15 @@ function FreeWorkoutPage() {
               Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={skipExercise}
+            aria-label="Salta esercizio"
+            className="mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
+          >
+            <SkipForward className="size-4" /> Salta esercizio
+          </button>
 
           <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
             {rows.map((row, index) => (

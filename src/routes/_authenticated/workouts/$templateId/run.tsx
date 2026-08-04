@@ -5,7 +5,7 @@ import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
-import { X, Check, Plus, Minus } from "lucide-react";
+import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
@@ -137,32 +137,35 @@ function RunPage() {
   const es = String(elapsed % 60).padStart(2, "0");
   const persistTick = Math.floor(now / 5000);
 
-  const persistWorkout = useCallback(() => {
-    const bootstrap = activeWorkoutData;
-    if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
-    saveActiveWorkoutDraft({
-      version: 1,
-      sessionId: bootstrap.session.id,
-      templateId,
-      sessionStartedAt: bootstrap.session.startedAt,
-      elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
+  const persistWorkout = useCallback(
+    (nextActiveIdx = activeIdx) => {
+      const bootstrap = activeWorkoutData;
+      if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
+      saveActiveWorkoutDraft({
+        version: 1,
+        sessionId: bootstrap.session.id,
+        templateId,
+        sessionStartedAt: bootstrap.session.startedAt,
+        elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
+        activeIdx: nextActiveIdx,
+        rowsByExercise: Object.fromEntries(
+          Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
+            exerciseId,
+            exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+          ]),
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [
       activeIdx,
-      rowsByExercise: Object.fromEntries(
-        Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
-          exerciseId,
-          exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
-        ]),
-      ),
-      updatedAt: new Date().toISOString(),
-    });
-  }, [
-    activeIdx,
-    activeWorkoutData,
-    restoredTimerSessionId,
-    rowsInitialized,
-    rowsByExercise,
-    templateId,
-  ]);
+      activeWorkoutData,
+      restoredTimerSessionId,
+      rowsInitialized,
+      rowsByExercise,
+      templateId,
+    ],
+  );
 
   useEffect(() => {
     if (typeof document === "undefined" || document.visibilityState !== "visible") return;
@@ -303,6 +306,20 @@ function RunPage() {
     }
   };
 
+  const skipExercise = () => {
+    if (!activeEx) return;
+    const nextIndex = activeIdx + 1;
+    timer.skip();
+    if (nextIndex >= exercises.length) {
+      setShowCompletionPrompt(true);
+      return;
+    }
+    setActiveIdx(nextIndex);
+    setActiveSetIdx(0);
+    persistWorkout(nextIndex);
+    toast.success(`Passato a ${exercises[nextIndex].exercise.name}`);
+  };
+
   const finish = async () => {
     if (!sessionId || !activeWorkout.data || isFinishing) return;
     setIsFinishing(true);
@@ -417,6 +434,15 @@ function RunPage() {
                     Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={skipExercise}
+                  aria-label="Salta esercizio"
+                  className="mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
+                >
+                  <SkipForward className="size-4" /> Salta esercizio
+                </button>
 
                 <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
                   {rows.map((row, index) => (

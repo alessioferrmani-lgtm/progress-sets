@@ -124,9 +124,7 @@ test("gli esercizi di corsa restano in Atletica e non nel picker palestra", () =
     new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(overview, /data-testid="running-warmup-reminder"/);
-  assert.match(overview, /A-Skip/);
-  assert.match(overview, /localStorage/);
+  assert.match(overview, /<CustomizableWarmupReminder/);
 
   const recategorization = readFileSync(
     new URL(
@@ -163,6 +161,20 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
       `immagine mancante per ${drill.name}`,
     );
   }
+  for (const id of [
+    "a-skip",
+    "b-skip",
+    "c-skip",
+    "skip-basso",
+    "skip-medio",
+    "skip-alto",
+    "calciata-dietro",
+    "corsa-calciata",
+    "corsa-balzata",
+    "bounding",
+  ]) {
+    assert.equal(runningDrillImageFile(id), `${id}.png`, `immagine nuova non collegata per ${id}`);
+  }
 
   const overview = readFileSync(
     new URL("../src/routes/_authenticated/athletics/index.tsx", import.meta.url),
@@ -170,6 +182,7 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   );
   assert.match(overview, /data-testid="open-running-warmup"/);
   assert.match(overview, /<RunningWarmupSheet/);
+  assert.match(overview, /CustomizableWarmupReminder/);
 
   const sheet = readFileSync(
     new URL("../src/components/RunningWarmupSheet.tsx", import.meta.url),
@@ -193,7 +206,8 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
     new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(home, /CustomizableWarmupReminder/);
+  assert.doesNotMatch(home, /CustomizableWarmupReminder/);
+  assert.doesNotMatch(home, /running-warmup-reminder/);
   const homeReminder = readFileSync(
     new URL("../src/components/CustomizableWarmupReminder.tsx", import.meta.url),
     "utf8",

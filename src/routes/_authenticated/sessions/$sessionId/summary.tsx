@@ -419,15 +419,6 @@ function SummaryPage() {
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                onClick={exportForZepp}
-                aria-label="Esporta allenamento per Zepp in formato TCX"
-                title="Esporta per Zepp (TCX)"
-                className="flex min-h-10 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
-              >
-                <Download className="size-4" /> Zepp
-              </button>
-              <button
-                type="button"
                 onClick={startEditing}
                 className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
               >
@@ -436,13 +427,6 @@ function SummaryPage() {
             </div>
           )}
         </header>
-
-        {!isEditing && (
-          <p className="mt-2 px-1 text-xs leading-relaxed text-label-tertiary">
-            Zepp scarica il file TCX dell’allenamento; esercizi, serie, carichi e ripetizioni sono
-            inclusi nelle note del file.
-          </p>
-        )}
 
         {isEditing && (
           <section className="ios-card mt-5 p-4" aria-label="Modifica allenamento">
@@ -673,14 +657,26 @@ function SummaryPage() {
           )}
         </section>
 
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="mt-8 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-danger px-5 py-3 font-semibold text-white active:opacity-80"
-        >
-          <Trash2 className="size-5" />
-          Elimina allenamento
-        </button>
+        <div className="mt-8 space-y-3">
+          <button
+            type="button"
+            onClick={exportForZepp}
+            aria-label="Esporta allenamento per Zepp"
+            title="Esporta allenamento per Zepp (TCX)"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 py-3 font-semibold text-accent active:opacity-80"
+          >
+            <Download className="size-5" />
+            Esporta allenamento per Zepp
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-danger px-5 py-3 font-semibold text-white active:opacity-80"
+          >
+            <Trash2 className="size-5" />
+            Elimina allenamento
+          </button>
+        </div>
       </div>
 
       {confirmDelete && (

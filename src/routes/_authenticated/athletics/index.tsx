@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
-  Check,
   ChevronRight,
   ClipboardCheck,
   Flag,
@@ -18,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { fetchIntervalSessions, formatDistance, formatTime } from "@/lib/athletics-queries";
 import { RunningWarmupSheet } from "@/components/RunningWarmupSheet";
+import { CustomizableWarmupReminder } from "@/components/CustomizableWarmupReminder";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/athletics/")({
@@ -106,7 +106,7 @@ function AthleticsOverview() {
         <ChevronRight className="size-5 shrink-0 text-label-tertiary" />
       </button>
 
-      <RunningWarmupReminder />
+      <CustomizableWarmupReminder />
       <RunningWarmupSheet open={warmupOpen} onClose={() => setWarmupOpen(false)} />
 
       <h2 className="mt-6 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
@@ -180,134 +180,6 @@ function AthleticsOverview() {
         />
       </div>
     </div>
-  );
-}
-
-const RUNNING_WARMUP_STEPS = [
-  { id: "walk", title: "Camminata veloce", detail: "3–5 min" },
-  { id: "jog", title: "Jogging leggero", detail: "3–5 min" },
-  { id: "ankle", title: "Mobilità caviglie", detail: "30 s per lato" },
-  { id: "hip", title: "Mobilità anche", detail: "30 s per lato" },
-  { id: "march", title: "A-March", detail: "2 × 20 m" },
-  { id: "skip", title: "A-Skip", detail: "2 × 20 m" },
-  { id: "kick", title: "Calciata dietro", detail: "2 × 20 m" },
-  { id: "strides", title: "Allunghi progressivi", detail: "3 × 60 m" },
-] as const;
-
-function RunningWarmupReminder() {
-  const todayKey = useTodayKey();
-  const storageKey = `progress-sets:running-warmup:${todayKey}`;
-  const [completed, setCompleted] = useState<string[]>([]);
-  const [hydratedKey, setHydratedKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    setHydratedKey(null);
-    try {
-      const stored = window.localStorage.getItem(storageKey);
-      const parsed = stored ? (JSON.parse(stored) as unknown) : [];
-      const valid = Array.isArray(parsed)
-        ? parsed.filter((id): id is string =>
-            RUNNING_WARMUP_STEPS.some((step) => step.id === id),
-          )
-        : [];
-      setCompleted(valid);
-    } catch {
-      setCompleted([]);
-    } finally {
-      setHydratedKey(storageKey);
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (hydratedKey !== storageKey) return;
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(completed));
-    } catch {
-      // The checklist remains usable when storage is unavailable/private.
-    }
-  }, [completed, hydratedKey, storageKey]);
-
-  const toggle = (id: string) => {
-    setCompleted((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  };
-  const finished = completed.length;
-  const total = RUNNING_WARMUP_STEPS.length;
-
-  return (
-    <section
-      className="ios-card mt-5 p-4"
-      aria-labelledby="running-warmup-title"
-      data-testid="running-warmup-reminder"
-    >
-      <div className="flex items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/15">
-          <ClipboardCheck className="size-5 text-accent" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h2 id="running-warmup-title" className="text-base font-bold text-label">
-                Riscaldamento pre-corsa
-              </h2>
-              <p className="mt-0.5 text-xs text-label-secondary">Promemoria giornaliero</p>
-            </div>
-            <span className="shrink-0 text-sm font-semibold text-accent">
-              {finished}/{total}
-            </span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-fill-secondary">
-            <div
-              className="h-full rounded-full bg-accent transition-[width]"
-              style={{ width: `${(finished / total) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 divide-y divide-separator rounded-xl bg-fill">
-        {RUNNING_WARMUP_STEPS.map((step) => {
-          const isDone = completed.includes(step.id);
-          return (
-            <button
-              key={step.id}
-              type="button"
-              aria-pressed={isDone}
-              onClick={() => toggle(step.id)}
-              className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-fill-secondary"
-            >
-              <span
-                className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                  isDone ? "border-accent bg-accent text-accent-foreground" : "border-separator"
-                }`}
-              >
-                {isDone && <Check className="size-3.5" strokeWidth={3} />}
-              </span>
-              <span className={`min-w-0 flex-1 text-sm ${isDone ? "text-label-tertiary line-through" : "text-label"}`}>
-                {step.title}
-              </span>
-              <span className="text-xs text-label-secondary">{step.detail}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-xs text-label-secondary">
-          {finished === total ? "Riscaldamento completato. Buona corsa!" : "Segna ogni passaggio mentre lo esegui."}
-        </p>
-        {finished > 0 && (
-          <button
-            type="button"
-            onClick={() => setCompleted([])}
-            className="shrink-0 text-xs font-semibold text-accent"
-          >
-            Azzera
-          </button>
-        )}
-      </div>
-    </section>
   );
 }
 

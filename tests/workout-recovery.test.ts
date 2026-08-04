@@ -79,6 +79,15 @@ test("la schermata libera permette di aggiungere esercizi e usa il recupero cond
   assert.match(free, /<Check className="size-5" \/> Termina allenamento/);
   assert.match(free, /user_id: auth\.user\.id/);
   assert.match(free, /WorkoutRecoveryCard/);
+  assert.match(free, /aria-label="Salta esercizio"/);
+  assert.match(free, /const skipExercise/);
   assert.match(recoveryCard, /addSeconds\(-15\)/);
   assert.match(recoveryCard, /addSeconds\(15\)/);
+});
+
+test("il flusso guidato puÃ² saltare l'esercizio senza cancellare le serie", () => {
+  assert.match(run, /aria-label="Salta esercizio"/);
+  assert.match(run, /const skipExercise/);
+  assert.match(run, /setActiveIdx\(nextIndex\)/);
+  assert.match(run, /persistWorkout\(nextIndex\)/);
 });
