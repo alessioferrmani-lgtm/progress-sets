@@ -174,7 +174,10 @@ test("Il riepilogo usa una modalità unica per modificare tutto l'allenamento", 
   const headerEnd = summary.indexOf("</header>");
   assert.ok(headerEnd >= 0);
   assert.doesNotMatch(summary.slice(0, headerEnd), /Esporta allenamento per Zepp/);
+  assert.match(summary, /isAppleMobile/);
   assert.match(summary, /navigator\.share/);
+  assert.match(summary, /buildZeppFit/);
+  assert.match(summary, /File FIT per Zepp/);
   assert.match(summary, /document\.body\.appendChild\(link\)/);
   assert.match(summary, /navigator\.canShare/);
   assert.doesNotMatch(summary, /aria-label=\{`Modifica serie/);

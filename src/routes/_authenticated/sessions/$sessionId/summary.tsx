@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
 import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
-import { buildZeppTcx, zeppFilename } from "@/lib/zepp-export";
+import { buildZeppFit, zeppFilename } from "@/lib/zepp-export";
 
 export const Route = createFileRoute("/_authenticated/sessions/$sessionId/summary")({
   component: SummaryPage,
@@ -347,7 +347,7 @@ function SummaryPage() {
       })),
     );
     try {
-      const tcx = buildZeppTcx({
+      const fit = buildZeppFit({
         name: summary.data.name,
         startedAt: summary.data.startedAt,
         endedAt: summary.data.endedAt,
@@ -356,12 +356,20 @@ function SummaryPage() {
         sets,
       });
       const filename = zeppFilename(summary.data.name, summary.data.startedAt);
-      const blob = new Blob([tcx], { type: "application/vnd.garmin.tcx+xml;charset=utf-8" });
+      const blob = new Blob([fit], { type: "application/octet-stream" });
       const file = new File([blob], filename, {
-        type: "application/vnd.garmin.tcx+xml",
+        type: "application/octet-stream",
       });
 
+      // The native share sheet is the most reliable hand-off to Zepp on iPhone/iPad.
+      // On desktop/in-app browsers a partially implemented share API can leave the
+      // click unresolved, so keep the normal download fallback available there.
+      const isAppleMobile =
+        typeof navigator !== "undefined" &&
+        (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
       if (
+        isAppleMobile &&
         typeof navigator !== "undefined" &&
         typeof navigator.share === "function" &&
         typeof navigator.canShare === "function" &&
@@ -369,10 +377,10 @@ function SummaryPage() {
       ) {
         await navigator.share({
           title: "Allenamento Progress Sets",
-          text: "File TCX per Zepp",
+          text: "File FIT per Zepp",
           files: [file],
         });
-        toast.success("File TCX pronto per Zepp");
+        toast.success("File FIT pronto per Zepp");
         return;
       }
 
@@ -386,7 +394,7 @@ function SummaryPage() {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-      toast.success("File TCX pronto per Zepp");
+      toast.success("File FIT pronto per Zepp");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error(error instanceof Error ? error.message : "Esportazione non riuscita");
@@ -687,11 +695,11 @@ function SummaryPage() {
             type="button"
             onClick={exportForZepp}
             aria-label="Esporta allenamento per Zepp"
-            title="Esporta allenamento per Zepp (TCX)"
+            title="Esporta allenamento per Zepp (FIT)"
             className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 py-3 font-semibold text-accent active:opacity-80"
           >
             <Download className="size-5" />
-            Esporta allenamento per Zepp
+            Esporta allenamento per Zepp (.FIT)
           </button>
           <button
             type="button"

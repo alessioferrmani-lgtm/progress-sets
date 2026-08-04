@@ -146,6 +146,11 @@ test("la sagoma dispone di semi separati per tibiali e polpacci", () => {
 test("Atletica espone il catalogo completo delle andature e la routine personalizzata", () => {
   assert.equal(RUNNING_DRILLS.length, 31);
   assert.equal(new Set(RUNNING_DRILLS.map((drill) => drill.id)).size, RUNNING_DRILLS.length);
+  assert.equal(
+    new Set(RUNNING_DRILLS.map((drill) => runningDrillImageFile(drill.id))).size,
+    RUNNING_DRILLS.length,
+    "ogni andatura deve avere un file immagine distinto",
+  );
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "A-Skip"));
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Wall Drill"));
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Pawback Drill"));
