@@ -30,7 +30,7 @@ test("crea un TCX per Zepp con le serie dell'allenamento", () => {
 test("crea un nome file FIT stabile", () => {
   assert.equal(
     zeppFilename("Giorno 2 · Spalle", "2026-08-03T18:02:21.558Z"),
-    "progress-sets-giorno-2-spalle-2026-08-03.fit",
+    "progress-sets-giorno-2-spalle-2026-08-03-zepp-strength-v2.fit",
   );
 });
 
