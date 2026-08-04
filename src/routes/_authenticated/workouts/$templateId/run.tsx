@@ -9,6 +9,7 @@ import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
+import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { insertLoggedSet } from "@/lib/logged-sets";
 import { findNextUncompletedSet } from "@/lib/workout-navigation";
 import {
@@ -421,8 +422,18 @@ function RunPage() {
           const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
             <div className="space-y-3 px-4 pb-6">
+              <WorkoutExerciseHero
+                exerciseName={activeEx.exercise.name}
+                exercisePosition={activeIdx + 1}
+                exerciseCount={exercises.length}
+                seriesPosition={activeSetIdx + 1}
+                seriesCount={rows.length}
+                completedSets={completedSets}
+                totalSets={totalSets}
+                onSkip={skipExercise}
+              />
               <div className="ios-card overflow-hidden p-4">
-                <div className="flex items-start justify-between gap-3">
+                <div className="hidden">
                   <div>
                     <div className="text-2xl font-bold text-label">{activeEx.exercise.name}</div>
                     <div className="mt-1 text-xs text-label-secondary">
@@ -443,6 +454,11 @@ function RunPage() {
                 >
                   <SkipForward className="size-4" /> Salta esercizio
                 </button>
+
+                <div className="mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
+                  <span>Recupero target: {activeEx.rest_seconds}s</span>
+                  {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
+                </div>
 
                 <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
                   {rows.map((row, index) => (

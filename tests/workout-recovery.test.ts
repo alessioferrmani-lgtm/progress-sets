@@ -6,6 +6,8 @@ const recovery = readFileSync("src/lib/active-workout.ts", "utf8");
 const prompt = readFileSync("src/components/InterruptedWorkoutPrompt.tsx", "utf8");
 const layout = readFileSync("src/routes/_authenticated/route.tsx", "utf8");
 const run = readFileSync("src/routes/_authenticated/workouts/$templateId/run.tsx", "utf8");
+const free = readFileSync("src/routes/_authenticated/workouts/free.tsx", "utf8");
+const hero = readFileSync("src/components/WorkoutExerciseHero.tsx", "utf8");
 
 test("un allenamento aperto viene riutilizzato invece di creare duplicati", () => {
   assert.match(recovery, /readActiveWorkoutDraft\(\)/);
@@ -90,4 +92,14 @@ test("il flusso guidato puÃ² saltare l'esercizio senza cancellare le serie", (
   assert.match(run, /const skipExercise/);
   assert.match(run, /setActiveIdx\(nextIndex\)/);
   assert.match(run, /persistWorkout\(nextIndex\)/);
+});
+
+test("la schermata allenamento usa l'hero iOS dark della proposta 2", () => {
+  assert.match(run, /import \{ WorkoutExerciseHero \}/);
+  assert.match(free, /import \{ WorkoutExerciseHero \}/);
+  assert.match(run, /<WorkoutExerciseHero/);
+  assert.match(free, /<WorkoutExerciseHero/);
+  assert.match(hero, /data-testid="workout-exercise-hero"/);
+  assert.match(hero, /conic-gradient/);
+  assert.match(hero, /aria-label="Salta esercizio"/);
 });
