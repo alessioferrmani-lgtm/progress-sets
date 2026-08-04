@@ -130,8 +130,8 @@ export type Database = {
           rest_taken_sec: number | null
           session_id: string
           set_number: number
+          user_id: string | null
           weight_kg: number
-          user_id: string
         }
         Insert: {
           completed_at?: string
@@ -141,8 +141,8 @@ export type Database = {
           rest_taken_sec?: number | null
           session_id: string
           set_number: number
+          user_id?: string | null
           weight_kg?: number
-          user_id?: string
         }
         Update: {
           completed_at?: string
@@ -152,8 +152,8 @@ export type Database = {
           rest_taken_sec?: number | null
           session_id?: string
           set_number?: number
+          user_id?: string | null
           weight_kg?: number
-          user_id?: string
         }
         Relationships: [
           {
@@ -308,7 +308,7 @@ export type Database = {
           target_sets: number
           target_weight_kg: number | null
           template_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -322,7 +322,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -336,7 +336,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
