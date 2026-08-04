@@ -334,7 +334,7 @@ function SummaryPage() {
     setIsEditing(true);
   };
 
-  const exportForZepp = () => {
+  const exportForZepp = async () => {
     if (!summary.data) return;
     const sets = summary.data.exercises.flatMap((exercise) =>
       exercise.sets.map((set) => ({
@@ -355,15 +355,40 @@ function SummaryPage() {
         avgHr: summary.data.avgHr,
         sets,
       });
+      const filename = zeppFilename(summary.data.name, summary.data.startedAt);
       const blob = new Blob([tcx], { type: "application/vnd.garmin.tcx+xml;charset=utf-8" });
+      const file = new File([blob], filename, {
+        type: "application/vnd.garmin.tcx+xml",
+      });
+
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          title: "Allenamento Progress Sets",
+          text: "File TCX per Zepp",
+          files: [file],
+        });
+        toast.success("File TCX pronto per Zepp");
+        return;
+      }
+
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = zeppFilename(summary.data.name, summary.data.startedAt);
+      link.download = filename;
+      link.rel = "noopener";
+      link.target = "_blank";
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
       toast.success("File TCX pronto per Zepp");
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error(error instanceof Error ? error.message : "Esportazione non riuscita");
     }
   };
