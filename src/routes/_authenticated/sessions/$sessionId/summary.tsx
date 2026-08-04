@@ -377,7 +377,6 @@ function SummaryPage() {
       ) {
         await navigator.share({
           title: "Allenamento Progress Sets",
-          text: "File FIT per Zepp",
           files: [file],
         });
         toast.success("File FIT pronto per Zepp");

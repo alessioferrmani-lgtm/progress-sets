@@ -153,6 +153,16 @@ const FIT_BASE_TYPE_ID: Record<FitBaseType, number> = {
 const FIT_EPOCH_MS = Date.UTC(1989, 11, 31);
 const FIT_DEVELOPER_INDEX = 0;
 const FIT_RECORD_MESSAGE = 20;
+const FIT_SET_MESSAGE = 225;
+const FIT_WORKOUT_MESSAGE = 26;
+const FIT_WORKOUT_STEP_MESSAGE = 27;
+const FIT_TRAINING_SPORT = 10;
+const FIT_STRENGTH_SUBSPORT = 20;
+const FIT_REPETITIONS_DURATION = 29;
+const FIT_OPEN_TARGET = 2;
+const FIT_ACTIVE_INTENSITY = 0;
+const FIT_ACTIVE_SET = 1;
+const FIT_KILOGRAM_UNIT = 1;
 
 function fitDateTime(value: string, label: string) {
   const date = new Date(value);
@@ -275,10 +285,10 @@ const FIT_SESSION: FitDefinition = {
     { number: 6, size: 1, baseType: "enum" },
     { number: 7, size: 4, baseType: "uint32" },
     { number: 8, size: 4, baseType: "uint32" },
-    { number: 9, size: 4, baseType: "float32" },
+    { number: 9, size: 4, baseType: "uint32" },
     { number: 11, size: 2, baseType: "uint16" },
-    { number: 16, size: 1, baseType: "uint8" },
-    { number: 24, size: 4, baseType: "uint32" },
+    { number: 15, size: 1, baseType: "uint8" },
+    { number: 26, size: 2, baseType: "uint16" },
   ],
 };
 
@@ -316,12 +326,50 @@ const FIT_LAP: FitDefinition = {
     { number: 2, size: 4, baseType: "uint32" },
     { number: 7, size: 4, baseType: "uint32" },
     { number: 8, size: 4, baseType: "uint32" },
-    { number: 9, size: 4, baseType: "float32" },
+    { number: 9, size: 4, baseType: "uint32" },
     { number: 11, size: 2, baseType: "uint16" },
-    { number: 16, size: 1, baseType: "uint8" },
-    { number: 5, size: 1, baseType: "enum" },
-    { number: 6, size: 1, baseType: "enum" },
-    { number: 24, size: 4, baseType: "uint32" },
+    { number: 15, size: 1, baseType: "uint8" },
+  ],
+};
+
+const FIT_WORKOUT: FitDefinition = {
+  localMessageType: 8,
+  globalMessageNumber: FIT_WORKOUT_MESSAGE,
+  fields: [
+    { number: 4, size: 1, baseType: "enum" },
+    { number: 5, size: 4, baseType: "uint32" },
+    { number: 6, size: 2, baseType: "uint16" },
+    { number: 8, size: 64, baseType: "string" },
+    { number: 11, size: 1, baseType: "enum" },
+  ],
+};
+
+const FIT_WORKOUT_STEP: FitDefinition = {
+  localMessageType: 9,
+  globalMessageNumber: FIT_WORKOUT_STEP_MESSAGE,
+  fields: [
+    { number: 0, size: 64, baseType: "string" },
+    { number: 1, size: 1, baseType: "enum" },
+    { number: 2, size: 4, baseType: "uint32" },
+    { number: 3, size: 1, baseType: "enum" },
+    { number: 7, size: 1, baseType: "enum" },
+    { number: 12, size: 2, baseType: "uint16" },
+    { number: 13, size: 2, baseType: "uint16" },
+    { number: 254, size: 2, baseType: "uint16" },
+  ],
+};
+
+const FIT_SET: FitDefinition = {
+  localMessageType: 7,
+  globalMessageNumber: FIT_SET_MESSAGE,
+  fields: [
+    { number: 3, size: 2, baseType: "uint16" },
+    { number: 4, size: 2, baseType: "uint16" },
+    { number: 5, size: 1, baseType: "uint8" },
+    { number: 6, size: 4, baseType: "uint32" },
+    { number: 10, size: 2, baseType: "uint16" },
+    { number: 11, size: 2, baseType: "uint16" },
+    { number: 254, size: 4, baseType: "uint32" },
   ],
 };
 
@@ -352,7 +400,7 @@ const FIT_ACTIVITY: FitDefinition = {
   ],
 };
 
-/** Crea un FIT Activity valido, con riepilogo e ogni serie nei developer fields. */
+/** Crea un FIT Activity valido con metadati strength e serie standard + developer fields. */
 export function buildZeppFit(workout: ZeppExportWorkout) {
   const startedAt = fitDateTime(workout.startedAt, "Data di inizio");
   const endedAt = fitDateTime(workout.endedAt, "Data di fine");
@@ -383,14 +431,14 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
       fit0: 0,
       fit1: 1,
       fit2: startedAt,
-      fit5: 5,
-      fit6: 0,
+      fit5: FIT_TRAINING_SPORT,
+      fit6: FIT_STRENGTH_SUBSPORT,
       fit7: elapsedMs,
       fit8: elapsedMs,
       fit9: 0,
       fit11: calories,
-      fit16: avgHr,
-      fit24: sets.reduce((sum, set) => sum + integer(set.reps), 0),
+      fit15: avgHr,
+      fit26: 1,
     }),
   );
   append(fitDefinition(FIT_LAP));
@@ -404,12 +452,36 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
       fit8: elapsedMs,
       fit9: 0,
       fit11: calories,
-      fit16: avgHr,
-      fit5: 5,
-      fit6: 0,
-      fit24: sets.reduce((sum, set) => sum + integer(set.reps), 0),
+      fit15: avgHr,
     }),
   );
+  if (sets.length > 0) {
+    append(fitDefinition(FIT_WORKOUT));
+    append(
+      fitData(FIT_WORKOUT, {
+        fit4: FIT_TRAINING_SPORT,
+        fit5: 2,
+        fit6: sets.length,
+        fit8: workout.name,
+        fit11: FIT_STRENGTH_SUBSPORT,
+      }),
+    );
+    append(fitDefinition(FIT_WORKOUT_STEP));
+    sets.forEach((set, index) => {
+      append(
+        fitData(FIT_WORKOUT_STEP, {
+          fit0: set.exerciseName,
+          fit1: FIT_REPETITIONS_DURATION,
+          fit2: integer(set.reps),
+          fit3: FIT_OPEN_TARGET,
+          fit7: FIT_ACTIVE_INTENSITY,
+          fit12: Math.max(0, Math.round(set.weightKg * 100)),
+          fit13: FIT_KILOGRAM_UNIT,
+          fit254: index,
+        }),
+      );
+    });
+  }
   const developerId = [
     0x50, 0x52, 0x4f, 0x47, 0x52, 0x45, 0x53, 0x53, 0x2d, 0x53, 0x45, 0x54, 0, 0, 0, 1,
   ];
@@ -457,6 +529,20 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
         dev3: set.reps,
         dev4: set.restTakenSec ?? 0,
         dev5: set.setNumber,
+      }),
+    );
+  });
+  append(fitDefinition(FIT_SET));
+  sets.forEach((set, index) => {
+    append(
+      fitData(FIT_SET, {
+        fit3: integer(set.reps),
+        fit4: Math.max(0, Math.round(set.weightKg * 16)),
+        fit5: FIT_ACTIVE_SET,
+        fit6: set.completedAt,
+        fit10: index,
+        fit11: index,
+        fit254: set.completedAt,
       }),
     );
   });

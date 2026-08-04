@@ -34,7 +34,7 @@ test("crea un nome file FIT stabile", () => {
   );
 });
 
-test("crea un FIT binario valido con le serie nei developer fields", () => {
+test("crea un FIT binario valido con serie standard e developer fields", () => {
   const fit = buildZeppFit({
     name: "Giorno 2",
     startedAt: "2026-08-03T18:02:21.558Z",
@@ -55,6 +55,38 @@ test("crea un FIT binario valido con le serie nei developer fields", () => {
   assert.equal(fit[0], 14);
   assert.equal(String.fromCharCode(...fit.slice(8, 12)), ".FIT");
   assert.ok(fit.length > 16);
+  const findDefinition = (localMessageType: number, globalMessageNumber: number) =>
+    fit.findIndex(
+      (byte, index) =>
+        byte === 0x40 + localMessageType &&
+        fit[index + 1] === 0 &&
+        fit[index + 2] === 0 &&
+        fit[index + 3] === globalMessageNumber &&
+        fit[index + 4] === 0,
+    );
+  const sessionDefinition = findDefinition(1, 18);
+  assert.ok(sessionDefinition > 0, "manca la sessione FIT");
+  const sessionFieldCount = fit[sessionDefinition + 5];
+  const sessionFieldNumbers = Array.from(
+    { length: sessionFieldCount },
+    (_, index) => fit[sessionDefinition + 6 + index * 3],
+  );
+  assert.ok(sessionFieldNumbers.includes(5), "manca il campo sport");
+  assert.ok(sessionFieldNumbers.includes(6), "manca il campo sub_sport");
+  const workoutDefinition = findDefinition(8, 26);
+  const workoutStepDefinition = findDefinition(9, 27);
+  const setDefinition = findDefinition(7, 225);
+  assert.ok(workoutDefinition > 0, "manca il workout FIT standard");
+  assert.ok(workoutStepDefinition > 0, "mancano gli esercizi FIT standard");
+  assert.ok(setDefinition > 0, "mancano le serie FIT standard");
+  const setFieldCount = fit[setDefinition + 5];
+  const setFieldNumbers = Array.from(
+    { length: setFieldCount },
+    (_, index) => fit[setDefinition + 6 + index * 3],
+  );
+  assert.ok(setFieldNumbers.includes(3), "mancano le ripetizioni standard");
+  assert.ok(setFieldNumbers.includes(4), "manca il peso standard");
+  assert.ok(setFieldNumbers.includes(11), "manca il collegamento all'esercizio standard");
   const recordDefinition = fit.findIndex(
     (byte, index) => byte === 0x63 && fit[index + 3] === 20 && fit[index + 4] === 0,
   );
