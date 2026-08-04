@@ -5,10 +5,11 @@ import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
-import { X, Check, Plus, Minus } from "lucide-react";
+import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
+import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { insertLoggedSet } from "@/lib/logged-sets";
 import { findNextUncompletedSet } from "@/lib/workout-navigation";
 import {
@@ -137,32 +138,35 @@ function RunPage() {
   const es = String(elapsed % 60).padStart(2, "0");
   const persistTick = Math.floor(now / 5000);
 
-  const persistWorkout = useCallback(() => {
-    const bootstrap = activeWorkoutData;
-    if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
-    saveActiveWorkoutDraft({
-      version: 1,
-      sessionId: bootstrap.session.id,
-      templateId,
-      sessionStartedAt: bootstrap.session.startedAt,
-      elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
+  const persistWorkout = useCallback(
+    (nextActiveIdx = activeIdx) => {
+      const bootstrap = activeWorkoutData;
+      if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
+      saveActiveWorkoutDraft({
+        version: 1,
+        sessionId: bootstrap.session.id,
+        templateId,
+        sessionStartedAt: bootstrap.session.startedAt,
+        elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
+        activeIdx: nextActiveIdx,
+        rowsByExercise: Object.fromEntries(
+          Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
+            exerciseId,
+            exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+          ]),
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [
       activeIdx,
-      rowsByExercise: Object.fromEntries(
-        Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
-          exerciseId,
-          exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
-        ]),
-      ),
-      updatedAt: new Date().toISOString(),
-    });
-  }, [
-    activeIdx,
-    activeWorkoutData,
-    restoredTimerSessionId,
-    rowsInitialized,
-    rowsByExercise,
-    templateId,
-  ]);
+      activeWorkoutData,
+      restoredTimerSessionId,
+      rowsInitialized,
+      rowsByExercise,
+      templateId,
+    ],
+  );
 
   useEffect(() => {
     if (typeof document === "undefined" || document.visibilityState !== "visible") return;
@@ -303,6 +307,20 @@ function RunPage() {
     }
   };
 
+  const skipExercise = () => {
+    if (!activeEx) return;
+    const nextIndex = activeIdx + 1;
+    timer.skip();
+    if (nextIndex >= exercises.length) {
+      setShowCompletionPrompt(true);
+      return;
+    }
+    setActiveIdx(nextIndex);
+    setActiveSetIdx(0);
+    persistWorkout(nextIndex);
+    toast.success(`Passato a ${exercises[nextIndex].exercise.name}`);
+  };
+
   const finish = async () => {
     if (!sessionId || !activeWorkout.data || isFinishing) return;
     setIsFinishing(true);
@@ -404,8 +422,18 @@ function RunPage() {
           const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
             <div className="space-y-3 px-4 pb-6">
+              <WorkoutExerciseHero
+                exerciseName={activeEx.exercise.name}
+                exercisePosition={activeIdx + 1}
+                exerciseCount={exercises.length}
+                seriesPosition={activeSetIdx + 1}
+                seriesCount={rows.length}
+                completedSets={completedSets}
+                totalSets={totalSets}
+                onSkip={skipExercise}
+              />
               <div className="ios-card overflow-hidden p-4">
-                <div className="flex items-start justify-between gap-3">
+                <div className="hidden">
                   <div>
                     <div className="text-2xl font-bold text-label">{activeEx.exercise.name}</div>
                     <div className="mt-1 text-xs text-label-secondary">
@@ -416,6 +444,20 @@ function RunPage() {
                   <span className="shrink-0 rounded-full bg-fill px-3 py-1.5 text-sm font-semibold text-label-secondary">
                     Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
                   </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={skipExercise}
+                  aria-label="Salta esercizio"
+                  className="mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
+                >
+                  <SkipForward className="size-4" /> Salta esercizio
+                </button>
+
+                <div className="mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
+                  <span>Recupero target: {activeEx.rest_seconds}s</span>
+                  {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
                 </div>
 
                 <div className="mt-5 flex gap-2 overflow-x-auto pb-1">

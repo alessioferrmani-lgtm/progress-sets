@@ -37,7 +37,6 @@ import {
   getDay,
 } from "date-fns";
 import { it } from "date-fns/locale";
-import { CustomizableWarmupReminder } from "@/components/CustomizableWarmupReminder";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: HomePage,
@@ -99,8 +98,6 @@ function HomePage() {
             loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
           />
         </div>
-
-        <CustomizableWarmupReminder />
 
         <MonthCalendarSection
           sessions={sessionsQ.data}

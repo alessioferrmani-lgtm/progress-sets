@@ -6,6 +6,7 @@ import { it } from "date-fns/locale";
 import {
   ArrowLeft,
   Clock,
+  Download,
   Dumbbell,
   Flame,
   ListChecks,
@@ -20,6 +21,7 @@ import { toast } from "sonner";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
 import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
+import { buildZeppTcx, zeppFilename } from "@/lib/zepp-export";
 
 export const Route = createFileRoute("/_authenticated/sessions/$sessionId/summary")({
   component: SummaryPage,
@@ -47,7 +49,7 @@ function formatDuration(totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}min`;
+  if (hours > 0) return `${hours}h ${minutes}min ${seconds}s`;
   if (minutes > 0) return `${minutes}min ${seconds}s`;
   return `${seconds}s`;
 }
@@ -197,6 +199,9 @@ function SummaryPage() {
       return {
         name: template?.name ?? "Allenamento libero",
         startedAt: session.started_at,
+        endedAt:
+          session.ended_at ??
+          new Date(new Date(session.started_at).getTime() + durationSec * 1000).toISOString(),
         durationSec,
         totalRestSec,
         calories: session.calories_burned == null ? null : Number(session.calories_burned),
@@ -329,6 +334,65 @@ function SummaryPage() {
     setIsEditing(true);
   };
 
+  const exportForZepp = async () => {
+    if (!summary.data) return;
+    const sets = summary.data.exercises.flatMap((exercise) =>
+      exercise.sets.map((set) => ({
+        exerciseName: exercise.name,
+        setNumber: set.setNumber,
+        weightKg: set.weightKg,
+        reps: set.reps,
+        completedAt: set.completedAt,
+        restTakenSec: set.restTakenSec,
+      })),
+    );
+    try {
+      const tcx = buildZeppTcx({
+        name: summary.data.name,
+        startedAt: summary.data.startedAt,
+        endedAt: summary.data.endedAt,
+        calories: summary.data.calories,
+        avgHr: summary.data.avgHr,
+        sets,
+      });
+      const filename = zeppFilename(summary.data.name, summary.data.startedAt);
+      const blob = new Blob([tcx], { type: "application/vnd.garmin.tcx+xml;charset=utf-8" });
+      const file = new File([blob], filename, {
+        type: "application/vnd.garmin.tcx+xml",
+      });
+
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          title: "Allenamento Progress Sets",
+          text: "File TCX per Zepp",
+          files: [file],
+        });
+        toast.success("File TCX pronto per Zepp");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+      toast.success("File TCX pronto per Zepp");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error(error instanceof Error ? error.message : "Esportazione non riuscita");
+    }
+  };
+
   if (summary.isLoading) {
     return (
       <div className="mx-auto max-w-md px-4 pt-[calc(env(safe-area-inset-top)+16px)]">
@@ -377,13 +441,15 @@ function SummaryPage() {
             </p>
           </div>
           {!isEditing && (
-            <button
-              type="button"
-              onClick={startEditing}
-              className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
-            >
-              <Pencil className="size-4" /> Modifica
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={startEditing}
+                className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-fill px-3 text-sm font-semibold text-accent active:opacity-70"
+              >
+                <Pencil className="size-4" /> Modifica
+              </button>
+            </div>
           )}
         </header>
 
@@ -616,14 +682,26 @@ function SummaryPage() {
           )}
         </section>
 
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="mt-8 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-danger px-5 py-3 font-semibold text-white active:opacity-80"
-        >
-          <Trash2 className="size-5" />
-          Elimina allenamento
-        </button>
+        <div className="mt-8 space-y-3">
+          <button
+            type="button"
+            onClick={exportForZepp}
+            aria-label="Esporta allenamento per Zepp"
+            title="Esporta allenamento per Zepp (TCX)"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 py-3 font-semibold text-accent active:opacity-80"
+          >
+            <Download className="size-5" />
+            Esporta allenamento per Zepp
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-danger px-5 py-3 font-semibold text-white active:opacity-80"
+          >
+            <Trash2 className="size-5" />
+            Elimina allenamento
+          </button>
+        </div>
       </div>
 
       {confirmDelete && (

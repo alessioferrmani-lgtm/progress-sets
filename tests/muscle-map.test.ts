@@ -167,6 +167,16 @@ test("Il riepilogo usa una modalità unica per modificare tutto l'allenamento", 
   assert.match(summary, /ended_at: endedAt\.toISOString\(\)/);
   assert.match(summary, /computeCaloriesForSession/);
   assert.match(summary, /Salva modifiche/);
+  const exportIndex = summary.indexOf('aria-label="Esporta allenamento per Zepp"');
+  const deleteIndex = summary.indexOf("Elimina allenamento");
+  assert.ok(exportIndex >= 0, "manca il pulsante di esportazione Zepp");
+  assert.ok(deleteIndex > exportIndex, "Esporta Zepp deve precedere Elimina allenamento");
+  const headerEnd = summary.indexOf("</header>");
+  assert.ok(headerEnd >= 0);
+  assert.doesNotMatch(summary.slice(0, headerEnd), /Esporta allenamento per Zepp/);
+  assert.match(summary, /navigator\.share/);
+  assert.match(summary, /document\.body\.appendChild\(link\)/);
+  assert.match(summary, /navigator\.canShare/);
   assert.doesNotMatch(summary, /aria-label=\{`Modifica serie/);
   assert.match(summary, /queryKey: \["session-summary", sessionId\]/);
 });

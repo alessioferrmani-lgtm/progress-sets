@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, SkipForward, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -19,6 +19,7 @@ import {
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
+import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
 import { insertLoggedSet } from "@/lib/logged-sets";
 import { findNextUncompletedSet } from "@/lib/workout-navigation";
@@ -159,25 +160,28 @@ function FreeWorkoutPage() {
     .filter((row) => row.completed).length;
   const totalSets = Object.values(rowsByExercise).reduce((sum, list) => sum + list.length, 0);
 
-  const persistWorkout = useCallback(() => {
-    if (!session || !initialized) return;
-    saveActiveWorkoutDraft({
-      version: 1,
-      sessionId: session.id,
-      templateId: null,
-      sessionStartedAt: session.startedAt,
-      elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
-      activeIdx,
-      exerciseIds: selectedIds,
-      rowsByExercise: Object.fromEntries(
-        Object.entries(rowsByExercise).map(([id, list]) => [
-          id,
-          list.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
-        ]),
-      ),
-      updatedAt: new Date().toISOString(),
-    });
-  }, [activeIdx, initialized, rowsByExercise, selectedIds, session]);
+  const persistWorkout = useCallback(
+    (nextActiveIdx = activeIdx) => {
+      if (!session || !initialized) return;
+      saveActiveWorkoutDraft({
+        version: 1,
+        sessionId: session.id,
+        templateId: null,
+        sessionStartedAt: session.startedAt,
+        elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
+        activeIdx: nextActiveIdx,
+        exerciseIds: selectedIds,
+        rowsByExercise: Object.fromEntries(
+          Object.entries(rowsByExercise).map(([id, list]) => [
+            id,
+            list.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+          ]),
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [activeIdx, initialized, rowsByExercise, selectedIds, session],
+  );
 
   useEffect(() => {
     if (typeof document !== "undefined" && document.visibilityState === "visible") persistWorkout();
@@ -283,6 +287,22 @@ function FreeWorkoutPage() {
       timer.skip();
       setShowCompletionPrompt(true);
     }
+  };
+
+  const skipExercise = () => {
+    if (!activeExercise) return;
+    const nextIndex = activeIdx + 1;
+    timer.skip();
+    if (nextIndex >= selectedIds.length) {
+      setShowCompletionPrompt(true);
+      return;
+    }
+    setActiveIdx(nextIndex);
+    setActiveSetIdx(0);
+    persistWorkout(nextIndex);
+    toast.success(
+      `Passato a ${exerciseById.get(selectedIds[nextIndex])?.name ?? "esercizio successivo"}`,
+    );
   };
 
   const addExercise = (exercise: Exercise) => {
@@ -450,71 +470,99 @@ function FreeWorkoutPage() {
           </div>
         </section>
       ) : (
-        <section className="ios-card mt-4 overflow-hidden p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-2xl font-bold text-label">{activeExercise.name}</div>
-              <div className="mt-1 text-xs text-label-secondary">Recupero suggerito: 1:30</div>
+        <>
+          <WorkoutExerciseHero
+            exerciseName={activeExercise.name}
+            exercisePosition={activeIdx + 1}
+            exerciseCount={selectedIds.length}
+            seriesPosition={activeSetIdx + 1}
+            seriesCount={rows.length}
+            completedSets={completedSets}
+            totalSets={totalSets}
+            onSkip={skipExercise}
+          />
+          <section className="ios-card mt-3 overflow-hidden p-4">
+            <div className="hidden">
+              <div>
+                <div className="text-2xl font-bold text-label">{activeExercise.name}</div>
+                <div className="mt-1 text-xs text-label-secondary">Recupero suggerito: 1:30</div>
+              </div>
+              <span className="rounded-full bg-fill px-3 py-1.5 text-sm font-semibold text-label-secondary">
+                Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
+              </span>
             </div>
-            <span className="rounded-full bg-fill px-3 py-1.5 text-sm font-semibold text-label-secondary">
-              Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
-            </span>
-          </div>
 
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-            {rows.map((row, index) => (
-              <button
-                key={row.set_number}
-                type="button"
-                onClick={() => setActiveSetIdx(index)}
-                className={`flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
-                  index === activeSetIdx
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : row.completed
-                      ? "border-success bg-success/15 text-success"
-                      : "border-separator bg-fill text-label-secondary"
-                }`}
-              >
-                {row.set_number}
-              </button>
-            ))}
-          </div>
+            <button
+              type="button"
+              onClick={skipExercise}
+              aria-label="Salta esercizio"
+              className="hidden"
+            >
+              <SkipForward className="size-4" /> Salta esercizio
+            </button>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <NumberCell
-              label="Carico kg"
-              value={activeRow.weight}
-              onChange={(value) => updateRow("weight", value)}
-              step={2.5}
-              disabled={activeRow.completed}
-            />
-            <NumberCell
-              label="Ripetizioni"
-              value={activeRow.reps}
-              onChange={(value) => updateRow("reps", value)}
-              step={1}
-              integer
-              disabled={activeRow.completed}
-            />
-          </div>
+            <div className="mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
+              <span>Recupero suggerito: 1:30</span>
+              <span>
+                Serie {activeSetIdx + 1} di {rows.length}
+              </span>
+            </div>
 
-          <button
-            type="button"
-            onClick={confirmSet}
-            className={`mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white ${activeRow.completed ? "bg-success" : "bg-accent"}`}
-          >
-            <Check className="size-5" />{" "}
-            {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
-          </button>
-          <button
-            type="button"
-            onClick={addSet}
-            className="mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-semibold text-accent"
-          >
-            <Plus className="size-4" /> Aggiungi serie
-          </button>
-          <WorkoutRecoveryCard />
-        </section>
+            <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+              {rows.map((row, index) => (
+                <button
+                  key={row.set_number}
+                  type="button"
+                  onClick={() => setActiveSetIdx(index)}
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
+                    index === activeSetIdx
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : row.completed
+                        ? "border-success bg-success/15 text-success"
+                        : "border-separator bg-fill text-label-secondary"
+                  }`}
+                >
+                  {row.set_number}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <NumberCell
+                label="Carico kg"
+                value={activeRow.weight}
+                onChange={(value) => updateRow("weight", value)}
+                step={2.5}
+                disabled={activeRow.completed}
+              />
+              <NumberCell
+                label="Ripetizioni"
+                value={activeRow.reps}
+                onChange={(value) => updateRow("reps", value)}
+                step={1}
+                integer
+                disabled={activeRow.completed}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={confirmSet}
+              className={`mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white ${activeRow.completed ? "bg-success" : "bg-accent"}`}
+            >
+              <Check className="size-5" />{" "}
+              {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
+            </button>
+            <button
+              type="button"
+              onClick={addSet}
+              className="mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-semibold text-accent"
+            >
+              <Plus className="size-4" /> Aggiungi serie
+            </button>
+            <WorkoutRecoveryCard />
+          </section>
+        </>
       )}
 
       {pickerOpen && (
