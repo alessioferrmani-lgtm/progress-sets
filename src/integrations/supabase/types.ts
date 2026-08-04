@@ -18,32 +18,32 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
-          created_by: string | null
           equipment: string | null
           id: string
           is_default: boolean
           muscle_group: string | null
           name: string
+          user_id: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
-          created_by?: string | null
           equipment?: string | null
           id?: string
           is_default?: boolean
           muscle_group?: string | null
           name: string
+          user_id?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string
-          created_by?: string | null
           equipment?: string | null
           id?: string
           is_default?: boolean
           muscle_group?: string | null
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -130,6 +130,7 @@ export type Database = {
           rest_taken_sec: number | null
           session_id: string
           set_number: number
+          user_id: string | null
           weight_kg: number
         }
         Insert: {
@@ -140,6 +141,7 @@ export type Database = {
           rest_taken_sec?: number | null
           session_id: string
           set_number: number
+          user_id?: string | null
           weight_kg?: number
         }
         Update: {
@@ -150,6 +152,7 @@ export type Database = {
           rest_taken_sec?: number | null
           session_id?: string
           set_number?: number
+          user_id?: string | null
           weight_kg?: number
         }
         Relationships: [
@@ -305,6 +308,7 @@ export type Database = {
           target_sets: number
           target_weight_kg: number | null
           template_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -318,6 +322,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -331,6 +336,7 @@ export type Database = {
           target_sets?: number
           target_weight_kg?: number | null
           template_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
