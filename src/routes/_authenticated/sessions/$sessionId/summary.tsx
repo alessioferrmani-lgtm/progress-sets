@@ -195,6 +195,26 @@ function SummaryPage() {
         );
       });
       const template = (session as unknown as { template: { name: string } | null }).template;
+      let calories = session.calories_burned == null ? null : Number(session.calories_burned);
+      // Recalculate legacy sessions with the current strength model so an old
+      // 1,000+ kcal value is not reused in the summary or FIT export.
+      if (sets.length > 0 && durationSec > 0) {
+        try {
+          const { fetchMyProfile } = await import("@/lib/profile-queries");
+          const { computeCaloriesForSession } = await import("@/lib/calories");
+          const profile = await fetchMyProfile();
+          if (profile) {
+            const corrected = computeCaloriesForSession(profile, {
+              duration_min: durationSec / 60,
+              avg_hr: session.avg_hr,
+              rpe: session.rpe,
+            });
+            if (corrected !== null) calories = corrected;
+          }
+        } catch {
+          // Keep the persisted value when the profile is unavailable offline.
+        }
+      }
 
       return {
         name: template?.name ?? "Allenamento libero",
@@ -204,7 +224,7 @@ function SummaryPage() {
           new Date(new Date(session.started_at).getTime() + durationSec * 1000).toISOString(),
         durationSec,
         totalRestSec,
-        calories: session.calories_burned == null ? null : Number(session.calories_burned),
+        calories,
         avgHr: session.avg_hr,
         rpe: session.rpe,
         totalVolumeKg,

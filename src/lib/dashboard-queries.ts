@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { startOfISOWeek, endOfISOWeek, subDays, formatISO } from "date-fns";
+import { computeCaloriesForSession } from "@/lib/calories";
+import { fetchMyProfile } from "@/lib/profile-queries";
 
 export type SessionRow = {
   id: string;
@@ -26,10 +28,18 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
   const since = subDays(new Date(), days).toISOString();
   const { data, error } = await supabase
     .from("workout_sessions")
-    .select("id,template_id,started_at,ended_at,calories_burned,template:workout_templates(name)")
+    .select(
+      "id,template_id,started_at,ended_at,calories_burned,avg_hr,rpe,template:workout_templates(name)",
+    )
     .gte("started_at", since)
     .order("started_at", { ascending: false });
   if (error) throw error;
+  let profile: Awaited<ReturnType<typeof fetchMyProfile>> = null;
+  try {
+    profile = await fetchMyProfile();
+  } catch {
+    // Keep persisted values available when the profile query is offline.
+  }
   return (data ?? []).map((r) => {
     const row = r as unknown as {
       id: string;
@@ -37,15 +47,29 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
       started_at: string;
       ended_at: string | null;
       calories_burned: number | string | null;
+      avg_hr: number | null;
+      rpe: number | null;
       template: { name: string } | null;
     };
+    const storedCalories = row.calories_burned == null ? null : Number(row.calories_burned);
+    const durationMin = row.ended_at
+      ? Math.max(0, (new Date(row.ended_at).getTime() - new Date(row.started_at).getTime()) / 60000)
+      : 0;
+    const estimatedCalories =
+      profile && durationMin > 0
+        ? computeCaloriesForSession(profile, {
+            duration_min: durationMin,
+            avg_hr: row.avg_hr,
+            rpe: row.rpe,
+          })
+        : null;
     return {
       id: row.id,
       template_id: row.template_id,
       template_name: row.template?.name ?? null,
       started_at: row.started_at,
       ended_at: row.ended_at,
-      calories_burned: row.calories_burned == null ? null : Number(row.calories_burned),
+      calories_burned: estimatedCalories ?? storedCalories,
     };
   });
 }

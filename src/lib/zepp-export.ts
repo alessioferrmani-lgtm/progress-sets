@@ -158,6 +158,7 @@ const FIT_RECORD_MESSAGE = 20;
 const FIT_SET_MESSAGE = 225;
 const FIT_WORKOUT_MESSAGE = 26;
 const FIT_WORKOUT_STEP_MESSAGE = 27;
+const FIT_EXERCISE_TITLE_MESSAGE = 264;
 const FIT_TRAINING_SPORT = 10;
 const FIT_STRENGTH_SUBSPORT = 20;
 const FIT_REPETITIONS_DURATION = 29;
@@ -165,6 +166,7 @@ const FIT_OPEN_TARGET = 2;
 const FIT_ACTIVE_INTENSITY = 0;
 const FIT_ACTIVE_SET = 1;
 const FIT_KILOGRAM_UNIT = 1;
+const FIT_UNKNOWN_EXERCISE_CATEGORY = 0xfffe;
 
 function fitDateTime(value: string, label: string) {
   const date = new Date(value);
@@ -290,6 +292,7 @@ const FIT_SESSION: FitDefinition = {
     { number: 9, size: 4, baseType: "uint32" },
     { number: 11, size: 2, baseType: "uint16" },
     { number: 15, size: 1, baseType: "uint8" },
+    { number: 25, size: 2, baseType: "uint16" },
     { number: 26, size: 2, baseType: "uint16" },
   ],
 };
@@ -331,6 +334,7 @@ const FIT_LAP: FitDefinition = {
     { number: 9, size: 4, baseType: "uint32" },
     { number: 11, size: 2, baseType: "uint16" },
     { number: 15, size: 1, baseType: "uint8" },
+    { number: 71, size: 2, baseType: "uint16" },
   ],
 };
 
@@ -355,8 +359,21 @@ const FIT_WORKOUT_STEP: FitDefinition = {
     { number: 2, size: 4, baseType: "uint32" },
     { number: 3, size: 1, baseType: "enum" },
     { number: 7, size: 1, baseType: "enum" },
+    { number: 10, size: 2, baseType: "uint16" },
+    { number: 11, size: 2, baseType: "uint16" },
     { number: 12, size: 2, baseType: "uint16" },
-    { number: 13, size: 2, baseType: "uint16" },
+    { number: 13, size: 1, baseType: "enum" },
+    { number: 254, size: 2, baseType: "uint16" },
+  ],
+};
+
+const FIT_EXERCISE_TITLE: FitDefinition = {
+  localMessageType: 10,
+  globalMessageNumber: FIT_EXERCISE_TITLE_MESSAGE,
+  fields: [
+    { number: 0, size: 2, baseType: "uint16" },
+    { number: 1, size: 2, baseType: "uint16" },
+    { number: 2, size: 64, baseType: "string" },
     { number: 254, size: 2, baseType: "uint16" },
   ],
 };
@@ -369,6 +386,8 @@ const FIT_SET: FitDefinition = {
     { number: 4, size: 2, baseType: "uint16" },
     { number: 5, size: 1, baseType: "uint8" },
     { number: 6, size: 4, baseType: "uint32" },
+    { number: 7, size: 2, baseType: "uint16" },
+    { number: 9, size: 1, baseType: "enum" },
     { number: 10, size: 2, baseType: "uint16" },
     { number: 11, size: 2, baseType: "uint16" },
     { number: 254, size: 4, baseType: "uint32" },
@@ -410,7 +429,26 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
     ...set,
     completedAt: fitDateTime(set.completedAt, "Data serie"),
   }));
+  // A workout step is an exercise; a Set message is one completed series.
+  // Grouping here prevents Zepp from collapsing the export to the first set.
+  const exerciseGroups: Array<{ name: string; sets: typeof sets }> = [];
+  const groupsByName = new Map<string, (typeof exerciseGroups)[number]>();
+  const stepIndexBySet = new Map<(typeof sets)[number], number>();
+  sets.forEach((set) => {
+    const name = set.exerciseName.trim() || "Esercizio";
+    let group = groupsByName.get(name);
+    if (!group) {
+      group = { name, sets: [] };
+      groupsByName.set(name, group);
+      exerciseGroups.push(group);
+    }
+    group.sets.push(set);
+  });
+  exerciseGroups.forEach((group, stepIndex) => {
+    group.sets.forEach((set) => stepIndexBySet.set(set, stepIndex));
+  });
   const endTime = Math.max(startedAt, endedAt);
+  const lapCount = Math.max(1, exerciseGroups.length);
   const elapsedMs = Math.max(0, (endTime - startedAt) * 1000);
   const calories = workout.calories == null ? 0 : integer(workout.calories);
   const avgHr = workout.avgHr == null ? 0 : integer(workout.avgHr);
@@ -440,45 +478,79 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
       fit9: 0,
       fit11: calories,
       fit15: avgHr,
-      fit26: 1,
+      fit25: 0,
+      fit26: lapCount,
     }),
   );
   append(fitDefinition(FIT_LAP));
-  append(
-    fitData(FIT_LAP, {
-      fit253: endTime,
-      fit0: 0,
-      fit1: 1,
-      fit2: startedAt,
-      fit7: elapsedMs,
-      fit8: elapsedMs,
-      fit9: 0,
-      fit11: calories,
-      fit15: avgHr,
-    }),
-  );
+  let allocatedLapCalories = 0;
+  const lapStarts = exerciseGroups.map((group) => group.sets[0]?.completedAt ?? startedAt);
+  const lapSource =
+    exerciseGroups.length > 0 ? exerciseGroups : [{ name: "Allenamento", sets: [] as typeof sets }];
+  lapSource.forEach((group, index) => {
+    const lapStart = index === 0 ? startedAt : lapStarts[index];
+    const lapEnd = index < lapSource.length - 1 ? lapStarts[index + 1] : endTime;
+    const lapElapsed = Math.max(0, lapEnd - lapStart);
+    const lapCalories =
+      index === lapSource.length - 1
+        ? Math.max(0, calories - allocatedLapCalories)
+        : Math.round((calories * lapElapsed) / Math.max(1, endTime - startedAt));
+    allocatedLapCalories += lapCalories;
+    append(
+      fitData(FIT_LAP, {
+        fit253: lapEnd,
+        fit0: 0,
+        fit1: 1,
+        fit2: lapStart,
+        fit7: lapElapsed * 1000,
+        fit8: lapElapsed * 1000,
+        fit9: 0,
+        fit11: lapCalories,
+        fit15: avgHr,
+        fit71: exerciseGroups.length > 0 ? index : 0,
+      }),
+    );
+  });
   if (sets.length > 0) {
     append(fitDefinition(FIT_WORKOUT));
     append(
       fitData(FIT_WORKOUT, {
         fit4: FIT_TRAINING_SPORT,
         fit5: 2,
-        fit6: sets.length,
+        fit6: exerciseGroups.length,
         fit8: workout.name,
         fit11: FIT_STRENGTH_SUBSPORT,
       }),
     );
     append(fitDefinition(FIT_WORKOUT_STEP));
-    sets.forEach((set, index) => {
+    exerciseGroups.forEach((group, index) => {
+      const totalReps = group.sets.reduce((total, set) => total + integer(set.reps), 0);
+      const averageWeight =
+        group.sets.reduce((total, set) => total + Math.max(0, set.weightKg), 0) / group.sets.length;
       append(
         fitData(FIT_WORKOUT_STEP, {
-          fit0: set.exerciseName,
+          fit0: group.name,
           fit1: FIT_REPETITIONS_DURATION,
-          fit2: integer(set.reps),
+          fit2: totalReps,
           fit3: FIT_OPEN_TARGET,
           fit7: FIT_ACTIVE_INTENSITY,
-          fit12: Math.max(0, Math.round(set.weightKg * 100)),
+          fit10: FIT_UNKNOWN_EXERCISE_CATEGORY,
+          fit11: index,
+          fit12: Math.max(0, Math.round(averageWeight * 100)),
           fit13: FIT_KILOGRAM_UNIT,
+          fit254: index,
+        }),
+      );
+    });
+    // Consumers such as Garmin/Zepp resolve custom exercise names through the
+    // Exercise Title lookup (category + exercise name), not only the step name.
+    append(fitDefinition(FIT_EXERCISE_TITLE));
+    exerciseGroups.forEach((group, index) => {
+      append(
+        fitData(FIT_EXERCISE_TITLE, {
+          fit0: FIT_UNKNOWN_EXERCISE_CATEGORY,
+          fit1: index,
+          fit2: group.name,
           fit254: index,
         }),
       );
@@ -536,14 +608,17 @@ export function buildZeppFit(workout: ZeppExportWorkout) {
   });
   append(fitDefinition(FIT_SET));
   sets.forEach((set, index) => {
+    const stepIndex = stepIndexBySet.get(set) ?? 0;
     append(
       fitData(FIT_SET, {
         fit3: integer(set.reps),
         fit4: Math.max(0, Math.round(set.weightKg * 16)),
         fit5: FIT_ACTIVE_SET,
         fit6: set.completedAt,
+        fit7: FIT_UNKNOWN_EXERCISE_CATEGORY,
+        fit9: FIT_KILOGRAM_UNIT,
         fit10: index,
-        fit11: index,
+        fit11: stepIndex,
         fit254: set.completedAt,
       }),
     );

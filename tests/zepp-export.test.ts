@@ -50,6 +50,22 @@ test("crea un FIT binario valido con serie standard e developer fields", () => {
         completedAt: "2026-08-03T18:02:30.540Z",
         restTakenSec: 90,
       },
+      {
+        exerciseName: "Panca",
+        setNumber: 2,
+        weightKg: 32.5,
+        reps: 5,
+        completedAt: "2026-08-03T18:04:30.540Z",
+        restTakenSec: 90,
+      },
+      {
+        exerciseName: "Rematore",
+        setNumber: 1,
+        weightKg: 25,
+        reps: 8,
+        completedAt: "2026-08-03T18:08:30.540Z",
+        restTakenSec: 90,
+      },
     ],
   });
   assert.equal(fit[0], 14);
@@ -61,8 +77,8 @@ test("crea un FIT binario valido con serie standard e developer fields", () => {
         byte === 0x40 + localMessageType &&
         fit[index + 1] === 0 &&
         fit[index + 2] === 0 &&
-        fit[index + 3] === globalMessageNumber &&
-        fit[index + 4] === 0,
+        fit[index + 3] === (globalMessageNumber & 0xff) &&
+        fit[index + 4] === globalMessageNumber >>> 8,
     );
   const sessionDefinition = findDefinition(1, 18);
   assert.ok(sessionDefinition > 0, "manca la sessione FIT");
@@ -79,6 +95,21 @@ test("crea un FIT binario valido con serie standard e developer fields", () => {
   assert.ok(workoutDefinition > 0, "manca il workout FIT standard");
   assert.ok(workoutStepDefinition > 0, "mancano gli esercizi FIT standard");
   assert.ok(setDefinition > 0, "mancano le serie FIT standard");
+  const exerciseTitleDefinition = findDefinition(10, 264);
+  assert.ok(exerciseTitleDefinition > 0, "mancano i titoli degli esercizi FIT");
+  const workoutFieldCount = fit[workoutDefinition + 5];
+  const workoutFieldNumbers = Array.from(
+    { length: workoutFieldCount },
+    (_, index) => fit[workoutDefinition + 6 + index * 3],
+  );
+  assert.ok(workoutFieldNumbers.includes(6), "manca il numero degli esercizi");
+  const workoutStepFieldCount = fit[workoutStepDefinition + 5];
+  const workoutStepFieldNumbers = Array.from(
+    { length: workoutStepFieldCount },
+    (_, index) => fit[workoutStepDefinition + 6 + index * 3],
+  );
+  assert.ok(workoutStepFieldNumbers.includes(10), "manca la categoria esercizio");
+  assert.ok(workoutStepFieldNumbers.includes(11), "manca il collegamento al nome esercizio");
   const setFieldCount = fit[setDefinition + 5];
   const setFieldNumbers = Array.from(
     { length: setFieldCount },
@@ -86,6 +117,8 @@ test("crea un FIT binario valido con serie standard e developer fields", () => {
   );
   assert.ok(setFieldNumbers.includes(3), "mancano le ripetizioni standard");
   assert.ok(setFieldNumbers.includes(4), "manca il peso standard");
+  assert.ok(setFieldNumbers.includes(7), "manca la categoria standard della serie");
+  assert.ok(setFieldNumbers.includes(9), "manca l'unità di misura del peso");
   assert.ok(setFieldNumbers.includes(11), "manca il collegamento all'esercizio standard");
   const recordDefinition = fit.findIndex(
     (byte, index) => byte === 0x63 && fit[index + 3] === 20 && fit[index + 4] === 0,
@@ -95,5 +128,7 @@ test("crea un FIT binario valido con serie standard e developer fields", () => {
   const developerFieldCount = fit[recordDefinition + 6 + standardFieldCount * 3];
   assert.equal(standardFieldCount, 1);
   assert.equal(developerFieldCount, 6, "le sei colonne della serie devono essere developer fields");
-  assert.ok(new TextDecoder().decode(fit).includes("Panca"));
+  const text = new TextDecoder().decode(fit);
+  assert.ok(text.includes("Panca"));
+  assert.ok(text.includes("Rematore"));
 });
