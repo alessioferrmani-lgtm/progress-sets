@@ -273,14 +273,18 @@ const RUNNING_DRILL_DESCRIPTIONS: Record<string, string> = {
   "skip-medio": "Skip intermedio per coordinare cadenza, ginocchio e appoggio sotto il corpo.",
   "skip-alto": "Skip ampio con ginocchia alte per migliorare forza elastica e postura.",
   "high-knees": "Corsa sul posto o in avanzamento con ginocchia rapide e braccia attive.",
-  "calciata-dietro": "Andatura con talloni ai glutei per migliorare rapidità di recupero della gamba.",
+  "calciata-dietro":
+    "Andatura con talloni ai glutei per migliorare rapidità di recupero della gamba.",
   "corsa-calciata": "Calciata eseguita avanzando per trasferire il gesto alla corsa reale.",
   ankling: "Piccoli appoggi elastici che rinforzano caviglie e sensibilità dell’avampiede.",
-  "dribbling-basso": "Passi molto brevi e veloci per sviluppare frequenza e controllo dell’appoggio.",
+  "dribbling-basso":
+    "Passi molto brevi e veloci per sviluppare frequenza e controllo dell’appoggio.",
   "dribbling-medio": "Dribbling con ampiezza moderata per collegare frequenza e avanzamento.",
   "dribbling-alto": "Dribbling ampio che prepara il ciclo completo della gamba nella corsa.",
-  "straight-leg-run": "Corsa a gambe quasi tese per allenare richiamo del piede e catena posteriore.",
-  "corsa-balzata": "Balzi alternati in avanzamento per potenza, ampiezza e controllo dell’atterraggio.",
+  "straight-leg-run":
+    "Corsa a gambe quasi tese per allenare richiamo del piede e catena posteriore.",
+  "corsa-balzata":
+    "Balzi alternati in avanzamento per potenza, ampiezza e controllo dell’atterraggio.",
   bounding: "Sequenza di balzi lunghi alternati per sviluppare forza elastica e propulsione.",
   carioca: "Andatura laterale incrociata che migliora mobilità del bacino e coordinazione.",
   grapevine: "Passi laterali incrociati continui per agilità, ritmo e controllo del tronco.",
@@ -289,11 +293,14 @@ const RUNNING_DRILL_DESCRIPTIONS: Record<string, string> = {
   "corsa-indietro": "Corsa controllata all’indietro per propriocezione, appoggio e rapidità.",
   "wall-drill": "Esercizio al muro che fissa inclinazione, postura e posizione di spinta.",
   "wall-switch": "Scambi rapidi delle gambe al muro per allenare reattività e assetto.",
-  "falling-start": "Partenza dalla caduta in avanti per imparare a proiettare il corpo in accelerazione.",
+  "falling-start":
+    "Partenza dalla caduta in avanti per imparare a proiettare il corpo in accelerazione.",
   "lean-fall-run": "Progressione inclinazione-caduta-corsa per collegare postura e accelerazione.",
-  "wicket-drill": "Corsa tra riferimenti regolari per controllare ritmo, ampiezza e punto d’appoggio.",
+  "wicket-drill":
+    "Corsa tra riferimenti regolari per controllare ritmo, ampiezza e punto d’appoggio.",
   "fast-leg-drill": "Ciclo rapido di una gamba per aumentare velocità e precisione del richiamo.",
-  "single-leg-cycle": "Ciclo completo eseguito con una gamba per isolare e correggere il movimento.",
+  "single-leg-cycle":
+    "Ciclo completo eseguito con una gamba per isolare e correggere il movimento.",
   "pawback-drill": "Richiamo attivo del piede verso il terreno per ridurre frenata e dispersioni.",
 };
 
@@ -304,19 +311,8 @@ export const RUNNING_DRILLS: RunningDrill[] = RUNNING_DRILL_BASE.map((drill) => 
 
 export const runningDrillById = (id: string) => RUNNING_DRILLS.find((drill) => drill.id === id);
 
-const SEQUENCE_IMAGE_DRILLS = new Set([
-  "a-skip",
-  "b-skip",
-  "c-skip",
-  "skip-basso",
-  "skip-medio",
-  "skip-alto",
-  "calciata-dietro",
-  "corsa-calciata",
-  "corsa-balzata",
-  "bounding",
-]);
-
 export function runningDrillImageFile(id: string) {
-  return SEQUENCE_IMAGE_DRILLS.has(id) ? `${id}.png` : `${id}.jpg`;
+  // The JPG set shares the same anatomical black/white/orange illustration style.
+  // Keep one deterministic extension so old mixed PNG previews cannot reappear.
+  return `${id}.jpg`;
 }

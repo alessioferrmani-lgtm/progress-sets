@@ -177,7 +177,8 @@ test("Il riepilogo usa una modalità unica per modificare tutto l'allenamento", 
   assert.match(summary, /isAppleMobile/);
   assert.match(summary, /navigator\.share/);
   assert.match(summary, /buildZeppFit/);
-  assert.match(summary, /File FIT per Zepp/);
+  assert.match(summary, /title: "Allenamento Progress Sets"/);
+  assert.doesNotMatch(summary, /text: "File FIT per Zepp"/);
   assert.match(summary, /document\.body\.appendChild\(link\)/);
   assert.match(summary, /navigator\.canShare/);
   assert.doesNotMatch(summary, /aria-label=\{`Modifica serie/);

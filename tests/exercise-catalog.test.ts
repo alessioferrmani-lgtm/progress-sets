@@ -166,19 +166,12 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
       `immagine mancante per ${drill.name}`,
     );
   }
-  for (const id of [
-    "a-skip",
-    "b-skip",
-    "c-skip",
-    "skip-basso",
-    "skip-medio",
-    "skip-alto",
-    "calciata-dietro",
-    "corsa-calciata",
-    "corsa-balzata",
-    "bounding",
-  ]) {
-    assert.equal(runningDrillImageFile(id), `${id}.png`, `immagine nuova non collegata per ${id}`);
+  for (const drill of RUNNING_DRILLS) {
+    assert.equal(
+      runningDrillImageFile(drill.id),
+      `${drill.id}.jpg`,
+      `immagine coerente non collegata per ${drill.id}`,
+    );
   }
 
   const overview = readFileSync(
@@ -204,7 +197,7 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   );
   assert.match(illustration, /running-drill-image/);
   assert.match(illustration, /runningDrillImageFile/);
-  assert.match(illustration, /v=20260804-2/);
+  assert.match(illustration, /v=20260804-3/);
   assert.match(sheet, /drill\.description/);
 
   const home = readFileSync(
