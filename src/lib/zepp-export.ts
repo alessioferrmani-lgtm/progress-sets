@@ -121,7 +121,9 @@ export function zeppFilename(name: string, startedAt: string) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
-  return `progress-sets-${safeName || "allenamento"}-${datePart}.fit`;
+  // Keep the version in the filename so iOS/Zepp cannot silently reuse an
+  // older export with the same workout name and date.
+  return `progress-sets-${safeName || "allenamento"}-${datePart}-zepp-strength-v2.fit`;
 }
 
 type FitBaseType = "enum" | "uint8" | "uint16" | "uint32" | "float32" | "string" | "bytes";

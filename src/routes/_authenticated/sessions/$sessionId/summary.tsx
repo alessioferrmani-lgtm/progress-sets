@@ -379,7 +379,7 @@ function SummaryPage() {
           title: "Allenamento Progress Sets",
           files: [file],
         });
-        toast.success("File FIT pronto per Zepp");
+        toast.success(`File FIT pronto per Zepp: ${filename}`);
         return;
       }
 
@@ -393,7 +393,7 @@ function SummaryPage() {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-      toast.success("File FIT pronto per Zepp");
+      toast.success(`File FIT pronto per Zepp: ${filename}`);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error(error instanceof Error ? error.message : "Esportazione non riuscita");
