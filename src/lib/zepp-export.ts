@@ -121,5 +121,350 @@ export function zeppFilename(name: string, startedAt: string) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
-  return `progress-sets-${safeName || "allenamento"}-${datePart}.tcx`;
+  return `progress-sets-${safeName || "allenamento"}-${datePart}.fit`;
+}
+
+type FitBaseType = "enum" | "uint8" | "uint16" | "uint32" | "float32" | "string" | "bytes";
+
+type FitField = {
+  number: number;
+  size: number;
+  baseType: FitBaseType;
+  developerDataIndex?: number;
+};
+
+type FitDefinition = {
+  localMessageType: number;
+  globalMessageNumber: number;
+  fields: FitField[];
+  developerFields?: FitField[];
+};
+
+const FIT_BASE_TYPE_ID: Record<FitBaseType, number> = {
+  enum: 0x00,
+  uint8: 0x02,
+  uint16: 0x84,
+  uint32: 0x86,
+  float32: 0x88,
+  string: 0x07,
+  bytes: 0x0d,
+};
+
+const FIT_EPOCH_MS = Date.UTC(1989, 11, 31);
+const FIT_DEVELOPER_INDEX = 0;
+const FIT_RECORD_MESSAGE = 20;
+
+function fitDateTime(value: string, label: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error(`${label} non valida`);
+  return Math.max(0, Math.floor((date.getTime() - FIT_EPOCH_MS) / 1000));
+}
+
+function fitU16(value: number) {
+  const safe = Math.max(0, Math.min(0xffff, Math.round(value)));
+  return [safe & 0xff, (safe >>> 8) & 0xff];
+}
+
+function fitU32(value: number) {
+  const safe = Math.max(0, Math.min(0xffffffff, Math.round(value)));
+  return [safe & 0xff, (safe >>> 8) & 0xff, (safe >>> 16) & 0xff, (safe >>> 24) & 0xff];
+}
+
+function fitF32(value: number) {
+  const bytes = new ArrayBuffer(4);
+  new DataView(bytes).setFloat32(0, Number.isFinite(value) ? value : 0, true);
+  return [...new Uint8Array(bytes)];
+}
+
+function fitString(value: string, size: number) {
+  const bytes = [...new TextEncoder().encode(value)].slice(0, Math.max(0, size - 1));
+  return [...bytes, ...new Array(Math.max(0, size - bytes.length)).fill(0)];
+}
+
+function fitValue(field: FitField, value: unknown) {
+  if (field.baseType === "bytes") {
+    const bytes = Array.isArray(value) ? value : [];
+    return [
+      ...bytes.slice(0, field.size),
+      ...new Array(Math.max(0, field.size - bytes.length)).fill(0),
+    ];
+  }
+  if (field.baseType === "string") return fitString(String(value ?? ""), field.size);
+  if (field.baseType === "float32") return fitF32(Number(value));
+  if (field.baseType === "uint32") return fitU32(Number(value));
+  if (field.baseType === "uint16") return fitU16(Number(value));
+  return [Math.max(0, Math.min(0xff, Math.round(Number(value) || 0)))];
+}
+
+function fitDefinition(definition: FitDefinition) {
+  const allFields = [...definition.fields, ...(definition.developerFields ?? [])];
+  const hasDeveloperFields = (definition.developerFields?.length ?? 0) > 0;
+  return [
+    0x40 | (hasDeveloperFields ? 0x20 : 0) | definition.localMessageType,
+    0,
+    0,
+    ...fitU16(definition.globalMessageNumber),
+    allFields.length,
+    ...allFields.flatMap((field) => [
+      field.number,
+      field.size,
+      field.developerDataIndex == null
+        ? FIT_BASE_TYPE_ID[field.baseType]
+        : field.developerDataIndex,
+    ]),
+  ];
+}
+
+function fitData(definition: FitDefinition, values: Record<string, unknown>) {
+  return [
+    definition.localMessageType,
+    ...[...definition.fields, ...(definition.developerFields ?? [])].flatMap((field) =>
+      fitValue(field, values[`${field.developerDataIndex == null ? "fit" : "dev"}${field.number}`]),
+    ),
+  ];
+}
+
+function fitCrc(bytes: number[]) {
+  const crcTable = [
+    0x0000, 0xcc01, 0xd801, 0x1400, 0xf001, 0x3c00, 0x2800, 0xe401, 0xa001, 0x6c00, 0x7800, 0xb401,
+    0x5000, 0x9c01, 0x8801, 0x4400,
+  ];
+  let crc = 0;
+  for (const byte of bytes) {
+    let tmp = crcTable[crc & 0xf];
+    crc = (crc >>> 4) & 0x0fff;
+    crc ^= tmp ^ crcTable[byte & 0xf];
+    tmp = crcTable[crc & 0xf];
+    crc = (crc >>> 4) & 0x0fff;
+    crc ^= tmp ^ crcTable[(byte >>> 4) & 0xf];
+  }
+  return crc;
+}
+
+const FIT_FILE_ID: FitDefinition = {
+  localMessageType: 0,
+  globalMessageNumber: 0,
+  fields: [
+    { number: 0, size: 1, baseType: "enum" },
+    { number: 1, size: 2, baseType: "uint16" },
+    { number: 2, size: 2, baseType: "uint16" },
+    { number: 3, size: 4, baseType: "uint32" },
+    { number: 4, size: 4, baseType: "uint32" },
+  ],
+};
+
+const FIT_SESSION: FitDefinition = {
+  localMessageType: 1,
+  globalMessageNumber: 18,
+  fields: [
+    { number: 253, size: 4, baseType: "uint32" },
+    { number: 0, size: 1, baseType: "enum" },
+    { number: 1, size: 1, baseType: "enum" },
+    { number: 2, size: 4, baseType: "uint32" },
+    { number: 5, size: 1, baseType: "enum" },
+    { number: 6, size: 1, baseType: "enum" },
+    { number: 7, size: 4, baseType: "uint32" },
+    { number: 8, size: 4, baseType: "uint32" },
+    { number: 9, size: 4, baseType: "float32" },
+    { number: 11, size: 2, baseType: "uint16" },
+    { number: 16, size: 1, baseType: "uint8" },
+    { number: 24, size: 4, baseType: "uint32" },
+  ],
+};
+
+const FIT_DEVELOPER_DATA_ID: FitDefinition = {
+  localMessageType: 5,
+  globalMessageNumber: 207,
+  fields: [
+    { number: 0, size: 16, baseType: "bytes" },
+    { number: 1, size: 16, baseType: "bytes" },
+    { number: 3, size: 1, baseType: "uint8" },
+  ],
+};
+
+const FIT_FIELD_DESCRIPTION: FitDefinition = {
+  localMessageType: 6,
+  globalMessageNumber: 206,
+  fields: [
+    { number: 0, size: 1, baseType: "uint8" },
+    { number: 1, size: 1, baseType: "uint8" },
+    { number: 2, size: 1, baseType: "uint8" },
+    { number: 3, size: 32, baseType: "string" },
+    { number: 8, size: 16, baseType: "string" },
+    { number: 11, size: 2, baseType: "uint16" },
+    { number: 12, size: 1, baseType: "uint8" },
+  ],
+};
+
+const FIT_LAP: FitDefinition = {
+  localMessageType: 2,
+  globalMessageNumber: 19,
+  fields: [
+    { number: 253, size: 4, baseType: "uint32" },
+    { number: 0, size: 1, baseType: "enum" },
+    { number: 1, size: 1, baseType: "enum" },
+    { number: 2, size: 4, baseType: "uint32" },
+    { number: 7, size: 4, baseType: "uint32" },
+    { number: 8, size: 4, baseType: "uint32" },
+    { number: 9, size: 4, baseType: "float32" },
+    { number: 11, size: 2, baseType: "uint16" },
+    { number: 16, size: 1, baseType: "uint8" },
+    { number: 5, size: 1, baseType: "enum" },
+    { number: 6, size: 1, baseType: "enum" },
+    { number: 24, size: 4, baseType: "uint32" },
+  ],
+};
+
+const FIT_RECORD: FitDefinition = {
+  localMessageType: 3,
+  globalMessageNumber: FIT_RECORD_MESSAGE,
+  fields: [{ number: 253, size: 4, baseType: "uint32" }],
+  developerFields: [
+    { number: 0, size: 64, baseType: "string", developerDataIndex: FIT_DEVELOPER_INDEX },
+    { number: 1, size: 1, baseType: "uint8", developerDataIndex: FIT_DEVELOPER_INDEX },
+    { number: 2, size: 4, baseType: "float32", developerDataIndex: FIT_DEVELOPER_INDEX },
+    { number: 3, size: 2, baseType: "uint16", developerDataIndex: FIT_DEVELOPER_INDEX },
+    { number: 4, size: 2, baseType: "uint16", developerDataIndex: FIT_DEVELOPER_INDEX },
+    { number: 5, size: 2, baseType: "uint16", developerDataIndex: FIT_DEVELOPER_INDEX },
+  ],
+};
+
+const FIT_ACTIVITY: FitDefinition = {
+  localMessageType: 4,
+  globalMessageNumber: 34,
+  fields: [
+    { number: 253, size: 4, baseType: "uint32" },
+    { number: 0, size: 4, baseType: "uint32" },
+    { number: 1, size: 2, baseType: "uint16" },
+    { number: 2, size: 1, baseType: "enum" },
+    { number: 3, size: 1, baseType: "enum" },
+    { number: 4, size: 1, baseType: "enum" },
+  ],
+};
+
+/** Crea un FIT Activity valido, con riepilogo e ogni serie nei developer fields. */
+export function buildZeppFit(workout: ZeppExportWorkout) {
+  const startedAt = fitDateTime(workout.startedAt, "Data di inizio");
+  const endedAt = fitDateTime(workout.endedAt, "Data di fine");
+  const sets = workout.sets.map((set) => ({
+    ...set,
+    completedAt: fitDateTime(set.completedAt, "Data serie"),
+  }));
+  const endTime = Math.max(startedAt, endedAt);
+  const elapsedMs = Math.max(0, (endTime - startedAt) * 1000);
+  const calories = workout.calories == null ? 0 : integer(workout.calories);
+  const avgHr = workout.avgHr == null ? 0 : integer(workout.avgHr);
+  const records: number[] = [];
+  const append = (bytes: number[]) => records.push(...bytes);
+  append(fitDefinition(FIT_FILE_ID));
+  append(
+    fitData(FIT_FILE_ID, {
+      fit0: 4,
+      fit1: 1,
+      fit2: 1,
+      fit3: 0x50534554,
+      fit4: startedAt,
+    }),
+  );
+  append(fitDefinition(FIT_SESSION));
+  append(
+    fitData(FIT_SESSION, {
+      fit253: endTime,
+      fit0: 0,
+      fit1: 1,
+      fit2: startedAt,
+      fit5: 5,
+      fit6: 0,
+      fit7: elapsedMs,
+      fit8: elapsedMs,
+      fit9: 0,
+      fit11: calories,
+      fit16: avgHr,
+      fit24: sets.reduce((sum, set) => sum + integer(set.reps), 0),
+    }),
+  );
+  append(fitDefinition(FIT_LAP));
+  append(
+    fitData(FIT_LAP, {
+      fit253: endTime,
+      fit0: 0,
+      fit1: 1,
+      fit2: startedAt,
+      fit7: elapsedMs,
+      fit8: elapsedMs,
+      fit9: 0,
+      fit11: calories,
+      fit16: avgHr,
+      fit5: 5,
+      fit6: 0,
+      fit24: sets.reduce((sum, set) => sum + integer(set.reps), 0),
+    }),
+  );
+  const developerId = [
+    0x50, 0x52, 0x4f, 0x47, 0x52, 0x45, 0x53, 0x53, 0x2d, 0x53, 0x45, 0x54, 0, 0, 0, 1,
+  ];
+  const applicationId = [
+    0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x20, 0x53, 0x65, 0x74, 0x73, 0, 0, 1,
+  ];
+  append(fitDefinition(FIT_DEVELOPER_DATA_ID));
+  append(
+    fitData(FIT_DEVELOPER_DATA_ID, {
+      fit0: developerId,
+      fit1: applicationId,
+      fit3: FIT_DEVELOPER_INDEX,
+    }),
+  );
+  const developerDescriptions: Array<[number, FitBaseType, string, string]> = [
+    [0, "string", "exercise_name", "text"],
+    [1, "uint8", "set_number", "count"],
+    [2, "float32", "weight_kg", "kg"],
+    [3, "uint16", "repetitions", "repetitions"],
+    [4, "uint16", "rest_seconds", "s"],
+    [5, "uint16", "exercise_set_number", "count"],
+  ];
+  append(fitDefinition(FIT_FIELD_DESCRIPTION));
+  developerDescriptions.forEach(([fieldNumber, baseType, fieldName, units]) => {
+    append(
+      fitData(FIT_FIELD_DESCRIPTION, {
+        fit0: FIT_DEVELOPER_INDEX,
+        fit1: fieldNumber,
+        fit2: FIT_BASE_TYPE_ID[baseType],
+        fit3: fieldName,
+        fit8: units,
+        fit11: FIT_RECORD_MESSAGE,
+        fit12: fieldNumber,
+      }),
+    );
+  });
+  append(fitDefinition(FIT_RECORD));
+  sets.forEach((set) => {
+    append(
+      fitData(FIT_RECORD, {
+        fit253: set.completedAt,
+        dev0: set.exerciseName,
+        dev1: set.setNumber,
+        dev2: set.weightKg,
+        dev3: set.reps,
+        dev4: set.restTakenSec ?? 0,
+        dev5: set.setNumber,
+      }),
+    );
+  });
+  append(fitDefinition(FIT_ACTIVITY));
+  append(
+    fitData(FIT_ACTIVITY, {
+      fit253: endTime,
+      fit0: elapsedMs,
+      fit1: 1,
+      fit2: 0,
+      fit3: 0,
+      fit4: 1,
+    }),
+  );
+
+  // 14-byte FIT header; profile version 21.40 is the current public profile.
+  const header = [14, 0x20, 0x28, 0x15, ...fitU32(records.length), 0x2e, 0x46, 0x49, 0x54, 0, 0];
+  const all = [...header, ...records];
+  const crc = fitCrc(all);
+  return new Uint8Array([...all, ...fitU16(crc)]);
 }
