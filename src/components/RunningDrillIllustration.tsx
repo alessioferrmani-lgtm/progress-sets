@@ -1,4 +1,4 @@
-import type { RunningDrill } from "@/lib/running-drills";
+import { runningDrillImageFile, type RunningDrill } from "@/lib/running-drills";
 
 export function RunningDrillIllustration({
   drill,
@@ -16,7 +16,7 @@ export function RunningDrillIllustration({
       data-testid={`running-drill-image-${drill.id}`}
     >
       <img
-        src={`/running-drills/${drill.id}.jpg`}
+        src={`/running-drills/${runningDrillImageFile(drill.id)}`}
         alt={`Illustrazione anatomica dell’andatura ${drill.name}`}
         width="1024"
         height="1536"
