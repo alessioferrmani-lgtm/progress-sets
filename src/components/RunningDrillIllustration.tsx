@@ -16,7 +16,7 @@ export function RunningDrillIllustration({
       data-testid={`running-drill-image-${drill.id}`}
     >
       <img
-        src={`/running-drills/${runningDrillImageFile(drill.id)}`}
+        src={`/running-drills/${runningDrillImageFile(drill.id)}?v=20260804-2`}
         alt={`Illustrazione anatomica dell’andatura ${drill.name}`}
         width="1024"
         height="1536"

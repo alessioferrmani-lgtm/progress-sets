@@ -151,7 +151,11 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "A-Skip"));
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Wall Drill"));
   assert.ok(RUNNING_DRILLS.some((drill) => drill.name === "Pawback Drill"));
-  assert.ok(RUNNING_DRILLS.every((drill) => drill.cue.length > 0 && drill.dosage.length > 0));
+  assert.ok(
+    RUNNING_DRILLS.every(
+      (drill) => drill.description.length > 20 && drill.cue.length > 0 && drill.dosage.length > 0,
+    ),
+  );
   for (const drill of RUNNING_DRILLS) {
     assert.equal(
       existsSync(`public/running-drills/${runningDrillImageFile(drill.id)}`),
@@ -182,6 +186,8 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   );
   assert.match(illustration, /running-drill-image/);
   assert.match(illustration, /runningDrillImageFile/);
+  assert.match(illustration, /v=20260804-2/);
+  assert.match(sheet, /drill\.description/);
 
   const home = readFileSync(
     new URL("../src/routes/_authenticated/home.tsx", import.meta.url),

@@ -179,6 +179,9 @@ export function RunningWarmupSheet({
                         <RunningDrillIllustration drill={drill} compact />
                         <div className="p-3">
                           <p className="truncate text-sm font-semibold text-label">{drill.name}</p>
+                          <p className="mt-1 line-clamp-2 text-xs leading-snug text-label-secondary">
+                            {drill.description}
+                          </p>
                           <p className="mt-1 text-xs text-label-secondary">{drill.dosage}</p>
                           {routineDrillIds.includes(drill.id) && (
                             <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-accent">
@@ -237,7 +240,15 @@ function DrillDetail({
             {drill.dosage}
           </span>
         </div>
-        <p className="mt-4 text-sm leading-relaxed text-label-secondary">{drill.cue}</p>
+        <p className="mt-4 text-sm leading-relaxed text-label-secondary">
+          {drill.description}
+        </p>
+        <div className="mt-3 rounded-xl bg-fill px-3 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-label-tertiary">
+            Punto tecnico
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-label-secondary">{drill.cue}</p>
+        </div>
         <button
           type="button"
           onClick={onToggleRoutine}
