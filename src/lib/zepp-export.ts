@@ -197,21 +197,31 @@ function fitValue(field: FitField, value: unknown) {
 }
 
 function fitDefinition(definition: FitDefinition) {
-  const allFields = [...definition.fields, ...(definition.developerFields ?? [])];
-  const hasDeveloperFields = (definition.developerFields?.length ?? 0) > 0;
+  const developerFields = definition.developerFields ?? [];
+  const hasDeveloperFields = developerFields.length > 0;
   return [
     0x40 | (hasDeveloperFields ? 0x20 : 0) | definition.localMessageType,
     0,
     0,
     ...fitU16(definition.globalMessageNumber),
-    allFields.length,
-    ...allFields.flatMap((field) => [
+    definition.fields.length,
+    ...definition.fields.flatMap((field) => [
       field.number,
       field.size,
       field.developerDataIndex == null
         ? FIT_BASE_TYPE_ID[field.baseType]
         : field.developerDataIndex,
     ]),
+    ...(hasDeveloperFields
+      ? [
+          developerFields.length,
+          ...developerFields.flatMap((field) => [
+            field.number,
+            field.size,
+            field.developerDataIndex ?? 0,
+          ]),
+        ]
+      : []),
   ];
 }
 

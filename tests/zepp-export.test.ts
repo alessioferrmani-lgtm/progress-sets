@@ -55,5 +55,13 @@ test("crea un FIT binario valido con le serie nei developer fields", () => {
   assert.equal(fit[0], 14);
   assert.equal(String.fromCharCode(...fit.slice(8, 12)), ".FIT");
   assert.ok(fit.length > 16);
-  assert.ok(fit.includes(0x65));
+  const recordDefinition = fit.findIndex(
+    (byte, index) => byte === 0x63 && fit[index + 3] === 20 && fit[index + 4] === 0,
+  );
+  assert.ok(recordDefinition > 0, "manca la definition message dei record");
+  const standardFieldCount = fit[recordDefinition + 5];
+  const developerFieldCount = fit[recordDefinition + 6 + standardFieldCount * 3];
+  assert.equal(standardFieldCount, 1);
+  assert.equal(developerFieldCount, 6, "le sei colonne della serie devono essere developer fields");
+  assert.ok(new TextDecoder().decode(fit).includes("Panca"));
 });
