@@ -37,6 +37,7 @@ import {
   getDay,
 } from "date-fns";
 import { it } from "date-fns/locale";
+import { CustomizableWarmupReminder } from "@/components/CustomizableWarmupReminder";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: HomePage,
@@ -98,6 +99,8 @@ function HomePage() {
             loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
           />
         </div>
+
+        <CustomizableWarmupReminder />
 
         <MonthCalendarSection
           sessions={sessionsQ.data}
@@ -301,8 +304,7 @@ function RecentSessionsSection({
                     <div className="mt-0.5 text-xs text-label-secondary">
                       {format(new Date(s.started_at), "d MMM · HH:mm", { locale: it })}
                       {" · "}
-                      {dur} min · {sessSets.length} serie ·{" "}
-                      {formatVolumeKg(volume)}
+                      {dur} min · {sessSets.length} serie · {formatVolumeKg(volume)}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-label-tertiary" />

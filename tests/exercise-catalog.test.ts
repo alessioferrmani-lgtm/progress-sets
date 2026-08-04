@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
 import { isAthleticsExercise, isGymExercise } from "../src/lib/exercise-categories.ts";
-import { RUNNING_DRILLS } from "../src/lib/running-drills.ts";
+import { RUNNING_DRILLS, runningDrillImageFile } from "../src/lib/running-drills.ts";
 
 const catalogMigrations = [
   "supabase/migrations/20260714080144_684ae935-69f9-4749-8b03-0b1886901d95.sql",
@@ -14,19 +14,29 @@ const catalogMigrations = [
 function readCatalog() {
   return catalogMigrations.flatMap((path) => {
     const sql = readFileSync(path, "utf8");
-    return Array.from(
-      sql.matchAll(/\('([^']+)','([^']+)','[^']+','[^']+',true\)/g),
-      (match) => ({ name: match[1], group: match[2] }),
-    );
+    return Array.from(sql.matchAll(/\('([^']+)','([^']+)','[^']+','[^']+',true\)/g), (match) => ({
+      name: match[1],
+      group: match[2],
+    }));
   });
 }
 
 test("il catalogo aggiunge esercizi a tutte le zone richieste", () => {
   const catalog = readCatalog();
   assert.ok(catalog.length >= 150);
-  for (const group of ["Core", "Polpacci", "Schiena", "Petto", "Spalle", "Bicipiti", "Tricipiti", "Caviglia"]) {
+  for (const group of [
+    "Core",
+    "Polpacci",
+    "Schiena",
+    "Petto",
+    "Spalle",
+    "Bicipiti",
+    "Tricipiti",
+    "Caviglia",
+  ]) {
     assert.ok(
-      catalog.filter((exercise) => exercise.group === group).length >= (group === "Caviglia" ? 8 : 5),
+      catalog.filter((exercise) => exercise.group === group).length >=
+        (group === "Caviglia" ? 8 : 5),
       `catalogo insufficiente per ${group}`,
     );
   }
@@ -45,7 +55,13 @@ test("i collegamenti ambigui e la caviglia usano le zone corrette", () => {
   assert.deepEqual(musclesFor("Rear delt row", "Spalle"), ["shoulders"]);
   assert.deepEqual(musclesFor("Rematore chest-supported", "Schiena"), ["back", "biceps"]);
   assert.deepEqual(musclesFor("Iperestensioni", "Schiena"), ["back", "hamstrings", "glutes"]);
-  assert.deepEqual(musclesFor("Vogatore", "Cardio"), ["back", "biceps", "quads", "hamstrings", "glutes"]);
+  assert.deepEqual(musclesFor("Vogatore", "Cardio"), [
+    "back",
+    "biceps",
+    "quads",
+    "hamstrings",
+    "glutes",
+  ]);
 });
 
 test("le varianti unilaterali attivano i muscoli corretti", () => {
@@ -138,7 +154,7 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   assert.ok(RUNNING_DRILLS.every((drill) => drill.cue.length > 0 && drill.dosage.length > 0));
   for (const drill of RUNNING_DRILLS) {
     assert.equal(
-      existsSync(`public/running-drills/${drill.id}.jpg`),
+      existsSync(`public/running-drills/${runningDrillImageFile(drill.id)}`),
       true,
       `immagine mancante per ${drill.name}`,
     );
@@ -165,5 +181,18 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
     "utf8",
   );
   assert.match(illustration, /running-drill-image/);
-  assert.match(illustration, /\/running-drills\/\$\{drill.id\}\.jpg/);
+  assert.match(illustration, /runningDrillImageFile/);
+
+  const home = readFileSync(
+    new URL("../src/routes/_authenticated/home.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(home, /CustomizableWarmupReminder/);
+  const homeReminder = readFileSync(
+    new URL("../src/components/CustomizableWarmupReminder.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(homeReminder, /data-testid="customize-running-warmup"/);
+  assert.match(homeReminder, /CONFIG_STORAGE_KEY/);
+  assert.match(homeReminder, /Salva Home/);
 });
