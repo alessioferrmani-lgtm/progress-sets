@@ -186,6 +186,13 @@ export function EliteStatusCard({ userId }: { userId: string }) {
               min="25"
               max="240"
             />
+            <NumberField
+              label="HRV (ms)"
+              value={form.hrvMs}
+              onChange={(value) => setForm((s) => ({ ...s, hrvMs: value }))}
+              min="0"
+              max="500"
+            />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
             <ScaleField
