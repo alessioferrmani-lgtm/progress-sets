@@ -20,7 +20,7 @@ import { useRestTimer } from "@/lib/rest-timer-store";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
-import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
+import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { insertLoggedSet } from "@/lib/logged-sets";
 import { findNextUncompletedSet } from "@/lib/workout-navigation";
 
@@ -212,14 +212,10 @@ function FreeWorkoutPage() {
     if (!activeExerciseId || activeRow?.completed) return;
     setRowsByExercise((current) => {
       const list = [...(current[activeExerciseId] ?? [])];
-      if (field === "weight") {
-        return {
-          ...current,
-          [activeExerciseId]: updateWeightAndPropagate(list, activeSetIdx, value),
-        };
-      }
-      list[activeSetIdx] = { ...list[activeSetIdx], [field]: value };
-      return { ...current, [activeExerciseId]: list };
+      return {
+        ...current,
+        [activeExerciseId]: updateSetFieldAndPropagate(list, activeSetIdx, field, value),
+      };
     });
   };
 
@@ -381,8 +377,8 @@ function FreeWorkoutPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-8 pt-[calc(env(safe-area-inset-top)+10px)]">
-      <header className="flex items-center gap-3">
+    <main className="workout-screen mx-auto flex w-full max-w-md flex-col px-4 pb-8 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <header className="workout-screen-header flex shrink-0 items-center gap-3">
         <button
           type="button"
           onClick={cancel}
@@ -413,14 +409,14 @@ function FreeWorkoutPage() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="ios-btn-primary mt-4 w-full"
+          className="workout-screen-add-exercise ios-btn-primary mt-4 w-full"
         >
           <Plus className="size-5" /> Aggiungi esercizio
         </button>
       )}
 
       {selectedIds.length > 0 && (
-        <div className="scrollbar-none mt-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="workout-screen-tabs scrollbar-none mt-4 flex shrink-0 gap-2 overflow-x-auto pb-1">
           {selectedIds.map((id, index) => {
             const exercise = exerciseById.get(id);
             const done = (rowsByExercise[id] ?? []).filter((row) => row.completed).length;
@@ -481,7 +477,7 @@ function FreeWorkoutPage() {
             totalSets={totalSets}
             onSkip={skipExercise}
           />
-          <section className="ios-card mt-3 overflow-hidden p-4">
+          <section className="workout-set-card ios-card mt-3 overflow-hidden p-4">
             <div className="hidden">
               <div>
                 <div className="text-2xl font-bold text-label">{activeExercise.name}</div>
@@ -501,14 +497,14 @@ function FreeWorkoutPage() {
               <SkipForward className="size-4" /> Salta esercizio
             </button>
 
-            <div className="mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
+            <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
               <span>Recupero suggerito: 1:30</span>
               <span>
                 Serie {activeSetIdx + 1} di {rows.length}
               </span>
             </div>
 
-            <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+            <div className="workout-set-picker mt-5 flex gap-2 overflow-x-auto pb-1">
               {rows.map((row, index) => (
                 <button
                   key={row.set_number}
@@ -527,7 +523,7 @@ function FreeWorkoutPage() {
               ))}
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="workout-values mt-4 grid grid-cols-2 gap-3">
               <NumberCell
                 label="Carico kg"
                 value={activeRow.weight}
@@ -548,7 +544,7 @@ function FreeWorkoutPage() {
             <button
               type="button"
               onClick={confirmSet}
-              className={`mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white ${activeRow.completed ? "bg-success" : "bg-accent"}`}
+              className={`workout-confirm mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white ${activeRow.completed ? "bg-success" : "bg-accent"}`}
             >
               <Check className="size-5" />{" "}
               {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
@@ -556,7 +552,7 @@ function FreeWorkoutPage() {
             <button
               type="button"
               onClick={addSet}
-              className="mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-semibold text-accent"
+              className="workout-add-series mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-semibold text-accent"
             >
               <Plus className="size-4" /> Aggiungi serie
             </button>
@@ -656,11 +652,11 @@ function NumberCell({
     onChange(integer ? String(Math.round(next)) : String(Math.round(next * 100) / 100));
   };
   return (
-    <div className="rounded-2xl bg-fill-secondary p-3 text-center">
-      <div className="text-xs font-semibold uppercase tracking-wide text-label-tertiary">
+    <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
+      <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
         {label}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-2">
+      <div className="workout-value-control mt-3 flex items-center justify-center gap-2">
         <button
           type="button"
           disabled={disabled}
@@ -677,7 +673,7 @@ function NumberCell({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onFocus={(event) => event.target.select()}
-          className="w-full min-w-0 bg-transparent py-1 text-center text-3xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+          className="workout-value-input w-full min-w-0 bg-transparent py-1 text-center text-3xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
         />
         <button
           type="button"

@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { RestTimerBar } from "@/components/RestTimerBar";
 import { BottomTabBar } from "@/components/BottomTabBar";
@@ -20,8 +20,17 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthedLayout() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const immersiveWorkout = /^\/workouts\/(?:free|[^/]+\/run)\/?$/.test(pathname);
+
   return (
-    <div className="min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]">
+    <div
+      className={
+        immersiveWorkout
+          ? "min-h-screen bg-background"
+          : "min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]"
+      }
+    >
       <Outlet />
       <RestTimerBar />
       <BottomTabBar />

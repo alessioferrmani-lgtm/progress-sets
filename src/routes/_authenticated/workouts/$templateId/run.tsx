@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
 import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
-import { updateWeightAndPropagate } from "@/lib/workout-set-utils";
+import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
@@ -365,9 +365,9 @@ function RunPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="workout-screen mx-auto flex w-full max-w-md flex-col">
       {/* Header */}
-      <div className="ios-blur sticky top-0 z-10 flex items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div className="workout-screen-header ios-blur sticky top-0 z-10 flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
         <button
           onClick={cancel}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label"
@@ -392,7 +392,7 @@ function RunPage() {
       </div>
 
       {/* Exercise tabs */}
-      <div className="scrollbar-none flex gap-2 overflow-x-auto px-4 py-3">
+      <div className="workout-screen-tabs scrollbar-none flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
         {exercises.map((ex, i) => {
           const list = rowsByExercise[ex.id] ?? [];
           const done = list.filter((r) => r.completed).length;
@@ -421,7 +421,7 @@ function RunPage() {
           const isCount = activeEx.reps_type === "count";
           const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
-            <div className="space-y-3 px-4 pb-6">
+            <div className="workout-screen-content flex min-h-0 flex-col gap-3 px-4 pb-6">
               <WorkoutExerciseHero
                 exerciseName={activeEx.exercise.name}
                 exercisePosition={activeIdx + 1}
@@ -432,7 +432,7 @@ function RunPage() {
                 totalSets={totalSets}
                 onSkip={skipExercise}
               />
-              <div className="ios-card overflow-hidden p-4">
+              <div className="workout-set-card ios-card overflow-hidden p-4">
                 <div className="hidden">
                   <div>
                     <div className="text-2xl font-bold text-label">{activeEx.exercise.name}</div>
@@ -450,17 +450,17 @@ function RunPage() {
                   type="button"
                   onClick={skipExercise}
                   aria-label="Salta esercizio"
-                  className="mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
+                  className="workout-skip-button mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
                 >
                   <SkipForward className="size-4" /> Salta esercizio
                 </button>
 
-                <div className="mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
+                <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
                   <span>Recupero target: {activeEx.rest_seconds}s</span>
                   {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
                 </div>
 
-                <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+                <div className="workout-set-picker mt-5 flex gap-2 overflow-x-auto pb-1">
                   {rows.map((row, index) => (
                     <button
                       key={row.set_number}
@@ -482,14 +482,14 @@ function RunPage() {
                 </div>
 
                 {previousSet && (
-                  <div className="mt-4 rounded-xl bg-fill-secondary px-3 py-2 text-center text-xs text-label-secondary">
+                  <div className="workout-previous mt-4 rounded-xl bg-fill-secondary px-3 py-2 text-center text-xs text-label-secondary">
                     Precedente: {previousSet.weight_kg} kg × {previousSet.reps}
                   </div>
                 )}
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-fill-secondary p-3 text-center">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-label-tertiary">
+                  <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
+                    <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
                       Carico kg
                     </div>
                     <NumberCell
@@ -500,17 +500,18 @@ function RunPage() {
                       onChange={(value) =>
                         setRowsByExercise((current) => ({
                           ...current,
-                          [activeEx.id]: updateWeightAndPropagate(
+                          [activeEx.id]: updateSetFieldAndPropagate(
                             current[activeEx.id] ?? [],
                             activeSetIdx,
+                            "weight",
                             value,
                           ),
                         }))
                       }
                     />
                   </div>
-                  <div className="rounded-2xl bg-fill-secondary p-3 text-center">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-label-tertiary">
+                  <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
+                    <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
                       {isCount ? "Ripetizioni" : "Target"}
                     </div>
                     {isCount ? (
@@ -521,13 +522,15 @@ function RunPage() {
                         step={1}
                         integer
                         onChange={(value) =>
-                          setRowsByExercise((current) => {
-                            const next = { ...current };
-                            const list = [...(next[activeEx.id] ?? [])];
-                            list[activeSetIdx] = { ...list[activeSetIdx], reps: value };
-                            next[activeEx.id] = list;
-                            return next;
-                          })
+                          setRowsByExercise((current) => ({
+                            ...current,
+                            [activeEx.id]: updateSetFieldAndPropagate(
+                              current[activeEx.id] ?? [],
+                              activeSetIdx,
+                              "reps",
+                              value,
+                            ),
+                          }))
                         }
                       />
                     ) : (
@@ -543,6 +546,7 @@ function RunPage() {
                   onClick={() => confirmSet(activeSetIdx)}
                   aria-label={activeRow.completed ? "Rimuovi spunta serie" : "Conferma serie"}
                   className={
+                    "workout-confirm " +
                     "mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white active:scale-[0.99] " +
                     (activeRow.completed ? "bg-success" : "bg-accent")
                   }
@@ -571,7 +575,7 @@ function RunPage() {
                     });
                     setActiveSetIdx(rows.length);
                   }}
-                  className="mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-medium text-accent active:opacity-70"
+                  className="workout-add-series mt-3 flex w-full items-center justify-center gap-1 py-2 text-sm font-medium text-accent active:opacity-70"
                 >
                   <Plus className="size-4" /> Aggiungi serie
                 </button>
@@ -613,7 +617,10 @@ function NumberCell({
   };
   return (
     <div
-      className={large ? "mt-3 flex items-center justify-center gap-2" : "flex items-center gap-1"}
+      className={
+        (large ? "mt-3 flex items-center justify-center gap-2" : "flex items-center gap-1") +
+        " workout-value-control"
+      }
     >
       <button
         type="button"
@@ -637,7 +644,7 @@ function NumberCell({
         onFocus={(e) => e.target.select()}
         className={
           large
-            ? "w-full min-w-0 bg-transparent py-1 text-center text-4xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
+            ? "workout-value-input w-full min-w-0 bg-transparent py-1 text-center text-4xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
             : "w-full min-w-0 rounded-md bg-fill-secondary py-1.5 text-center text-sm font-medium text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
         }
       />

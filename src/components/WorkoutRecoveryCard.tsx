@@ -22,7 +22,10 @@ export function WorkoutRecoveryCard() {
   };
 
   return (
-    <section className="ios-card mt-4 overflow-hidden" aria-label="Timer recupero">
+    <section
+      className="workout-recovery-card ios-card mt-4 overflow-hidden"
+      aria-label="Timer recupero"
+    >
       <div className="relative h-1 bg-fill-secondary">
         <div
           className="absolute inset-y-0 left-0 bg-accent transition-[width] duration-500 ease-linear"
