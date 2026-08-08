@@ -39,9 +39,17 @@ test("RPE viene limitato all'intervallo 1-10", () => {
 test("una sessione richiede peso e durata ma non altezza", () => {
   assert.equal(
     computeCaloriesForSession({ ...profile, height_cm: null }, { duration_min: 60 }),
-    404,
+    257,
   );
   assert.equal(computeCaloriesForSession(profile, { duration_min: 0 }), null);
+});
+
+test("una sessione pesi lunga non viene trasformata in cardio da oltre mille kcal", () => {
+  const calories = computeCaloriesForSession(
+    { ...profile, weight_kg: 80 },
+    { duration_min: 120, avg_hr: 185 },
+  );
+  assert.equal(calories, 840);
 });
 
 test("FC non plausibile usa il fallback MET", () => {

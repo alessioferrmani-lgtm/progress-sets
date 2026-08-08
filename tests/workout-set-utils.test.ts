@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { updateWeightAndPropagate } from "../src/lib/workout-set-utils.ts";
+import {
+  updateSetFieldAndPropagate,
+  updateWeightAndPropagate,
+} from "../src/lib/workout-set-utils.ts";
 
 test("il carico della prima serie viene copiato alle serie successive non completate", () => {
   const rows = [
@@ -29,5 +32,21 @@ test("la modifica di una serie diversa dalla prima resta locale", () => {
   assert.deepEqual(
     updateWeightAndPropagate(rows, 1, "22.5").map((row) => row.weight),
     ["20", "22.5", "20"],
+  );
+});
+
+test("le ripetizioni della prima serie vengono copiate alle serie successive non completate", () => {
+  const rows = [
+    { weight: "20", reps: "", completed: false },
+    { weight: "20", reps: "", completed: false },
+    { weight: "20", reps: "7", completed: true },
+    { weight: "20", reps: "", completed: false },
+  ];
+
+  const updated = updateSetFieldAndPropagate(rows, 0, "reps", "10");
+
+  assert.deepEqual(
+    updated.map((row) => row.reps),
+    ["10", "10", "7", "10"],
   );
 });

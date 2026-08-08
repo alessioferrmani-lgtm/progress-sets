@@ -112,7 +112,10 @@ export function caloriesFromMET(opts: {
 }
 
 export const MET = {
-  GYM: 5.5,
+  // Moderate resistance training with recovery periods.
+  GYM: 3.5,
+  // Upper bound for noisy HR readings during strength work.
+  GYM_HR_CEILING: 5,
   RUN_SLOW: 8.3,
   RUN_MEDIUM: 9.8,
   RUN_FAST: 11.5,
@@ -138,32 +141,41 @@ export function metForTest(result_type: "TIME" | "DISTANCE", distance_m: number 
 
 /* ----------------- Orchestrators ----------------- */
 
-/** Gym session — needs duration_min. Uses HR if provided, else MET (with RPE bump). */
+/**
+ * Strength sessions are mostly sets plus recovery, not continuous cardio.
+ * A heart-rate spike during a set therefore must not be extrapolated as a
+ * steady-state cardio effort for the entire wall-clock duration.
+ */
 export function computeCaloriesForSession(
   profile: UserProfileForCalc,
   s: { duration_min: number; avg_hr?: number | null; rpe?: number | null },
 ): number | null {
   if (!isPositive(profile.weight_kg) || !isPositive(s.duration_min)) return null;
+  const metEstimate = caloriesFromMET({
+    met: MET.GYM,
+    weight_kg: profile.weight_kg,
+    duration_min: s.duration_min,
+    rpe: s.rpe ?? null,
+  });
   const age = ageFromDOB(profile.date_of_birth);
   if (isPlausibleHeartRate(s.avg_hr) && age !== null && profile.sex) {
-    return round(
-      caloriesFromHR({
-        avg_hr: s.avg_hr,
-        weight_kg: profile.weight_kg,
-        age,
-        sex: profile.sex,
-        duration_min: s.duration_min,
-      }),
-    );
-  }
-  return round(
-    caloriesFromMET({
-      met: MET.GYM,
+    const hrEstimate = caloriesFromHR({
+      avg_hr: s.avg_hr,
+      weight_kg: profile.weight_kg,
+      age,
+      sex: profile.sex,
+      duration_min: s.duration_min,
+    });
+    // Keep HR useful when available, but cap it at a conservative strength
+    // envelope so short peaks cannot become a 1,000+ kcal cardio estimate.
+    const strengthCeiling = caloriesFromMET({
+      met: MET.GYM_HR_CEILING,
       weight_kg: profile.weight_kg,
       duration_min: s.duration_min,
-      rpe: s.rpe ?? null,
-    }),
-  );
+    });
+    return round(Math.min(hrEstimate, strengthCeiling));
+  }
+  return round(metEstimate);
 }
 
 /** Test — time_sec or (duration_sec for DISTANCE type). */

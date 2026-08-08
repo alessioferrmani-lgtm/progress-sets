@@ -36,27 +36,27 @@ export function WorkoutExerciseHero({
 
   return (
     <section
-      className="relative overflow-hidden rounded-[28px] border border-separator/80 bg-gradient-to-br from-fill-secondary via-background to-fill p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
+      className="workout-exercise-hero relative overflow-hidden rounded-[28px] border border-separator/80 bg-gradient-to-br from-fill-secondary via-background to-fill p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
       data-testid="workout-exercise-hero"
       aria-label={`Esercizio ${exercisePosition} di ${exerciseCount}: ${exerciseName}`}
     >
       <div className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-accent/15 blur-3xl" />
-      <div className="relative flex items-start justify-between gap-5">
+      <div className="workout-exercise-hero-top relative flex items-start justify-between gap-5">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-label-tertiary">
             Esercizio {exercisePosition} di {exerciseCount}
           </p>
-          <h2 className="mt-3 text-[2rem] font-bold leading-[1.05] tracking-tight text-label">
+          <h2 className="workout-exercise-hero-title mt-3 text-[2rem] font-bold leading-[1.05] tracking-tight text-label">
             {exerciseName}
           </h2>
-          <p className="mt-3 text-sm font-medium text-label-secondary">
+          <p className="workout-exercise-hero-series mt-3 text-sm font-medium text-label-secondary">
             Serie <span className="text-accent">{seriesPosition}</span> di {seriesCount}
           </p>
           <button
             type="button"
             onClick={onSkip}
             aria-label="Salta esercizio"
-            className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors active:bg-accent/10"
+            className="workout-exercise-hero-skip mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors active:bg-accent/10"
           >
             <SkipForward className="size-4" />
             Salta esercizio
@@ -64,7 +64,7 @@ export function WorkoutExerciseHero({
         </div>
 
         <div
-          className="relative flex size-28 shrink-0 items-center justify-center rounded-full p-1"
+          className="workout-exercise-hero-ring relative flex size-28 shrink-0 items-center justify-center rounded-full p-1"
           style={{
             background: `conic-gradient(#0a84ff ${seriesProgress}%, rgba(255,255,255,0.12) 0)`,
           }}
@@ -79,7 +79,7 @@ export function WorkoutExerciseHero({
         </div>
       </div>
 
-      <div className="relative mt-6">
+      <div className="workout-exercise-hero-progress relative mt-6">
         <div className="flex items-center justify-between text-xs font-medium text-label-secondary">
           <span>Progresso allenamento</span>
           <span className="tabular-nums">
