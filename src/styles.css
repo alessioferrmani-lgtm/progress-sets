@@ -214,6 +214,30 @@ html body #lovable-badge-cta {
   }
 }
 
+.workout-top-shell {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-separator) 72%, transparent);
+  border-top: 0;
+  border-radius: 0 0 30px 30px;
+  background: color-mix(in oklab, var(--color-surface) 86%, var(--color-background));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
+}
+
+.workout-top-shell .workout-screen-header,
+.workout-top-shell .workout-screen-tabs {
+  background: transparent;
+}
+
+.workout-top-shell .workout-exercise-hero {
+  margin: 0 12px 12px;
+  border-color: color-mix(in oklab, var(--color-separator) 78%, transparent);
+  box-shadow: none;
+}
+
+.workout-screen-content {
+  padding-top: 12px;
+}
+
 /*
  * The active workout is an immersive iPhone screen: on short portrait
  * viewports (including iPhone 15 Pro) the controls must remain visible above
