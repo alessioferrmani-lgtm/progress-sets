@@ -198,13 +198,14 @@ function FreeWorkoutPage() {
       setStartedAt(new Date(session?.startedAt ?? "").getTime());
       setNow(Date.now());
     };
+    const handleUnload = () => persistWorkout();
     document.addEventListener("visibilitychange", persistOnHide);
-    window.addEventListener("pagehide", persistWorkout);
-    window.addEventListener("beforeunload", persistWorkout);
+    window.addEventListener("pagehide", handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
     return () => {
       document.removeEventListener("visibilitychange", persistOnHide);
-      window.removeEventListener("pagehide", persistWorkout);
-      window.removeEventListener("beforeunload", persistWorkout);
+      window.removeEventListener("pagehide", handleUnload);
+      window.removeEventListener("beforeunload", handleUnload);
     };
   }, [persistWorkout, session?.startedAt, sessionId]);
 
