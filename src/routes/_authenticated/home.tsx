@@ -10,6 +10,9 @@ import {
   type SetRow,
 } from "@/lib/dashboard-queries";
 import { WeeklyVolumeChart } from "@/components/dashboard/WeeklyVolumeChart";
+import { EliteStatusCard } from "@/components/dashboard/EliteStatusCard";
+import { TrainingPlanCard } from "@/components/dashboard/TrainingPlanCard";
+import { PerformanceCoachCard } from "@/components/dashboard/PerformanceCoachCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyProfile, upsertMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
@@ -87,6 +90,12 @@ function HomePage() {
 
       <div className="space-y-4">
         <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
+
+        <EliteStatusCard userId={user.id} />
+
+        <TrainingPlanCard userId={user.id} />
+
+        <PerformanceCoachCard sessions={sessionsQ.data} sets={setsQ.data} prs={prsQ.data} />
 
         <div className="grid grid-cols-2 gap-3">
           <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />

@@ -12,6 +12,7 @@ import {
   ListChecks,
   Pencil,
   Save,
+  Sparkles,
   Timer,
   Trash2,
   Trophy,
@@ -73,6 +74,7 @@ function SummaryPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [draftDurationMin, setDraftDurationMin] = useState("");
+  const [draftRpe, setDraftRpe] = useState("");
   const [draftSets, setDraftSets] = useState<
     Record<string, { weightKg: string; reps: string; restTakenSec: string }>
   >({});
@@ -268,6 +270,9 @@ function SummaryPage() {
       const durationMin = Number(draftDurationMin.replace(",", "."));
       if (!Number.isFinite(durationMin) || durationMin <= 0 || durationMin > 1440)
         throw new Error("Inserisci una durata valida tra 1 e 1440 minuti");
+      const rpe = draftRpe.trim() ? Number(draftRpe) : null;
+      if (rpe !== null && (!Number.isInteger(rpe) || rpe < 1 || rpe > 10))
+        throw new Error("RPE non valido: scegli un valore tra 1 e 10");
 
       const sets = summary.data.exercises.flatMap((exercise) => exercise.sets);
       const updates = sets.map((set) => {
@@ -309,7 +314,7 @@ function SummaryPage() {
           calories = computeCaloriesForSession(profile, {
             duration_min: durationMin,
             avg_hr: summary.data.avgHr,
-            rpe: summary.data.rpe,
+            rpe,
           });
         }
       } catch {
@@ -318,7 +323,7 @@ function SummaryPage() {
 
       const { error: sessionError } = await supabase
         .from("workout_sessions")
-        .update({ ended_at: endedAt.toISOString(), calories_burned: calories })
+        .update({ ended_at: endedAt.toISOString(), calories_burned: calories, rpe })
         .eq("id", sessionId);
       if (sessionError) throw sessionError;
     },
@@ -337,6 +342,7 @@ function SummaryPage() {
   const startEditing = () => {
     if (!summary.data) return;
     setDraftDurationMin(String(Math.max(1, Math.round(summary.data.durationSec / 60))));
+    setDraftRpe(summary.data.rpe == null ? "" : String(summary.data.rpe));
     setDraftSets(
       Object.fromEntries(
         summary.data.exercises.flatMap((exercise) =>
@@ -503,6 +509,26 @@ function SummaryPage() {
                 />
               </label>
             </div>
+            <label className="mt-4 block text-xs font-medium text-label-secondary">
+              Quanto è stato difficile? (RPE 1–10)
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={draftRpe || "6"}
+                  onChange={(event) => setDraftRpe(event.target.value)}
+                  className="min-w-0 flex-1 accent-[var(--color-accent)]"
+                />
+                <span className="w-6 text-right text-lg font-bold tabular-nums text-label">
+                  {draftRpe || "—"}
+                </span>
+              </div>
+              <span className="mt-1 block text-[11px] text-label-tertiary">
+                Serve per calibrare carico, recupero e progressione futura.
+              </span>
+            </label>
           </section>
         )}
 
@@ -542,6 +568,11 @@ function SummaryPage() {
             icon={<ListChecks className="size-5 text-accent" />}
             value={String(data.totalSets)}
             label="Serie completate"
+          />
+          <MetricCard
+            icon={<Sparkles className="size-5 text-warning" />}
+            value={data.rpe == null ? "—" : String(data.rpe)}
+            label="RPE sessione"
           />
         </section>
 

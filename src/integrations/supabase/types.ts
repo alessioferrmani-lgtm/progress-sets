@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      athlete_checkins: {
+        Row: {
+          created_at: string
+          date: string
+          hrv_ms: number | null
+          id: string
+          motivation: number | null
+          notes: string | null
+          resting_hr: number | null
+          sleep_hours: number | null
+          sleep_quality: number | null
+          soreness: number | null
+          stress: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          hrv_ms?: number | null
+          id?: string
+          motivation?: number | null
+          notes?: string | null
+          resting_hr?: number | null
+          sleep_hours?: number | null
+          sleep_quality?: number | null
+          soreness?: number | null
+          stress?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          hrv_ms?: number | null
+          id?: string
+          motivation?: number | null
+          notes?: string | null
+          resting_hr?: number | null
+          sleep_hours?: number | null
+          sleep_quality?: number | null
+          soreness?: number | null
+          stress?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           category: string | null
@@ -437,6 +485,56 @@ export type Database = {
             columns: ["test_type_id"]
             isOneToOne: false
             referencedRelation: "test_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_plan_items: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          linked_session_id: string | null
+          notes: string | null
+          status: string
+          target: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          linked_session_id?: string | null
+          notes?: string | null
+          status?: string
+          target?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          linked_session_id?: string | null
+          notes?: string | null
+          status?: string
+          target?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_plan_items_linked_session_id_fkey"
+            columns: ["linked_session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
             referencedColumns: ["id"]
           },
         ]

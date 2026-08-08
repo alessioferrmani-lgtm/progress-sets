@@ -22,6 +22,8 @@ export async function loadProgressExport() {
     racesResult,
     intervalsResult,
     performanceResult,
+    checkinsResult,
+    planResult,
   ] = await Promise.all([
     safeExportOne(
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
@@ -63,6 +65,16 @@ export async function loadProgressExport() {
       "Registro prestazioni",
       warnings,
     ),
+    safeExportRows(
+      supabase.from("athlete_checkins").select("*").eq("user_id", userId).order("date"),
+      "Check-in recupero",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("training_plan_items").select("*").eq("user_id", userId).order("date"),
+      "Piano allenamenti",
+      warnings,
+    ),
   ]);
 
   const profile = profileResult;
@@ -73,6 +85,8 @@ export async function loadProgressExport() {
   const races = racesResult;
   const intervalSessions = intervalsResult;
   const performanceLog = performanceResult;
+  const athleteCheckins = checkinsResult;
+  const trainingPlan = planResult;
 
   const templateIds = workoutTemplates.map((row) => row.id);
   const sessionIds = workoutSessions.map((row) => row.id);
@@ -163,6 +177,10 @@ export async function loadProgressExport() {
       interval_reps: intervalReps,
       performance_log: performanceLog,
     },
+    coaching: {
+      daily_checkins: athleteCheckins,
+      training_plan: trainingPlan,
+    },
     totals: {
       weight_entries: weightHistory.length,
       gym_templates: workoutTemplates.length,
@@ -172,6 +190,8 @@ export async function loadProgressExport() {
       races: races.length,
       interval_sessions: intervalSessions.length,
       interval_reps: intervalReps.length,
+      athlete_checkins: athleteCheckins.length,
+      training_plan_items: trainingPlan.length,
     },
   };
 }
