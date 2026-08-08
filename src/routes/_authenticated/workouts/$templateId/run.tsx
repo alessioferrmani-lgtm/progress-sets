@@ -5,7 +5,7 @@ import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
-import { X, Check, Plus, Minus, SkipForward } from "lucide-react";
+import { X, Check, Plus, Minus } from "lucide-react";
 import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
@@ -366,54 +366,69 @@ function RunPage() {
 
   return (
     <div className="workout-screen mx-auto flex w-full max-w-md flex-col">
-      {/* Header */}
-      <div className="workout-screen-header ios-blur sticky top-0 z-10 flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
-        <button
-          onClick={cancel}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label"
-          aria-label="Chiudi"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-label">
-            {templateData.template.name}
+      <section className="workout-top-shell shrink-0">
+        {/* Header */}
+        <div className="workout-screen-header ios-blur sticky top-0 z-10 flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
+          <button
+            onClick={cancel}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label"
+            aria-label="Chiudi"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-label">
+              {templateData.template.name}
+            </div>
+            <div className="font-mono text-xs tabular-nums text-label-secondary">
+              {em}:{es} · {completedSets}/{totalSets} serie
+            </div>
           </div>
-          <div className="font-mono text-xs tabular-nums text-label-secondary">
-            {em}:{es} · {completedSets}/{totalSets} serie
-          </div>
+          <button
+            onClick={finish}
+            className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+          >
+            Fine
+          </button>
         </div>
-        <button
-          onClick={finish}
-          className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
-        >
-          Fine
-        </button>
-      </div>
 
-      {/* Exercise tabs */}
-      <div className="workout-screen-tabs scrollbar-none flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
-        {exercises.map((ex, i) => {
-          const list = rowsByExercise[ex.id] ?? [];
-          const done = list.filter((r) => r.completed).length;
-          const isActive = i === activeIdx;
-          return (
-            <button
-              key={ex.id}
-              onClick={() => {
-                setActiveIdx(i);
-                setActiveSetIdx(0);
-              }}
-              className={
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors " +
-                (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
-              }
-            >
-              {ex.exercise.name} · {done}/{ex.target_sets}
-            </button>
-          );
-        })}
-      </div>
+        {/* Exercise tabs */}
+        <div className="workout-screen-tabs scrollbar-none flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
+          {exercises.map((ex, i) => {
+            const list = rowsByExercise[ex.id] ?? [];
+            const done = list.filter((r) => r.completed).length;
+            const isActive = i === activeIdx;
+            return (
+              <button
+                key={ex.id}
+                onClick={() => {
+                  setActiveIdx(i);
+                  setActiveSetIdx(0);
+                }}
+                className={
+                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors " +
+                  (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+                }
+              >
+                {ex.exercise.name} · {done}/{ex.target_sets}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeEx && activeRow && (
+          <WorkoutExerciseHero
+            exerciseName={activeEx.exercise.name}
+            exercisePosition={activeIdx + 1}
+            exerciseCount={exercises.length}
+            seriesPosition={activeSetIdx + 1}
+            seriesCount={rows.length}
+            completedSets={completedSets}
+            totalSets={totalSets}
+            onSkip={skipExercise}
+          />
+        )}
+      </section>
 
       {activeEx &&
         activeRow &&
@@ -422,16 +437,6 @@ function RunPage() {
           const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
             <div className="workout-screen-content flex min-h-0 flex-col gap-3 px-4 pb-6">
-              <WorkoutExerciseHero
-                exerciseName={activeEx.exercise.name}
-                exercisePosition={activeIdx + 1}
-                exerciseCount={exercises.length}
-                seriesPosition={activeSetIdx + 1}
-                seriesCount={rows.length}
-                completedSets={completedSets}
-                totalSets={totalSets}
-                onSkip={skipExercise}
-              />
               <div className="workout-set-card ios-card overflow-hidden p-4">
                 <div className="hidden">
                   <div>
@@ -445,15 +450,6 @@ function RunPage() {
                     Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
                   </span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={skipExercise}
-                  aria-label="Salta esercizio"
-                  className="workout-skip-button mt-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent active:opacity-80"
-                >
-                  <SkipForward className="size-4" /> Salta esercizio
-                </button>
 
                 <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
                   <span>Recupero target: {activeEx.rest_seconds}s</span>

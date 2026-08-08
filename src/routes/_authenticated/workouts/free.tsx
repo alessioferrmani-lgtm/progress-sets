@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, SkipForward, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -198,13 +198,14 @@ function FreeWorkoutPage() {
       setStartedAt(new Date(session?.startedAt ?? "").getTime());
       setNow(Date.now());
     };
+    const handleUnload = () => persistWorkout();
     document.addEventListener("visibilitychange", persistOnHide);
-    window.addEventListener("pagehide", persistWorkout);
-    window.addEventListener("beforeunload", persistWorkout);
+    window.addEventListener("pagehide", handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
     return () => {
       document.removeEventListener("visibilitychange", persistOnHide);
-      window.removeEventListener("pagehide", persistWorkout);
-      window.removeEventListener("beforeunload", persistWorkout);
+      window.removeEventListener("pagehide", handleUnload);
+      window.removeEventListener("beforeunload", handleUnload);
     };
   }, [persistWorkout, session?.startedAt, sessionId]);
 
@@ -378,68 +379,83 @@ function FreeWorkoutPage() {
 
   return (
     <main className="workout-screen mx-auto flex w-full max-w-md flex-col px-4 pb-8 pt-[calc(env(safe-area-inset-top)+10px)]">
-      <header className="workout-screen-header flex shrink-0 items-center gap-3">
-        <button
-          type="button"
-          onClick={cancel}
-          className="flex size-10 items-center justify-center rounded-full bg-fill text-label"
-          aria-label="Torna indietro"
-        >
-          <ArrowLeft className="size-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="text-lg font-bold text-label">Allenamento libero</div>
-          <div className="font-mono text-xs tabular-nums text-label-secondary">
-            {elapsedMinutes}:{elapsedSeconds} · {completedSets}/{totalSets || 0} serie
+      <section className="workout-top-shell shrink-0">
+        <header className="workout-screen-header flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={cancel}
+            className="flex size-10 items-center justify-center rounded-full bg-fill text-label"
+            aria-label="Torna indietro"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="text-lg font-bold text-label">Allenamento libero</div>
+            <div className="font-mono text-xs tabular-nums text-label-secondary">
+              {elapsedMinutes}:{elapsedSeconds} · {completedSets}/{totalSets || 0} serie
+            </div>
           </div>
-        </div>
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={finish}
+              className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
+              aria-label="Termina allenamento"
+            >
+              Termina allenamento
+            </button>
+          )}
+        </header>
+
         {selectedIds.length > 0 && (
           <button
             type="button"
-            onClick={finish}
-            className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
-            aria-label="Termina allenamento"
+            onClick={() => setPickerOpen(true)}
+            className="workout-screen-add-exercise ios-btn-primary mt-4 w-full"
           >
-            Termina allenamento
+            <Plus className="size-5" /> Aggiungi esercizio
           </button>
         )}
-      </header>
 
-      {selectedIds.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="workout-screen-add-exercise ios-btn-primary mt-4 w-full"
-        >
-          <Plus className="size-5" /> Aggiungi esercizio
-        </button>
-      )}
+        {selectedIds.length > 0 && (
+          <div className="workout-screen-tabs scrollbar-none mt-4 flex shrink-0 gap-2 overflow-x-auto pb-1">
+            {selectedIds.map((id, index) => {
+              const exercise = exerciseById.get(id);
+              const done = (rowsByExercise[id] ?? []).filter((row) => row.completed).length;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setActiveIdx(index);
+                    setActiveSetIdx(0);
+                  }}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    index === activeIdx
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-fill text-label-secondary"
+                  }`}
+                >
+                  {exercise?.name ?? "Esercizio"} · {done}/{(rowsByExercise[id] ?? []).length}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-      {selectedIds.length > 0 && (
-        <div className="workout-screen-tabs scrollbar-none mt-4 flex shrink-0 gap-2 overflow-x-auto pb-1">
-          {selectedIds.map((id, index) => {
-            const exercise = exerciseById.get(id);
-            const done = (rowsByExercise[id] ?? []).filter((row) => row.completed).length;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  setActiveIdx(index);
-                  setActiveSetIdx(0);
-                }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  index === activeIdx
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-fill text-label-secondary"
-                }`}
-              >
-                {exercise?.name ?? "Esercizio"} · {done}/{(rowsByExercise[id] ?? []).length}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        {activeExercise && activeRow && (
+          <WorkoutExerciseHero
+            exerciseName={activeExercise.name}
+            exercisePosition={activeIdx + 1}
+            exerciseCount={selectedIds.length}
+            seriesPosition={activeSetIdx + 1}
+            seriesCount={rows.length}
+            completedSets={completedSets}
+            totalSets={totalSets}
+            onSkip={skipExercise}
+          />
+        )}
+      </section>
 
       {!activeExercise || !activeRow ? (
         <section className="ios-card mt-4 p-6 text-center">
@@ -467,16 +483,6 @@ function FreeWorkoutPage() {
         </section>
       ) : (
         <>
-          <WorkoutExerciseHero
-            exerciseName={activeExercise.name}
-            exercisePosition={activeIdx + 1}
-            exerciseCount={selectedIds.length}
-            seriesPosition={activeSetIdx + 1}
-            seriesCount={rows.length}
-            completedSets={completedSets}
-            totalSets={totalSets}
-            onSkip={skipExercise}
-          />
           <section className="workout-set-card ios-card mt-3 overflow-hidden p-4">
             <div className="hidden">
               <div>
@@ -487,15 +493,6 @@ function FreeWorkoutPage() {
                 Serie <span className="text-accent">{activeSetIdx + 1}</span> di {rows.length}
               </span>
             </div>
-
-            <button
-              type="button"
-              onClick={skipExercise}
-              aria-label="Salta esercizio"
-              className="hidden"
-            >
-              <SkipForward className="size-4" /> Salta esercizio
-            </button>
 
             <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
               <span>Recupero suggerito: 1:30</span>
