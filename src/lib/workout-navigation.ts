@@ -34,3 +34,28 @@ export function findNextUncompletedSet<Row extends WorkoutNavigationRow>(
 
   return null;
 }
+
+/**
+ * Finds the next set using the state that exists immediately after the
+ * current set is confirmed. React state updates are asynchronous, so callers
+ * must not ask `findNextUncompletedSet` with the pre-confirmation snapshot or
+ * it can return the same set again.
+ */
+export function findNextAfterCompletion<Row extends WorkoutNavigationRow>(
+  exerciseOrder: string[],
+  rowsByExercise: Record<string, Row[]>,
+  current: WorkoutSetLocation,
+): WorkoutSetLocation | null {
+  const exerciseId = exerciseOrder[current.exerciseIndex];
+  const rows = exerciseId ? rowsByExercise[exerciseId] : undefined;
+  if (!rows?.[current.setIndex]) return null;
+
+  const completedRows = rows.map((row, index) =>
+    index === current.setIndex ? { ...row, completed: true } : row,
+  );
+  return findNextUncompletedSet(
+    exerciseOrder,
+    { ...rowsByExercise, [exerciseId]: completedRows },
+    current,
+  );
+}

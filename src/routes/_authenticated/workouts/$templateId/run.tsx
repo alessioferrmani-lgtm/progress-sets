@@ -11,7 +11,7 @@ import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { insertLoggedSet } from "@/lib/logged-sets";
-import { findNextUncompletedSet } from "@/lib/workout-navigation";
+import { findNextAfterCompletion } from "@/lib/workout-navigation";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
@@ -246,12 +246,16 @@ function RunPage() {
       toast.success("Spunta rimossa: ora puoi correggere la serie");
       return;
     }
-    const weight = Number(row.weight || 0);
+    const weight = Number((row.weight || "0").replace(",", "."));
     const isCount = activeEx.reps_type === "count";
     // For time/distance/unspecified sets we don't require a numeric rep count.
-    const reps = isCount ? parseInt(row.reps || "0", 10) : 1;
-    if (isCount && !reps) {
-      toast.error("Inserisci le ripetizioni");
+    const reps = isCount ? Number((row.reps || "0").replace(",", ".")) : 1;
+    if (
+      !Number.isFinite(weight) ||
+      weight < 0 ||
+      (isCount && (!Number.isInteger(reps) || reps < 1))
+    ) {
+      toast.error("Inserisci carico e ripetizioni validi");
       return;
     }
     // Compute rest_taken vs previous completed set in this session (any exercise)
@@ -289,7 +293,7 @@ function RunPage() {
       next[activeEx.id] = list;
       return next;
     });
-    const next = findNextUncompletedSet(
+    const next = findNextAfterCompletion(
       exercises.map((ex) => ex.id),
       rowsByExercise,
       {

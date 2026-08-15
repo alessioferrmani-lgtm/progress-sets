@@ -22,7 +22,7 @@ import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { insertLoggedSet } from "@/lib/logged-sets";
-import { findNextUncompletedSet } from "@/lib/workout-navigation";
+import { findNextAfterCompletion } from "@/lib/workout-navigation";
 
 export const Route = createFileRoute("/_authenticated/workouts/free")({
   component: FreeWorkoutPage,
@@ -272,7 +272,7 @@ function FreeWorkoutPage() {
         index === activeSetIdx ? { ...row, completed: true, completedAt, logId: data.id } : row,
       ),
     }));
-    const next = findNextUncompletedSet(selectedIds, rowsByExercise, {
+    const next = findNextAfterCompletion(selectedIds, rowsByExercise, {
       exerciseIndex: activeIdx,
       setIndex: activeSetIdx,
     });
