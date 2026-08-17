@@ -103,6 +103,21 @@ test("la schermata allenamento usa l'hero iOS dark della proposta 2", () => {
   assert.match(hero, /aria-label="Salta esercizio"/);
 });
 
+test("la chiusura sessione blocca il doppio tap", () => {
+  assert.match(recovery, /const finishPromises = new Map/);
+  assert.match(recovery, /finishPromises\.get\(session\.id\)/);
+  assert.match(recovery, /finishPromises\.delete\(session\.id\)/);
+  assert.match(run, /disabled=\{isFinishing\}/);
+  assert.match(free, /disabled=\{isFinishing\}/);
+});
+
+test("l'avvio della sessione è sincronizzato tra tab", () => {
+  assert.match(recovery, /withBootstrapLock/);
+  assert.match(recovery, /progress-sets:active-workout/);
+  assert.match(recovery, /withBootstrapLock\(`template:\$\{templateId\}`/);
+  assert.match(recovery, /withBootstrapLock\("free"/);
+});
+
 test("il pulsante Salta esercizio compare una sola volta nell'area attiva", () => {
   assert.match(run, /workout-top-shell/);
   assert.match(free, /workout-top-shell/);

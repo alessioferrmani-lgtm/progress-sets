@@ -112,10 +112,7 @@ export function clearActiveWorkoutDraft(sessionId?: string) {
 export function getWorkoutElapsedSeconds(startedAt: string, now = Date.now()) {
   const started = new Date(startedAt).getTime();
   if (!Number.isFinite(started) || !Number.isFinite(now)) return 0;
-  return Math.max(
-    0,
-    Math.min(MAX_RECOVERED_DURATION_SEC, Math.floor((now - started) / 1000)),
-  );
+  return Math.max(0, Math.min(MAX_RECOVERED_DURATION_SEC, Math.floor((now - started) / 1000)));
 }
 
 function estimateElapsedSeconds(startedAt: string, _lastCompletedAt: string | null) {
@@ -217,10 +214,21 @@ export async function fetchInterruptedWorkout(): Promise<ActiveWorkoutSession | 
 
 const bootstrapPromises = new Map<string, Promise<ActiveWorkoutBootstrap>>();
 
+type WebLockManagerLike = {
+  request<T>(name: string, options: { mode: "exclusive" }, callback: () => Promise<T>): Promise<T>;
+};
+
+async function withBootstrapLock<T>(key: string, task: () => Promise<T>): Promise<T> {
+  if (typeof navigator === "undefined") return task();
+  const lockManager = (navigator as Navigator & { locks?: WebLockManagerLike }).locks;
+  if (!lockManager) return task();
+  return lockManager.request(`progress-sets:active-workout:${key}`, { mode: "exclusive" }, task);
+}
+
 export function ensureActiveWorkout(templateId: string): Promise<ActiveWorkoutBootstrap> {
   const existing = bootstrapPromises.get(templateId);
   if (existing) return existing;
-  const promise = (async () => {
+  const promise = withBootstrapLock(`template:${templateId}`, async () => {
     const userId = await getUserId();
     const stored = readActiveWorkoutDraft();
     let session =
@@ -251,7 +259,7 @@ export function ensureActiveWorkout(templateId: string): Promise<ActiveWorkoutBo
       draft,
       loggedSets: (loggedSets ?? []) as RecoveredLoggedSet[],
     };
-  })().finally(() => bootstrapPromises.delete(templateId));
+  }).finally(() => bootstrapPromises.delete(templateId));
   bootstrapPromises.set(templateId, promise);
   return promise;
 }
@@ -267,7 +275,7 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
   const key = "free";
   const existing = bootstrapPromises.get(key);
   if (existing) return existing;
-  const promise = (async () => {
+  const promise = withBootstrapLock("free", async () => {
     const userId = await getUserId();
     const stored = readActiveWorkoutDraft();
     let session =
@@ -296,16 +304,38 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
       draft,
       loggedSets: (loggedSets ?? []) as RecoveredLoggedSet[],
     };
-  })().finally(() => bootstrapPromises.delete(key));
+  }).finally(() => bootstrapPromises.delete(key));
   bootstrapPromises.set(key, promise);
   return promise;
 }
 
-export async function finishActiveWorkout(
+type FinishWorkoutResult = { endedAt: Date; calories: number | null };
+
+// A fast double tap or two mounted tabs can otherwise submit the same finish
+// operation twice. Sharing the in-flight promise makes closing a session
+// idempotent within this browser context.
+const finishPromises = new Map<string, Promise<FinishWorkoutResult>>();
+
+export function finishActiveWorkout(
   session: ActiveWorkoutSession,
   elapsedSec?: number,
   hasCompletedSets = session.completedSets > 0,
-) {
+): Promise<FinishWorkoutResult> {
+  const existing = finishPromises.get(session.id);
+  if (existing) return existing;
+
+  const promise = finishActiveWorkoutInternal(session, elapsedSec, hasCompletedSets).finally(() => {
+    finishPromises.delete(session.id);
+  });
+  finishPromises.set(session.id, promise);
+  return promise;
+}
+
+async function finishActiveWorkoutInternal(
+  session: ActiveWorkoutSession,
+  elapsedSec?: number,
+  hasCompletedSets = session.completedSets > 0,
+): Promise<FinishWorkoutResult> {
   const stored = readActiveWorkoutDraft();
   const storedElapsed =
     stored?.sessionId === session.id && Number.isFinite(stored.elapsedSec) ? stored.elapsedSec : 0;
