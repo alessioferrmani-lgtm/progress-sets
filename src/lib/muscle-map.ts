@@ -13,7 +13,7 @@ export type MuscleGroup =
   | "forearms";
 
 const ANKLE_PATTERN =
-  /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba|pogo jump|ankling|jump rope/i;
+  /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba|pogo jump|ankling|ankle hop|short foot|toe yoga|jump rope/i;
 
 const SINGLE_LEG_JUMP_PATTERN =
   /single.?leg.*(?:jump|hop|bound)|(?:monopodal|a una gamba).*(?:salto|hop|jump|bound)|hurdle hop monopodal/i;
@@ -23,8 +23,17 @@ const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
     match: ANKLE_PATTERN,
     groups: ["tibialis", "calves"],
   },
+  { match: /dead bug|bird dog|side plank|hanging knee raise/i, groups: ["abs"] },
+  { match: /suitcase carry/i, groups: ["forearms", "abs"] },
+  { match: /snap down|step off.*stick|step down|step up/i, groups: ["quads", "glutes"] },
+  { match: /trap bar jump/i, groups: ["quads", "glutes"] },
+  { match: /push press/i, groups: ["shoulders", "triceps"] },
+  { match: /abduzione|abduction/i, groups: ["glutes"] },
+  { match: /flessione anca|hip flex/i, groups: ["quads"] },
+  { match: /^dip(?:\s|$)/i, groups: ["triceps", "chest"] },
   {
-    match: /single.?leg.*(?:calf|soleus)|single.?leg calf raise|soleus raise|calf raise|polpacc/i,
+    match:
+      /single.?leg.*(?:calf|soleus)|single.?leg calf raise|soleus(?: raise)?|calf raise|polpacc/i,
     groups: ["calves"],
   },
   {
@@ -32,36 +41,54 @@ const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
     groups: ["quads", "glutes", "calves", "tibialis"],
   },
   {
-    match: /single.?leg.*(?:squat|split squat)|pistol squat|bulgarian split squat|split squat|single.?leg step/i,
+    match:
+      /single.?leg.*(?:squat|split squat)|pistol squat|bulgarian split squat|split squat|single.?leg step/i,
     groups: ["quads", "glutes", "hamstrings", "calves"],
   },
   {
-    match: /single.?leg.*(?:romanian deadlift|deadlift|good morning)|single.?leg glute bridge|single.?leg hip thrust/i,
+    match:
+      /single.?leg.*(?:romanian deadlift|deadlift|good morning)|single.?leg glute bridge|single.?leg hip thrust/i,
     groups: ["hamstrings", "glutes"],
   },
   {
-    match: /single.?arm.*(?:row|rematore)|one.?arm.*(?:row|rematore)|single.?arm.*carry|waiter carry a un braccio/i,
+    match:
+      /single.?arm.*(?:row|rematore)|one.?arm.*(?:row|rematore)|single.?arm.*carry|waiter carry a un braccio/i,
     groups: ["back", "biceps", "forearms", "abs"],
   },
   {
     match: /single.?arm.*(?:press|push)|one.?arm.*(?:press|push)/i,
     groups: ["chest", "shoulders", "triceps"],
   },
-  { match: /wrist curl|reverse wrist curl|wrist roller|plate pinch|pinch grip/i, groups: ["forearms"] },
+  {
+    match: /wrist curl|reverse wrist curl|wrist roller|plate pinch|pinch grip/i,
+    groups: ["forearms"],
+  },
   { match: /curl alla panca scott/i, groups: ["biceps"] },
   { match: /rematore chest.?supported|chest.?supported row/i, groups: ["back", "biceps"] },
-  { match: /iperestension|reverse hyper|back extension 45/i, groups: ["back", "hamstrings", "glutes"] },
+  {
+    match: /iperestension|reverse hyper|back extension 45/i,
+    groups: ["back", "hamstrings", "glutes"],
+  },
   { match: /pullover con manubrio/i, groups: ["back", "chest"] },
   { match: /vogatore|rower/i, groups: ["back", "biceps", "quads", "hamstrings", "glutes"] },
   { match: /rack pull/i, groups: ["back", "hamstrings", "glutes"] },
   { match: /straight.?arm pulldown/i, groups: ["back"] },
-  { match: /pallof|woodchop|hollow body|v.?up|toes to bar|rollout|copenhagen plank/i, groups: ["abs"] },
+  {
+    match: /pallof|woodchop|hollow body|v.?up|toes to bar|rollout|copenhagen plank/i,
+    groups: ["abs"],
+  },
   { match: /plank shoulder tap|bear crawl/i, groups: ["abs", "shoulders"] },
-  { match: /crossover|floor press|svend press|hex press|landmine chest/i, groups: ["chest", "triceps"] },
+  {
+    match: /crossover|floor press|svend press|hex press|landmine chest/i,
+    groups: ["chest", "triceps"],
+  },
   { match: /cuban press|rear delt row|band pull.?apart|scaption|y raise/i, groups: ["shoulders"] },
   { match: /external rotation/i, groups: ["shoulders"] },
   { match: /pike push.?up|landmine shoulder press/i, groups: ["shoulders", "triceps"] },
-  { match: /jm press|tate press|rolling dumbbell triceps|triceps extension machine/i, groups: ["triceps"] },
+  {
+    match: /jm press|tate press|rolling dumbbell triceps|triceps extension machine/i,
+    groups: ["triceps"],
+  },
   { match: /panca stretta|close.grip|dip tricip/i, groups: ["triceps", "chest"] },
   {
     match: /panca|bench|push[- ]?up|chest|pettoral|croci|fly|dip alle/i,
@@ -134,9 +161,7 @@ export function musclesFor(exerciseName: string, storedGroup?: string | null): M
 
 /** Value stored for custom imported exercises, derived from the same central mapping. */
 export function storedMuscleGroupFor(exerciseName: string): string | null {
-  if (
-    ANKLE_PATTERN.test(exerciseName)
-  ) {
+  if (ANKLE_PATTERN.test(exerciseName)) {
     return "Caviglia";
   }
   const primary = musclesFor(exerciseName)[0];

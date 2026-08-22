@@ -29,6 +29,59 @@ test("classifica i nuovi esercizi importati", () => {
   assert.equal(storedMuscleGroupFor("Esercizio sconosciuto"), null);
 });
 
+test("classifica automaticamente tutti gli esercizi della nuova scheda", () => {
+  const importedNames = [
+    "Trap Bar Deadlift con maniglie alte",
+    "Bulgarian Split Squat",
+    "Hip Thrust con bilanciere",
+    "Leg Curl da seduto",
+    "Calf Raise monopodalico in piedi pesante",
+    "Soleus Raise da seduto pesante",
+    "Tibialis Raise",
+    "Inversione caviglia con elastico",
+    "Eversione caviglia con elastico",
+    "Incline Bench Press con manubri",
+    "Pull Up",
+    "Face Pull",
+    "Dead Bug caricato",
+    "Ab Wheel",
+    "Suitcase Carry pesante",
+    "Single Leg Romanian Deadlift",
+    "Reverse Lunge",
+    "Step Down lento",
+    "Leg Extension controllata",
+    "Spanish Squat Isometrico",
+    "Soleus Isometrico monopodalico",
+    "Abduzione anca al cavo",
+    "Flessione anca al cavo",
+    "Shoulder Press con manubri",
+    "Cable Row unilaterale in Split Stance",
+    "Dip",
+    "Copenhagen Plank",
+    "Pallof Press",
+    "Bird Dog Row",
+    "Side Plank con abduzione gamba superiore",
+    "Pogo Jump bilaterale basso",
+    "Ankle Hop avanti-indietro",
+    "Ankle Hop laterale",
+    "Snap Down",
+    "Step Off + Stick da rialzo basso",
+    "Trap Bar Jump",
+    "Step Up esplosivo",
+    "Push Press",
+    "Pull Up esplosivo",
+    "Rematore con petto appoggiato",
+    "Alzate Laterali",
+    "Farmer Carry pesante",
+    "Hanging Knee Raise",
+    "Short Foot",
+    "Toe Yoga",
+  ];
+
+  const unclassified = importedNames.filter((name) => !storedMuscleGroupFor(name));
+  assert.deepEqual(unclassified, []);
+});
+
 test("tutti gli esercizi del catalogo sono collegati ad almeno un muscolo", () => {
   const migration = readFileSync(
     new URL(
