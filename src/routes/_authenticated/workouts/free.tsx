@@ -22,7 +22,7 @@ import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { insertLoggedSet } from "@/lib/logged-sets";
-import { findNextUncompletedSet } from "@/lib/workout-navigation";
+import { findNextAfterCompletion } from "@/lib/workout-navigation";
 
 export const Route = createFileRoute("/_authenticated/workouts/free")({
   component: FreeWorkoutPage,
@@ -272,7 +272,7 @@ function FreeWorkoutPage() {
         index === activeSetIdx ? { ...row, completed: true, completedAt, logId: data.id } : row,
       ),
     }));
-    const next = findNextUncompletedSet(selectedIds, rowsByExercise, {
+    const next = findNextAfterCompletion(selectedIds, rowsByExercise, {
       exerciseIndex: activeIdx,
       setIndex: activeSetIdx,
     });
@@ -399,7 +399,8 @@ function FreeWorkoutPage() {
             <button
               type="button"
               onClick={finish}
-              className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"
+              disabled={isFinishing}
+              className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground disabled:opacity-50"
               aria-label="Termina allenamento"
             >
               Termina allenamento
@@ -475,7 +476,8 @@ function FreeWorkoutPage() {
             <button
               type="button"
               onClick={finish}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 font-semibold text-accent active:scale-[0.99]"
+              disabled={isFinishing}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-accent px-5 font-semibold text-accent active:scale-[0.99] disabled:opacity-50"
             >
               <Check className="size-5" /> Termina allenamento
             </button>

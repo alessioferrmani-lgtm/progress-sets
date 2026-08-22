@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { findNextUncompletedSet } from "../src/lib/workout-navigation.ts";
+import { findNextAfterCompletion, findNextUncompletedSet } from "../src/lib/workout-navigation.ts";
 
 test("avanza alla serie successiva dello stesso esercizio", () => {
   const next = findNextUncompletedSet(
@@ -36,4 +36,28 @@ test("restituisce null quando tutte le serie sono completate", () => {
     { exerciseIndex: 0, setIndex: 0 },
   );
   assert.equal(next, null);
+});
+
+test("dopo la conferma non ripropone la stessa serie", () => {
+  const next = findNextAfterCompletion(
+    ["push", "row"],
+    {
+      push: [{ completed: false }, { completed: false }],
+      row: [{ completed: false }],
+    },
+    { exerciseIndex: 0, setIndex: 0 },
+  );
+  assert.deepEqual(next, { exerciseIndex: 0, setIndex: 1 });
+});
+
+test("dopo l'ultima serie passa all'esercizio successivo", () => {
+  const next = findNextAfterCompletion(
+    ["push", "row"],
+    {
+      push: [{ completed: false }],
+      row: [{ completed: false }],
+    },
+    { exerciseIndex: 0, setIndex: 0 },
+  );
+  assert.deepEqual(next, { exerciseIndex: 1, setIndex: 0 });
 });
