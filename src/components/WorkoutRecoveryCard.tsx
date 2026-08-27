@@ -1,4 +1,4 @@
-import { Bell, Clock3, Minus, Plus } from "lucide-react";
+import { Bell, Clock3 } from "lucide-react";
 import { useState } from "react";
 import { useRestTimer } from "@/lib/rest-timer-store";
 
@@ -62,7 +62,7 @@ export function WorkoutRecoveryCard() {
           className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-accent bg-fill px-3 text-sm font-semibold text-accent active:scale-[0.97]"
           aria-label="Diminuisci recupero di 15 secondi"
         >
-          <Minus className="size-4" /> −15 s
+          −15 s
         </button>
         <button
           type="button"
@@ -70,7 +70,7 @@ export function WorkoutRecoveryCard() {
           className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-accent bg-fill px-3 text-sm font-semibold text-accent active:scale-[0.97]"
           aria-label="Aumenta recupero di 15 secondi"
         >
-          <Plus className="size-4" /> +15 s
+          +15 s
         </button>
       </div>
       {notificationPermission === "default" && (

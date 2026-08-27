@@ -1,7 +1,7 @@
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bell, Plus, Minus, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 
 export function RestTimerBar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -46,8 +46,7 @@ export function RestTimerBar() {
             className="flex h-10 min-w-[62px] items-center justify-center gap-0.5 rounded-full bg-fill px-2 text-xs font-semibold text-label active:scale-[0.97]"
             aria-label="Diminuisci recupero di 15 secondi"
           >
-            <Minus className="h-4 w-4" />
-            15
+            −15 s
           </button>
           {notificationPermission === "default" && (
             <button
@@ -65,8 +64,7 @@ export function RestTimerBar() {
             className="flex h-10 min-w-[62px] items-center justify-center gap-0.5 rounded-full bg-fill px-2 text-xs font-semibold text-label active:scale-[0.97]"
             aria-label="Aumenta recupero di 15 secondi"
           >
-            <Plus className="h-4 w-4" />
-            15
+            +15 s
           </button>
           <button
             type="button"
