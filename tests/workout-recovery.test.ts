@@ -8,6 +8,10 @@ const layout = readFileSync("src/routes/_authenticated/route.tsx", "utf8");
 const run = readFileSync("src/routes/_authenticated/workouts/$templateId/run.tsx", "utf8");
 const free = readFileSync("src/routes/_authenticated/workouts/free.tsx", "utf8");
 const hero = readFileSync("src/components/WorkoutExerciseHero.tsx", "utf8");
+const openSessionMigration = readFileSync(
+  "supabase/migrations/20260827120000_prevent_duplicate_open_workouts.sql",
+  "utf8",
+);
 
 test("un allenamento aperto viene riutilizzato invece di creare duplicati", () => {
   assert.match(recovery, /readActiveWorkoutDraft\(\)/);
@@ -67,7 +71,8 @@ test("il timer recuperato resta ancorato all'orario di inizio della sessione", (
 test("un allenamento libero usa una sessione senza template ed Ã¨ recuperabile", () => {
   assert.match(recovery, /templateId: string \\| null/);
   assert.match(recovery, /export function ensureFreeWorkout\(\)/);
-  assert.match(recovery, /template_id: null/);
+  assert.match(recovery, /createOpenSession\(userId, null\)/);
+  assert.match(recovery, /template_id: templateId/);
   assert.match(recovery, /findLatestOpenSession\(userId, null\)/);
   assert.match(recovery, /Allenamento libero/);
 });
@@ -84,6 +89,9 @@ test("la schermata libera permette di aggiungere esercizi e usa il recupero cond
   assert.match(free, /const skipExercise/);
   assert.match(recoveryCard, /addSeconds\(-15\)/);
   assert.match(recoveryCard, /addSeconds\(15\)/);
+  assert.doesNotMatch(recoveryCard, /<Minus|<Plus/);
+  assert.match(recoveryCard, /−15 s/);
+  assert.match(recoveryCard, /\+15 s/);
 });
 
 test("il flusso guidato puÃ² saltare l'esercizio senza cancellare le serie", () => {
@@ -116,6 +124,17 @@ test("l'avvio della sessione è sincronizzato tra tab", () => {
   assert.match(recovery, /progress-sets:active-workout/);
   assert.match(recovery, /withBootstrapLock\(`template:\$\{templateId\}`/);
   assert.match(recovery, /withBootstrapLock\("free"/);
+});
+
+test("il database impedisce un secondo allenamento aperto dello stesso tipo", () => {
+  assert.match(recovery, /error\.code === "23505"/);
+  assert.match(recovery, /createOpenSession\(userId, templateId\)/);
+  assert.match(
+    openSessionMigration,
+    /CREATE UNIQUE INDEX IF NOT EXISTS workout_sessions_one_open_per_type/i,
+  );
+  assert.match(openSessionMigration, /coalesce\(template_id/);
+  assert.match(openSessionMigration, /ranked\.duplicate_rank > 1/);
 });
 
 test("il pulsante Salta esercizio compare una sola volta nell'area attiva", () => {

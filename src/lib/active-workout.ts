@@ -201,6 +201,26 @@ async function findLatestOpenSession(userId: string, templateId?: string | null)
   return data ? hydrateSession(data) : null;
 }
 
+/**
+ * Creates the single open session allowed for a workout type.
+ *
+ * The partial unique index in the database is the final guard against two
+ * browser tabs starting the same workout at the same time. If another tab
+ * wins that race, reuse its session instead of surfacing a duplicate-key
+ * error to the athlete.
+ */
+async function createOpenSession(userId: string, templateId: string | null) {
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .insert({ user_id: userId, template_id: templateId })
+    .select("id,template_id,started_at,template:workout_templates(name)")
+    .single();
+
+  if (!error) return data ? hydrateSession(data) : null;
+  if (error.code === "23505") return findLatestOpenSession(userId, templateId);
+  throw error;
+}
+
 export async function fetchInterruptedWorkout(): Promise<ActiveWorkoutSession | null> {
   const userId = await getUserId();
   const stored = readActiveWorkoutDraft();
@@ -236,15 +256,7 @@ export function ensureActiveWorkout(templateId: string): Promise<ActiveWorkoutBo
         ? await findOpenSessionById(userId, stored.sessionId)
         : null;
     if (!session) session = await findLatestOpenSession(userId, templateId);
-    if (!session) {
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .insert({ user_id: userId, template_id: templateId })
-        .select("id,template_id,started_at,template:workout_templates(name)")
-        .single();
-      if (error) throw error;
-      session = await hydrateSession(data);
-    }
+    if (!session) session = await createOpenSession(userId, templateId);
     if (!session) throw new Error("Impossibile iniziare l'allenamento");
     const { data: loggedSets, error: setsError } = await supabase
       .from("logged_sets")
@@ -281,15 +293,7 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
     let session =
       stored?.templateId === null ? await findOpenSessionById(userId, stored.sessionId) : null;
     if (!session) session = await findLatestOpenSession(userId, null);
-    if (!session) {
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .insert({ user_id: userId, template_id: null })
-        .select("id,template_id,started_at,template:workout_templates(name)")
-        .single();
-      if (error) throw error;
-      session = await hydrateSession(data);
-    }
+    if (!session) session = await createOpenSession(userId, null);
     if (!session) throw new Error("Impossibile iniziare l'allenamento libero");
     const { data: loggedSets, error: setsError } = await supabase
       .from("logged_sets")
