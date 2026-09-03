@@ -297,13 +297,16 @@ export type Database = {
       }
       template_exercises: {
         Row: {
+          alternative: string | null
           created_at: string
           exercise_id: string
           id: string
           order_index: number
+          objective: string | null
           reps_display: string | null
           reps_type: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds: number
+          rir: string | null
           target_reps: number | null
           target_sets: number
           target_weight_kg: number | null
@@ -311,13 +314,16 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          alternative?: string | null
           created_at?: string
           exercise_id: string
           id?: string
           order_index?: number
+          objective?: string | null
           reps_display?: string | null
           reps_type?: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds?: number
+          rir?: string | null
           target_reps?: number | null
           target_sets?: number
           target_weight_kg?: number | null
@@ -325,13 +331,16 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          alternative?: string | null
           created_at?: string
           exercise_id?: string
           id?: string
           order_index?: number
+          objective?: string | null
           reps_display?: string | null
           reps_type?: Database["public"]["Enums"]["reps_type_enum"]
           rest_seconds?: number
+          rir?: string | null
           target_reps?: number | null
           target_sets?: number
           target_weight_kg?: number | null
@@ -354,6 +363,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_programs: {
+        Row: {
+          created_at: string
+          current_week: number
+          duration_weeks: number
+          id: string
+          name: string
+          sport: string | null
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_week?: number
+          duration_weeks?: number
+          id?: string
+          name: string
+          sport?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_week?: number
+          duration_weeks?: number
+          id?: string
+          name?: string
+          sport?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       test_types: {
         Row: {
@@ -508,6 +553,9 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          program_id: string | null
+          program_week: number | null
+          session_key: string | null
           updated_at: string
           user_id: string
         }
@@ -515,6 +563,9 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          program_id?: string | null
+          program_week?: number | null
+          session_key?: string | null
           updated_at?: string
           user_id: string
         }
@@ -522,10 +573,21 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          program_id?: string | null
+          program_week?: number | null
+          session_key?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workout_templates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "training_programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

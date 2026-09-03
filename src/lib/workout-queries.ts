@@ -14,6 +14,19 @@ export type Template = {
   name: string;
   created_at: string;
   updated_at: string;
+  program_id: string | null;
+  program_week: number | null;
+  session_key: string | null;
+};
+export type TrainingProgram = {
+  id: string;
+  name: string;
+  sport: string | null;
+  duration_weeks: number;
+  current_week: number;
+  start_date: string | null;
+  created_at: string;
+  updated_at: string;
 };
 export type RepsType = "count" | "time" | "distance" | "unspecified";
 export type TemplateExercise = {
@@ -21,6 +34,9 @@ export type TemplateExercise = {
   template_id: string;
   exercise_id: string;
   order_index: number;
+  objective: string | null;
+  rir: string | null;
+  alternative: string | null;
   target_sets: number;
   target_reps: number | null;
   reps_type: RepsType;
@@ -60,7 +76,7 @@ export async function fetchTemplates(): Promise<
 > {
   const { data: templates, error } = await supabase
     .from("workout_templates")
-    .select("id,name,created_at,updated_at")
+    .select("id,name,created_at,updated_at,program_id,program_week,session_key")
     .order("updated_at", { ascending: false });
   if (error) throw error;
   const ids = (templates ?? []).map((t) => t.id);
@@ -92,20 +108,29 @@ export async function fetchTemplates(): Promise<
   }));
 }
 
+export async function fetchTrainingPrograms(): Promise<TrainingProgram[]> {
+  const { data, error } = await supabase
+    .from("training_programs")
+    .select("id,name,sport,duration_weeks,current_week,start_date,created_at,updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as TrainingProgram[];
+}
+
 export async function fetchTemplate(id: string): Promise<{
   template: Template;
   exercises: TemplateExercise[];
 }> {
   const { data: t, error: te } = await supabase
     .from("workout_templates")
-    .select("id,name,created_at,updated_at")
+    .select("id,name,created_at,updated_at,program_id,program_week,session_key")
     .eq("id", id)
     .single();
   if (te) throw te;
   const { data: ex, error: ee } = await supabase
     .from("template_exercises")
     .select(
-      "id,template_id,exercise_id,order_index,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
+      "id,template_id,exercise_id,order_index,objective,rir,alternative,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
     )
     .eq("template_id", id)
     .order("order_index");

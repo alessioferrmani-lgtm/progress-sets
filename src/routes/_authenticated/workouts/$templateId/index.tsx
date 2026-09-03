@@ -82,6 +82,12 @@ function WorkoutTemplateDetail() {
             <p className="text-sm text-label-secondary">
               {data.exercises.length} esercizi · {totalSets} serie
             </p>
+            {data.template.program_id && data.template.program_week ? (
+              <p className="mt-1 text-xs font-semibold text-accent">
+                Programma · Settimana {data.template.program_week}
+                {data.template.session_key ? ` · Seduta ${data.template.session_key}` : ""}
+              </p>
+            ) : null}
           </div>
         </header>
 
@@ -103,6 +109,9 @@ function WorkoutTemplateDetail() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="font-semibold text-label">{exercise.exercise.name}</h2>
+                  {exercise.objective ? (
+                    <p className="mt-1 text-xs text-label-secondary">{exercise.objective}</p>
+                  ) : null}
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-label-secondary">
                     <span className="inline-flex items-center gap-1">
                       <Dumbbell className="size-3.5" />
@@ -113,7 +122,13 @@ function WorkoutTemplateDetail() {
                       <Timer className="size-3.5" />
                       {exercise.rest_seconds} sec recupero
                     </span>
+                    {exercise.rir ? <span>RIR {exercise.rir}</span> : null}
                   </div>
+                  {exercise.alternative ? (
+                    <p className="mt-1 text-[11px] text-label-tertiary">
+                      Alternativa: {exercise.alternative}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </article>
