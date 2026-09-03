@@ -63,6 +63,9 @@ function WorkoutNewPage() {
 type Row = {
   key: string;
   exercise_id: string;
+  objective: string | null;
+  rir: string | null;
+  alternative: string | null;
   target_sets: number;
   target_reps: number | null;
   reps_type: RepsType;
@@ -107,6 +110,9 @@ export function TemplateEditor({
         existing.exercises.map((e) => ({
           key: e.id,
           exercise_id: e.exercise_id,
+          objective: e.objective,
+          rir: e.rir,
+          alternative: e.alternative,
           target_sets: e.target_sets,
           target_reps: e.target_reps,
           reps_type: e.reps_type,
@@ -126,6 +132,9 @@ export function TemplateEditor({
       {
         key: crypto.randomUUID(),
         exercise_id: first.id,
+        objective: null,
+        rir: null,
+        alternative: null,
         target_sets: 3,
         target_reps: 10,
         reps_type: "count",
@@ -199,6 +208,9 @@ export function TemplateEditor({
         template_id: tid!,
         exercise_id: r.exercise_id,
         order_index: i,
+        objective: r.objective,
+        rir: r.rir,
+        alternative: r.alternative,
         target_sets: r.target_sets,
         target_reps: r.reps_type === "count" ? r.target_reps : null,
         reps_type: r.reps_type,
@@ -422,8 +434,19 @@ type ImportedExercise = {
   reps_value: number | null;
   reps_display: string;
   rest_sec: number;
+  target_weight_kg: number | null;
+  objective: string | null;
+  rir: string | null;
+  alternative: string | null;
 };
-type ImportedTemplate = { name: string; exercises: ImportedExercise[]; _warnings?: string[] };
+type ImportedTemplate = {
+  name: string;
+  exercises: ImportedExercise[];
+  _warnings?: string[];
+  program_name?: string;
+  program_week?: number;
+  session_key?: string;
+};
 type TemplateExerciseInsert = Database["public"]["Tables"]["template_exercises"]["Insert"];
 
 function WorkoutImport() {
@@ -481,17 +504,46 @@ function WorkoutImport() {
     if (!templates?.length) return;
     setSaving(true);
     const createdTemplateIds: string[] = [];
+    const createdProgramIds: string[] = [];
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessione scaduta");
+      const programName = templates.find((template) => template.program_name)?.program_name;
+      let programId: string | null = null;
+      if (programName) {
+        const durationWeeks = Math.max(
+          1,
+          ...templates.map((template) => template.program_week ?? 1),
+        );
+        const { data: program, error: programError } = await supabase
+          .from("training_programs")
+          .insert({
+            name: programName,
+            sport: "Preparazione atletica",
+            duration_weeks: durationWeeks,
+            current_week: 1,
+            user_id: userId,
+          })
+          .select("id")
+          .single();
+        if (programError) throw programError;
+        programId = program.id;
+        createdProgramIds.push(program.id);
+      }
       for (const template of templates) {
         if (!template.name.trim() || !template.exercises.length) {
           throw new Error("Ogni giorno deve avere un nome e almeno un esercizio");
         }
         const { data: created, error: templateError } = await supabase
           .from("workout_templates")
-          .insert({ name: template.name.trim(), user_id: userId })
+          .insert({
+            name: template.name.trim(),
+            user_id: userId,
+            program_id: programId,
+            program_week: template.program_week ?? null,
+            session_key: template.session_key ?? null,
+          })
           .select("id")
           .single();
         if (templateError) throw templateError;
@@ -533,10 +585,14 @@ function WorkoutImport() {
             template_id: created.id,
             exercise_id: exerciseId,
             order_index: index,
+            objective: exercise.objective,
+            rir: exercise.rir,
+            alternative: exercise.alternative,
             target_sets: exercise.sets,
             target_reps: exercise.reps_type === "count" ? (exercise.reps_value ?? null) : null,
             reps_type: exercise.reps_type,
             reps_display: exercise.reps_display,
+            target_weight_kg: exercise.target_weight_kg,
             rest_seconds: exercise.rest_sec,
             user_id: userId,
           });
@@ -546,10 +602,17 @@ function WorkoutImport() {
       }
       toast.success("Scheda salvata");
       qc.invalidateQueries({ queryKey: ["templates"] });
+      qc.invalidateQueries({ queryKey: ["training-programs"] });
       qc.invalidateQueries({ queryKey: ["exercises"] });
       navigate({ to: "/workouts" });
     } catch (error) {
-      if (createdTemplateIds.length > 0) {
+      if (createdProgramIds.length > 0) {
+        await supabase
+          .from("training_programs")
+          .delete()
+          .in("id", createdProgramIds)
+          .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "");
+      } else if (createdTemplateIds.length > 0) {
         await supabase
           .from("workout_templates")
           .delete()
@@ -626,6 +689,12 @@ function WorkoutImport() {
                   }
                   className="w-full bg-transparent text-base font-semibold text-label outline-none"
                 />
+                {template.program_name && template.program_week ? (
+                  <p className="mt-1 text-xs text-label-secondary">
+                    {template.program_name} · Settimana {template.program_week} · Seduta{" "}
+                    {template.session_key}
+                  </p>
+                ) : null}
                 {(template._warnings ?? []).length > 0 && (
                   <div className="mt-2 rounded-lg bg-warning/10 p-2 text-xs text-warning">
                     <AlertTriangle className="mr-1 inline h-3 w-3" />
@@ -648,7 +717,7 @@ function WorkoutImport() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
                       <ImportNumber
                         label="Serie"
                         value={exercise.sets}
@@ -683,7 +752,31 @@ function WorkoutImport() {
                         value={exercise.rest_sec}
                         onChange={(rest_sec) => updateExercise(ti, ei, { rest_sec })}
                       />
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] text-label-tertiary">Kg</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min="0"
+                          step="0.5"
+                          value={exercise.target_weight_kg ?? ""}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            updateExercise(ti, ei, {
+                              target_weight_kg: raw === "" ? null : Number(raw),
+                            });
+                          }}
+                          className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none"
+                        />
+                      </label>
                     </div>
+                    {(exercise.objective || exercise.rir || exercise.alternative) && (
+                      <p className="mt-2 text-[11px] leading-relaxed text-label-secondary">
+                        {exercise.objective ? `Obiettivo: ${exercise.objective}` : null}
+                        {exercise.rir ? ` · RIR: ${exercise.rir}` : null}
+                        {exercise.alternative ? ` · Alternativa: ${exercise.alternative}` : null}
+                      </p>
+                    )}
                     <label className="mt-2 flex items-center justify-between gap-2">
                       <span className="text-[10px] text-label-tertiary">Gruppo muscolare</span>
                       <select

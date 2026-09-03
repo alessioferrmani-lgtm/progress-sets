@@ -430,6 +430,9 @@ function RunPage() {
             seriesCount={rows.length}
             completedSets={completedSets}
             totalSets={totalSets}
+            objective={activeEx.objective}
+            rir={activeEx.rir}
+            alternative={activeEx.alternative}
             onSkip={skipExercise}
           />
         )}
