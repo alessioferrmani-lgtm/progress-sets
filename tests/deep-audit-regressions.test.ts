@@ -35,6 +35,13 @@ test("la Home non mostra sessioni chiuse senza serie registrate", () => {
   assert.match(home, /s\.ended_at && \(sets \?\? \[\]\)\.some\(\(set\) => set\.session_id === s\.id\)/);
 });
 
+test("l'esportazione JSON esclude le sessioni senza serie", () => {
+  const source = read("src/lib/progress-json-export.ts");
+  assert.match(source, /const persistedSessionIds = new Set\(loggedSets\.map\(\(row\) => row\.session_id\)\)/);
+  assert.match(source, /const savedWorkoutSessions = workoutSessions\.filter/);
+  assert.match(source, /sessions: savedWorkoutSessions/);
+});
+
 test("logged_sets ricalcola l'owner dalla sessione prima dell'RLS", () => {
   const migration = read("supabase/migrations/20260726130000_sync_logged_set_owner.sql");
   assert.match(migration, /SECURITY DEFINER/);
