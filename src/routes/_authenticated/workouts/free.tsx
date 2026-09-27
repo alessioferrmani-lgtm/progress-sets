@@ -348,7 +348,7 @@ function FreeWorkoutPage() {
     setIsFinishing(true);
     persistWorkout();
     try {
-      await finishActiveWorkout(session, elapsed, completedSets > 0);
+      const result = await finishActiveWorkout(session, elapsed, completedSets > 0);
       timer.skip();
       queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", "free"] });
       await Promise.all([
@@ -356,6 +356,11 @@ function FreeWorkoutPage() {
         queryClient.invalidateQueries({ queryKey: ["dash"] }),
         queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
       ]);
+      if (!result.saved) {
+        toast.success("Allenamento vuoto eliminato");
+        navigate({ to: "/workouts" });
+        return;
+      }
       navigate({ to: "/sessions/$sessionId/summary", params: { sessionId: session.id } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossibile salvare l'allenamento");

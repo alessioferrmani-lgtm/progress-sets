@@ -115,8 +115,19 @@ test("la chiusura sessione blocca il doppio tap", () => {
   assert.match(recovery, /const finishPromises = new Map/);
   assert.match(recovery, /finishPromises\.get\(session\.id\)/);
   assert.match(recovery, /finishPromises\.delete\(session\.id\)/);
+  assert.match(recovery, /export type FinishWorkoutResult/);
   assert.match(run, /disabled=\{isFinishing\}/);
   assert.match(free, /disabled=\{isFinishing\}/);
+});
+
+test("non salva una sessione vuota quando si preme fine senza serie", () => {
+  assert.match(recovery, /select\("id", \{ count: "exact", head: true \}\)/);
+  assert.match(recovery, /if \(!hasPersistedSets\)/);
+  assert.match(recovery, /\.from\("workout_sessions"\)\n      \.delete\(\)/);
+  assert.match(recovery, /saved: false/);
+  assert.match(run, /if \(!result\.saved\)/);
+  assert.match(free, /if \(!result\.saved\)/);
+  assert.match(prompt, /saved: result\.saved/);
 });
 
 test("l'avvio della sessione è sincronizzato tra tab", () => {

@@ -127,6 +127,10 @@ export async function loadProgressExport() {
   const loggedSets = loggedSetsResult;
   const intervalReps = intervalRepsResult;
   const testTypes = testTypesResult;
+  // A closed session without logged sets is a cancelled/duplicate start, not
+  // a workout. Keep it out of exports as well as the Home history list.
+  const persistedSessionIds = new Set(loggedSets.map((row) => row.session_id));
+  const savedWorkoutSessions = workoutSessions.filter((row) => persistedSessionIds.has(row.id));
 
   const exerciseIds = unique([
     ...templateExercises.map((row) => row.exercise_id),
@@ -151,7 +155,7 @@ export async function loadProgressExport() {
     gym: {
       templates: workoutTemplates,
       template_exercises: templateExercises,
-      sessions: workoutSessions,
+      sessions: savedWorkoutSessions,
       logged_sets: loggedSets,
       exercises,
     },
@@ -166,7 +170,7 @@ export async function loadProgressExport() {
     totals: {
       weight_entries: weightHistory.length,
       gym_templates: workoutTemplates.length,
-      gym_sessions: workoutSessions.length,
+      gym_sessions: savedWorkoutSessions.length,
       gym_sets: loggedSets.length,
       tests: tests.length,
       races: races.length,

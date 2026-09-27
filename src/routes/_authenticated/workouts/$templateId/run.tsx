@@ -329,8 +329,13 @@ function RunPage() {
     if (!sessionId || !activeWorkout.data || isFinishing) return;
     setIsFinishing(true);
     persistWorkout();
+    let result: Awaited<ReturnType<typeof finishActiveWorkout>>;
     try {
-      await finishActiveWorkout(activeWorkout.data.session, elapsed, completedSets > 0);
+      result = await finishActiveWorkout(
+        activeWorkout.data.session,
+        elapsed,
+        completedSets > 0,
+      );
     } catch (reason) {
       toast.error(
         `Impossibile salvare l'allenamento: ${reason instanceof Error ? reason.message : "errore sconosciuto"}`,
@@ -345,6 +350,12 @@ function RunPage() {
       queryClient.invalidateQueries({ queryKey: ["dash"] }),
       queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
     ]);
+    if (!result.saved) {
+      toast.success("Allenamento vuoto eliminato");
+      navigate({ to: "/workouts" });
+      setIsFinishing(false);
+      return;
+    }
     navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
     setIsFinishing(false);
   };

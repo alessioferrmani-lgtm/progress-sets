@@ -40,12 +40,21 @@ export function InterruptedWorkoutPrompt() {
   const saveWorkout = useMutation({
     mutationFn: async () => {
       if (!activeWorkout.data) throw new Error("Allenamento non disponibile");
-      await finishActiveWorkout(activeWorkout.data, undefined, activeWorkout.data.completedSets > 0);
-      return activeWorkout.data.id;
+      const result = await finishActiveWorkout(
+        activeWorkout.data,
+        undefined,
+        activeWorkout.data.completedSets > 0,
+      );
+      return { sessionId: activeWorkout.data.id, saved: result.saved };
     },
-    onSuccess: async (sessionId) => {
+    onSuccess: async ({ sessionId, saved }) => {
       timer.skip();
       await refreshAfterAction();
+      if (!saved) {
+        toast.success("Allenamento vuoto eliminato");
+        navigate({ to: "/workouts" });
+        return;
+      }
       toast.success("Allenamento recuperato e salvato");
       navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
     },

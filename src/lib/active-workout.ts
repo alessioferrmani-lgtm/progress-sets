@@ -313,7 +313,12 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
   return promise;
 }
 
-type FinishWorkoutResult = { endedAt: Date; calories: number | null };
+export type FinishWorkoutResult = {
+  endedAt: Date;
+  calories: number | null;
+  /** False when the user finished before recording any set; no empty history row is kept. */
+  saved: boolean;
+};
 
 // A fast double tap or two mounted tabs can otherwise submit the same finish
 // operation twice. Sharing the in-flight promise makes closing a session
@@ -352,10 +357,34 @@ async function finishActiveWorkoutInternal(
     Math.max(0, elapsedSec ?? 0, recoveredMax),
   );
   const endedAt = new Date(new Date(session.startedAt).getTime() + effectiveElapsed * 1000);
-  let calories: number | null = hasCompletedSets ? null : 0;
+  // The UI can briefly have stale local state after an iOS resume. Check the
+  // database before deciding that the workout is empty, then discard truly
+  // empty sessions instead of creating a second blank history item.
+  let hasPersistedSets = hasCompletedSets;
+  if (!hasPersistedSets) {
+    const { count, error: countError } = await supabase
+      .from("logged_sets")
+      .select("id", { count: "exact", head: true })
+      .eq("session_id", session.id);
+    if (countError) throw countError;
+    hasPersistedSets = (count ?? 0) > 0;
+  }
+  if (!hasPersistedSets) {
+    const { error: deleteError } = await supabase
+      .from("workout_sessions")
+      .delete()
+      .eq("id", session.id)
+      .eq("user_id", await getUserId())
+      .is("ended_at", null);
+    if (deleteError) throw deleteError;
+    clearActiveWorkoutDraft(session.id);
+    return { endedAt, calories: null, saved: false };
+  }
+
+  let calories: number | null = null;
   try {
     const profile = await fetchMyProfile();
-    if (profile && hasCompletedSets) {
+    if (profile) {
       // Keep a just-completed set measurable without inventing a full minute
       // of activity. The previous one-minute floor inflated empty sessions.
       calories = computeCaloriesForSession(profile, {
@@ -371,7 +400,7 @@ async function finishActiveWorkoutInternal(
     .eq("id", session.id);
   if (error) throw error;
   clearActiveWorkoutDraft(session.id);
-  return { endedAt, calories };
+  return { endedAt, calories, saved: true };
 }
 
 export async function deleteActiveWorkout(sessionId: string) {
