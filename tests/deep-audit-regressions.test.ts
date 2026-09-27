@@ -23,8 +23,16 @@ test("la chiusura di una sessione vuota non inventa un minuto di calorie", () =>
   const source = read("src/lib/active-workout.ts");
   assert.match(source, /hasCompletedSets = session\.completedSets > 0/);
   assert.match(source, /Math\.max\(0, elapsedSec/);
-  assert.match(source, /calories: number \| null = hasCompletedSets \? null : 0/);
+  assert.match(source, /select\("id", \{ count: "exact", head: true \}\)/);
+  assert.match(source, /if \(!hasPersistedSets\)/);
+  assert.match(source, /saved: false/);
+  assert.doesNotMatch(source, /hasCompletedSets \? null : 0/);
   assert.doesNotMatch(source, /Math\.max\(\s*60\s*,/);
+});
+
+test("la Home non mostra sessioni chiuse senza serie registrate", () => {
+  const home = read("src/routes/_authenticated/home.tsx");
+  assert.match(home, /s\.ended_at && \(sets \?\? \[\]\)\.some\(\(set\) => set\.session_id === s\.id\)/);
 });
 
 test("logged_sets ricalcola l'owner dalla sessione prima dell'RLS", () => {

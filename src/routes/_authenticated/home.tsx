@@ -258,7 +258,12 @@ function RecentSessionsSection({
   loading: boolean;
 }) {
   if (loading || !sessions) return <Skeleton h={200} />;
-  const completed = sessions.filter((s) => s.ended_at).slice(0, 5);
+  // A session with no logged set is only a cancelled/duplicate start. It is
+  // intentionally excluded so old empty rows cannot appear as a second
+  // workout after the real session has been saved.
+  const completed = sessions
+    .filter((s) => s.ended_at && (sets ?? []).some((set) => set.session_id === s.id))
+    .slice(0, 5);
   return (
     <section>
       <div className="mb-2 flex items-center gap-2 px-1">
