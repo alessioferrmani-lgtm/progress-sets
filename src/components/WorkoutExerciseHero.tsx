@@ -66,7 +66,7 @@ export function WorkoutExerciseHero({
         <div
           className="workout-exercise-hero-ring relative flex size-28 shrink-0 items-center justify-center rounded-full p-1"
           style={{
-            background: `conic-gradient(#0a84ff ${seriesProgress}%, rgba(255,255,255,0.12) 0)`,
+            background: `conic-gradient(var(--accent) ${seriesProgress}%, rgba(255,255,255,0.12) 0)`,
           }}
           aria-label={`${seriesPosition} di ${seriesCount} serie`}
         >
