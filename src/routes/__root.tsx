@@ -85,12 +85,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:image",
         content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png",
+          "https://progress-sets.alessioferrmani.chatgpt.site/progress-sets-track-flame-icon-512.png",
       },
       {
         name: "twitter:image",
         content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7ddef21f-908b-4324-8336-5d4097dff2af/id-preview-26ad09ce--bf4c054a-13cc-4df5-8378-9f7f31ff86b3.lovable.app-1783668719085.png",
+          "https://progress-sets.alessioferrmani.chatgpt.site/progress-sets-track-flame-icon-512.png",
       },
     ],
     links: [

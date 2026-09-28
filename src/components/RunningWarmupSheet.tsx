@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, ChevronDown, ChevronUp, ListPlus, Plus, Trash2, X } from "lucide-react";
 import { RUNNING_DRILLS, type RunningDrill } from "@/lib/running-drills";
 import { RunningDrillIllustration } from "@/components/RunningDrillIllustration";
+import { readPreference, writePreference } from "@/lib/site-preferences";
+import { toast } from "sonner";
 
 type SavedRoutine = {
   id: string;
@@ -10,7 +12,7 @@ type SavedRoutine = {
   createdAt: string;
 };
 
-const ROUTINES_STORAGE_KEY = "progress-sets:running-drill-routines";
+const ROUTINES_STORAGE_KEY = "running-routines";
 
 export function RunningWarmupSheet({
   open,
@@ -46,25 +48,14 @@ export function RunningWarmupSheet({
     setRoutineDrillIds([]);
     setRoutineName("");
     setStorageReady(false);
-    try {
-      const raw = window.localStorage.getItem(ROUTINES_STORAGE_KEY);
-      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    let cancelled = false;
+    void readPreference(ROUTINES_STORAGE_KEY).then((parsed) => {
+      if (cancelled) return;
       setSavedRoutines(Array.isArray(parsed) ? parsed.filter(isSavedRoutine) : []);
-    } catch {
-      setSavedRoutines([]);
-    } finally {
       setStorageReady(true);
-    }
+    }).catch((error: Error) => { if (!cancelled) toast.error(error.message); });
+    return () => { cancelled = true; };
   }, [open]);
-
-  useEffect(() => {
-    if (!open || !storageReady) return;
-    try {
-      window.localStorage.setItem(ROUTINES_STORAGE_KEY, JSON.stringify(savedRoutines));
-    } catch {
-      // The routine editor remains usable when storage is unavailable/private.
-    }
-  }, [open, savedRoutines, storageReady]);
 
   if (!open) return null;
 
@@ -74,19 +65,27 @@ export function RunningWarmupSheet({
     );
   };
 
-  const saveRoutine = () => {
+  const saveRoutine = async () => {
     const name = routineName.trim();
     if (!name || routineDrillIds.length === 0) return;
-    setSavedRoutines((current) => [
-      ...current,
+    if (!storageReady) return toast.error("Attendi il caricamento delle routine; se sei offline, riprova più tardi.");
+    const next = [
+      ...savedRoutines,
       {
         id: createRoutineId(),
         name,
         drillIds: routineDrillIds,
         createdAt: new Date().toISOString(),
       },
-    ]);
-    setRoutineName("");
+    ];
+    setStorageReady(false);
+    try {
+      await writePreference(ROUTINES_STORAGE_KEY, next);
+      setSavedRoutines(next);
+      setRoutineName("");
+      toast.success("Routine salvata nel tuo account");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile salvare la routine"); }
+    finally { setStorageReady(true); }
   };
 
   const moveRoutineDrill = (index: number, direction: -1 | 1) => {
