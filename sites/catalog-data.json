@@ -1,0 +1,3971 @@
+[
+  {
+    "id": "catalog-5b203b6c08480e1ff83d197d",
+    "name": "A-March",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-743b57d6a67b1f0ca84410fa",
+    "name": "A-Skip",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-126dd8b85c81312379661abd",
+    "name": "Ab wheel",
+    "muscle_group": "Core",
+    "equipment": "Attrezzo",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-4743fe3dbde4571e5ffdd8f9",
+    "name": "Ab Wheel Rollout",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-34161d43b297f92a26c588be",
+    "name": "Abduttori macchina",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-07459dfcae45341eb49f7642",
+    "name": "Accelerazione 100 metri",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-1187d49ff2f950138928fce6",
+    "name": "Accelerazione 20 metri",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-b7e4b91dad314f0ade69730a",
+    "name": "Accelerazione 30 metri",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-ba35d8482d9eaf7883c29ca6",
+    "name": "Accelerazione 50 metri",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9c826714d3c34b377123a4de",
+    "name": "Accelerazione 80 metri",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-109fefb2aeb8737dfc9e4acf",
+    "name": "Adduttori macchina",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-4f08802422c955ed5c2ac5d7",
+    "name": "Affondi",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-3106c6c1eafc6790427aeafc",
+    "name": "Affondi camminati",
+    "muscle_group": "Gambe",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-7546e3d697247222741f84be",
+    "name": "Affondi con bilanciere",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-3e112bf2598d60bdd7c57aaf",
+    "name": "Affondi con manubri",
+    "muscle_group": "Gambe",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a7a9c3893112e36cda65ad43",
+    "name": "Affondi indietro",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-16e4423248d65f4b8a7cc53c",
+    "name": "Affondo dinamico",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-645c4280a35fe73831dbdb66",
+    "name": "Alfabeto con la caviglia",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Mobilita"
+  },
+  {
+    "id": "catalog-919ed63b3fa0e3b71ed8491e",
+    "name": "Allunghi",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Velocità"
+  },
+  {
+    "id": "catalog-cb56bd4b405c3ca1a5267493",
+    "name": "Allunghi e accelerazioni",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9ecb7b38fb2f62db57388c55",
+    "name": "Allunghi progressivi",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-e70be1f74edb4b62af550e04",
+    "name": "Allungo",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-d9f945f9d9061554b7077817",
+    "name": "Alternate Bounds",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-95a36014f0324f1079e97799",
+    "name": "Alternating Pogo",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-3bc05a6e83de2b7c7806bf78",
+    "name": "Alzate frontali",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-7ab93fd16cff1badc84bd8d0",
+    "name": "Alzate laterali",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-3be8505caf2c35fbc03ae0bd",
+    "name": "Alzate laterali ai cavi",
+    "muscle_group": "Spalle",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-b879e87b5f3e534bf412db44",
+    "name": "Alzate posteriori",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f956efe22524737ac0bcb227",
+    "name": "Andature A",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Tecnica"
+  },
+  {
+    "id": "catalog-7146adeeafb786ab47c56b47",
+    "name": "Ankle Bounce",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-2163ce8fef41da298604589c",
+    "name": "Ankle Eversion con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-5537045d7a03dbebbc590e88",
+    "name": "Ankle Hop",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-0ecbc500d605b2eb15bc0482",
+    "name": "Ankle Inversion con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-0733f675a62716e8c7bc23f5",
+    "name": "Ankle pumps",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Mobilita"
+  },
+  {
+    "id": "catalog-e508c2093127f1ba3e2c1706",
+    "name": "Ankling",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ab851b234ae87a993c49e60c",
+    "name": "Arnold press",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-70700c4a0a14289629d89871",
+    "name": "B-Skip",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9ed72c6d9b17c52841eb33c7",
+    "name": "Back Extension",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-20726977071a081aa9433a53",
+    "name": "Back extension 45 gradi",
+    "muscle_group": "Schiena",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-342be0ab186a9c2bb148aed8",
+    "name": "Backpedal",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1fcb59dad56025d23a4c16aa",
+    "name": "Backward Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-453734f9d61784eab98aa6a0",
+    "name": "Balzi a piedi pari",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-8074ad9595dbe7bff54687dc",
+    "name": "Balzi alternati",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-2ec24f029a8dc52e466e2470",
+    "name": "Band pull-apart",
+    "muscle_group": "Spalle",
+    "equipment": "Elastico",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-813e0642ef2623906d1c9559",
+    "name": "Battle Rope",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-746387c54c01eb718ba7c1ba",
+    "name": "Bayesian curl",
+    "muscle_group": "Bicipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-6237e9c7f9a8ef26cca30568",
+    "name": "Bear crawl",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Full body"
+  },
+  {
+    "id": "catalog-4a544188965c0a15c8b518e7",
+    "name": "Bear Plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-deccb9991494fb2e62021a4f",
+    "name": "Bear Plank Shoulder Tap",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-a4e2974033ba3ddfa7aff046",
+    "name": "Bicycle Crunch",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-fbaa083ff160f2ce13b38d21",
+    "name": "Billat 30-30",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8cd9ed8234a242ace94f2026",
+    "name": "Bird dog",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-00935347da473bc270ee6fc4",
+    "name": "Bird Dog Row",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-80340d7825ef6c9d020c02d3",
+    "name": "Body Saw",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-e33137e6b5c562babe5f495c",
+    "name": "Bounding",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-6ba9234898ef38b8d53f1e76",
+    "name": "Bounds",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-a8a8c0347d83626f2371f140",
+    "name": "Box Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Box/ostacoli",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-27936c26a96dc692c2494250",
+    "name": "Box jump",
+    "muscle_group": "Atletica",
+    "equipment": "Attrezzo",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-0e9397793ebc1484ff411bad",
+    "name": "Box Jump con rincorsa",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-b59fbf173027aa158e534c16",
+    "name": "Box Jump Down controllato",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-84524695f90563b81be7be22",
+    "name": "Box Jump Over",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-894869a91fb5f92e4feca375",
+    "name": "Broad Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-25e39f3abe2d703593a0ecd2",
+    "name": "Build-Up Run",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-f1704dbc9a563f08c4fefe68",
+    "name": "Bulgarian split squat",
+    "muscle_group": "Gambe",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-20845257acf3dbbd64ff8cf6",
+    "name": "Burpee Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ca2b1c82dbf38cdfbffe8258",
+    "name": "Burpees",
+    "muscle_group": "Full body",
+    "equipment": "Corpo libero",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-bb73216466fa6090a8751263",
+    "name": "Butterfly Sit-up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-a784ca378f268ff0e740a002",
+    "name": "C-Skip",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-34f5920ec96fdc9fc2280333",
+    "name": "Cable crunch",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-39c46487a3850d13a266621c",
+    "name": "Cable woodchop",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Rotazione"
+  },
+  {
+    "id": "catalog-3bfa6fff7bb2a09cbcadce69",
+    "name": "Cable Woodchop alto-basso",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-5273583fe985837c6488776b",
+    "name": "Cable Woodchop basso-alto",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-7195a03fff8e23b1be025b8d",
+    "name": "Calciata dietro",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Tecnica"
+  },
+  {
+    "id": "catalog-8be246012551ecaf5fa5bc79",
+    "name": "Calf Raise",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-2ff8433942adfb3c370c7f45",
+    "name": "Calf Raise a ginocchio esteso",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-bb273f32082d53f2402b788a",
+    "name": "Calf Raise a ginocchio flesso",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-092ca979cb8924323f439887",
+    "name": "Calf raise a una gamba",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-23e7bc9886f8d85cb2694e22",
+    "name": "Calf raise al multipower",
+    "muscle_group": "Polpacci",
+    "equipment": "Multipower",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-18b45e431662574b0f7487b1",
+    "name": "Calf raise alla pressa",
+    "muscle_group": "Polpacci",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-1e091caf068d8811b7f597a5",
+    "name": "Calf raise con manubri",
+    "muscle_group": "Polpacci",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-9e80dae777839818fddc7c56",
+    "name": "Calf raise in piedi",
+    "muscle_group": "Polpacci",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f23036d64535d4cab11fd946",
+    "name": "Calf raise seduto",
+    "muscle_group": "Polpacci",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-ba82d5dbed6ed492d64c7bf5",
+    "name": "Calf raise su step",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-3a3fe10f603d9cadba2ca143",
+    "name": "Camminata defaticante",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-f4f6b4b2fd1e4796a19d1b49",
+    "name": "Camminata sui talloni",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-6036d76d02b8b6b18aad58fc",
+    "name": "Camminata sul bordo esterno del piede",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-f29c00aed785ad9a7fd02918",
+    "name": "Camminata sulle punte",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-4736c3fb1996074d2af234c9",
+    "name": "Camminata tallone-punta",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Coordinazione"
+  },
+  {
+    "id": "catalog-cfb3b4b7d33c1f06a907d028",
+    "name": "Camminata veloce",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-3634333ebbf8506df177d483",
+    "name": "Candlestick",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-0056665d1d7510d10cc23d13",
+    "name": "Captain’s Chair Knee Raise",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-60b4fe1354d42ed1cbf61a4c",
+    "name": "Captain’s Chair Leg Raise",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-e74637f92b56690bd61e5996",
+    "name": "Carioca",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1245773be33b291791ecc61e",
+    "name": "Carioca Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-e7bdbcb682f2f6043e5861f2",
+    "name": "Chest press",
+    "muscle_group": "Petto",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-95af8879e9abb5d17c750b0e",
+    "name": "Circonduzioni caviglia",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Mobilita"
+  },
+  {
+    "id": "catalog-c4a47bd8223a618051602b10",
+    "name": "Clamshell",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-8936173bf1127764be7c69d8",
+    "name": "Clap Push-Up",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-3b066804f6d1d077173cfe4d",
+    "name": "Clean",
+    "muscle_group": "Full body",
+    "equipment": "Bilanciere",
+    "category": "Olimpico"
+  },
+  {
+    "id": "catalog-81ed08f80f83b19861390158",
+    "name": "Cone Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3a0b57dfcbb3701e8188a202",
+    "name": "Consecutive Broad Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-c2a900bcec364a1ced997563",
+    "name": "Consecutive Hurdle Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-6da0ce63545d782736bcdc83",
+    "name": "Cooper Test",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-70d2a3bf23644f3808f09496",
+    "name": "Copenhagen plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isometrico"
+  },
+  {
+    "id": "catalog-6cd88cf3804c16832e348665",
+    "name": "Copenhagen Plank facilitato",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-2c0dbef9145616d42a34d663",
+    "name": "Corsa",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-e29a1478789ab39633d60e4a",
+    "name": "Corsa a otto",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ebd010531821f8270d1bc761",
+    "name": "Corsa a ritmo 10 km",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9dce6d0ffa743e1571f8e55e",
+    "name": "Corsa a ritmo 5 km",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-05311ade155721642f2ac7c5",
+    "name": "Corsa a ritmo gara",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d5d6aacd0ed80266e3f19f21",
+    "name": "Corsa a ritmo maratona",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3c9198aaf1bb62a6f3b53611",
+    "name": "Corsa a ritmo medio",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-40a1717ed9d8276a1af3040f",
+    "name": "Corsa a ritmo mezza maratona",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-0a640cb775fc40e27a5a6704",
+    "name": "Corsa a ritmo sostenuto",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ed171b742efff4c6a07d9b05",
+    "name": "Corsa a variazioni",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-93f8e136ceb085f00fd821b9",
+    "name": "Corsa aerobica",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-90fe3f785d4adf6342735d64",
+    "name": "Corsa all’indietro",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-59edf3f040a6ae026eabcde1",
+    "name": "Corsa alla soglia",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8ce7ec5e5a2399ccbca28fdc",
+    "name": "Corsa balzata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-c3fed87678bb520a952d4db7",
+    "name": "Corsa calciata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-7f4ac1a3de85f7df5fc7054a",
+    "name": "Corsa con passeggino",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-66bee6eb8d93b7ff2eccfd05",
+    "name": "Corsa con zavorra",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-060acae8a5c4ba7111b8783b",
+    "name": "Corsa continua",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-fa1a406e5846beda6cb7e6be",
+    "name": "Corsa continua collinare",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d3d4ab9a4d1d90002a0250e6",
+    "name": "Corsa di recupero",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b1e93092b6b7858fbfba7d13",
+    "name": "Corsa facile",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d91ab63f2461f3c18566e082",
+    "name": "Corsa in acqua",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3e65a476624b5ac7575eff9d",
+    "name": "Corsa in salita",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-fc862d117629023ed982d5e4",
+    "name": "Corsa incrociata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ec4beee3dccbc2697ede37b3",
+    "name": "Corsa laterale",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-14cb0020d33d3be31b90c370",
+    "name": "Corsa lenta",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d48611542a82218c4b55b675",
+    "name": "Corsa lunga progressiva",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-e428427b9e1166e1972b9032",
+    "name": "Corsa progressiva",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2f0b281af9c3f3c5120fc0bf",
+    "name": "Corsa regressiva",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-59867f8cf3b59f6cee28b29c",
+    "name": "Corsa su gradini",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d8d2dcae43db4578b0fab377",
+    "name": "Corsa su tapis roulant",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-0b436ba6a46aade4497b5653",
+    "name": "Corsa sulla sabbia",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3216038a8fb20bac663d1ede",
+    "name": "Corsa-camminata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-0b2240c3ba7724c785fb6520",
+    "name": "Countermovement Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-1e5ec24161f4142720c9b5d4",
+    "name": "Crab Walk",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-f6fd5eedcfbdf8847b1aabf6",
+    "name": "Croci ai cavi",
+    "muscle_group": "Petto",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-a11b6528418569221e790f21",
+    "name": "Croci con manubri",
+    "muscle_group": "Petto",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-47a8327c903bd7683d14225b",
+    "name": "Cross-Body Mountain Climber",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-0e43938ddf43ea3751286aa8",
+    "name": "Cross-Country",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-946ed2e056225b434f8466c6",
+    "name": "Crossover ai cavi",
+    "muscle_group": "Petto",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-022fb3ad5cb4d9bf804bbdad",
+    "name": "Crossover Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-d86ad24587e213e531dbb138",
+    "name": "Crossover Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b12a020b7fdd57547b41b43f",
+    "name": "Crunch",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-bdc563b68345162d944a24c4",
+    "name": "Crunch a terra",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4f69ee56fcc1023adcd2686b",
+    "name": "Crunch al cavo",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-24b6c1e2d41bc304f621eb22",
+    "name": "Crunch alla macchina",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-416db4189552ebb3192da9d7",
+    "name": "Crunch inverso",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-4d8409986d038ade8cbb1527",
+    "name": "Crunch su fitball",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4d88c60bff6cb297f83a432f",
+    "name": "Cuban press",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Prevenzione"
+  },
+  {
+    "id": "catalog-8111d9c68dbec0295a5fd4d7",
+    "name": "Curl a martello al cavo",
+    "muscle_group": "Bicipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-9079098cf118fb834c28567d",
+    "name": "Curl ai cavi",
+    "muscle_group": "Bicipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-c2d2bd1f303eb12629516031",
+    "name": "Curl alla panca Scott",
+    "muscle_group": "Bicipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-7b2f0321a40bcd038d511498",
+    "name": "Curl alternato con manubri",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-9d7ad51fe4aa0f70f7c35cd3",
+    "name": "Curl con bilanciere",
+    "muscle_group": "Bicipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-04d1904167c9601f232d044f",
+    "name": "Curl con bilanciere EZ",
+    "muscle_group": "Bicipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-23b4dd5ac83194ef2872b84c",
+    "name": "Curl con manubri",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-7e3db00e19edad02295b87f9",
+    "name": "Curl concentrato",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-7e309017fdfcfe9949325800",
+    "name": "Curl inclinato con manubri",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-10dedd69b50eaf2346c5aadf",
+    "name": "Curl inverso",
+    "muscle_group": "Bicipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-889c01b9fc232177c10f846d",
+    "name": "Curl machine",
+    "muscle_group": "Bicipiti",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-55c9d41c4e7428f0b82c9035",
+    "name": "Cyclette",
+    "muscle_group": "Cardio",
+    "equipment": "Macchina",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-5870523a3d3a118f53515b15",
+    "name": "Dead bug",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-37b7e32328f148354fe9ee00",
+    "name": "Dead bug con elastico",
+    "muscle_group": "Core",
+    "equipment": "Elastico",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-78acf12babf07f57e744988e",
+    "name": "Dead Bug con palla",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-8e626ca3ba976c361e14eb91",
+    "name": "Depth Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-e8c1c5acddccff4af3087bee",
+    "name": "Depth Jump oltre ostacolo",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ae599f2250bb1d0891a51f2a",
+    "name": "Depth Jump to Box",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-3074e2000d30f0527e6ad48d",
+    "name": "Depth Push-Up",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-f0abc216a78f455963ed3213",
+    "name": "Diagonal Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-60d1473e4d3029e86886e8f2",
+    "name": "Dip alle parallele",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-d60df3a43bc6c734396cda7c",
+    "name": "Dip tricipiti alla panca",
+    "muscle_group": "Tricipiti",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-e2b5f51ae165db31eedcfa19",
+    "name": "Donkey calf raise",
+    "muscle_group": "Polpacci",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-6c4d2af69025702b2c0862c8",
+    "name": "Dorsiflessione con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Rinforzo"
+  },
+  {
+    "id": "catalog-2b623f0ba2ee15051d680ff3",
+    "name": "Dribbling alto",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-452c6159246784df737d2063",
+    "name": "Dribbling basso",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8ac8e296859ec12a323b5b4e",
+    "name": "Dribbling medio",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-00fcef83abc39deeaf186052",
+    "name": "Drop Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-24c786aa050304b6cdbc0923",
+    "name": "Ellittica",
+    "muscle_group": "Cardio",
+    "equipment": "Macchina",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-873de25dde7c79c74893ba53",
+    "name": "Equilibrio monopodalico",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-562703fd6a3e5acef7e8c630",
+    "name": "Equilibrio monopodalico instabile",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-33f2c5268ddd327e8841b0f9",
+    "name": "Equilibrio su una gamba",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Stabilita"
+  },
+  {
+    "id": "catalog-7c498425dfd463c6a7e3fa14",
+    "name": "Estensioni sopra la testa ai cavi",
+    "muscle_group": "Tricipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-c082a0ce5a6215b52a86aaa6",
+    "name": "Eversione caviglia con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Stabilita"
+  },
+  {
+    "id": "catalog-172781f394509a2365d1223c",
+    "name": "Explosive Incline Push-Up",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-92645fca2ba9394ba46e6406",
+    "name": "Explosive Wall Pass",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-35c24d0e15bc8a93bb4943e9",
+    "name": "External rotation ai cavi",
+    "muscle_group": "Spalle",
+    "equipment": "Cavi",
+    "category": "Prevenzione"
+  },
+  {
+    "id": "catalog-f41cdeb429e744b7cb6c151d",
+    "name": "Face pull",
+    "muscle_group": "Spalle",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-1059bb1f0b35d63fddbc1b10",
+    "name": "Falling Start",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-25706a027ac565e591e90465",
+    "name": "Farmer Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-b4f3fcb72d9f7a54fbda2e0b",
+    "name": "Farmer Carry asimmetrico",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-0d4855bda7d99c0f84d4c5c7",
+    "name": "Farmer walk",
+    "muscle_group": "Avambracci",
+    "equipment": "Manubri",
+    "category": "Full body"
+  },
+  {
+    "id": "catalog-399ba05cc593985967a3e9b9",
+    "name": "Fartlek",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b68ea79c051921e655c323b6",
+    "name": "Fartlek collinare",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3bd1aa6184d3c2355becc360",
+    "name": "Fast Feet",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-4628a48081966ea0d790ff99",
+    "name": "Fast Leg Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9bce0e2f906f009542efdd9c",
+    "name": "Figure-Eight Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f0a2d56af9149bd772ef8173",
+    "name": "Flessione plantare con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Rinforzo"
+  },
+  {
+    "id": "catalog-26dda20bd2f9bc808b54797a",
+    "name": "Float Sprint",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-646fa2e713aba44827fc25e8",
+    "name": "Floor press",
+    "muscle_group": "Petto",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-6050b91fd2143f33aa9008ae",
+    "name": "Flutter Kick",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-291a8b33ede3721929db9699",
+    "name": "Flying Sprint",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-4cb230d88994c70578819ac8",
+    "name": "Foam Roller fascia laterale della coscia",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-2ee9929d361b2c9959ab8961",
+    "name": "Foam Roller glutei",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-89d7568735639899ec32cdd7",
+    "name": "Foam Roller ischiocrurali",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-9f872bc208ba1a948eb04cb8",
+    "name": "Foam Roller polpacci",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-aa9823ae5007a8e1d3dca7f9",
+    "name": "Foam Roller quadricipiti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-8c56d56d7cda02b559269e89",
+    "name": "Fondo lento",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2941fa91a6616a57bacfd8d6",
+    "name": "Fondo lungo",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-a4e19ae9c75c5325d7f52e75",
+    "name": "Fondo medio",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-92af68d9b0add49b8219a16f",
+    "name": "Forward Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-00c7e72f42ed7a4e73c63772",
+    "name": "Forward-Backward Hurdle Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-2c0415dabf40236b2fc4df5b",
+    "name": "French press",
+    "muscle_group": "Tricipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-c1aab68baee86538733a23d1",
+    "name": "French press manubri",
+    "muscle_group": "Tricipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-311bb4256934b519c69e0aea",
+    "name": "Frog Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-914530197e53a99e9faa713b",
+    "name": "Front Rack Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-508dd0dfaa7e97ca40b9353e",
+    "name": "Front squat",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f31e5d9744f80c4748247b31",
+    "name": "Garhammer Raise",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-c94de413bbc56658f212af54",
+    "name": "Glute bridge",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-ede77da13c8fe14ce10b70fb",
+    "name": "Goblet squat",
+    "muscle_group": "Gambe",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-cdf71dea7d7741a2b6f021f3",
+    "name": "Good morning",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-94194773e20c4777e3cc39b4",
+    "name": "Good Morning isometrico",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-22bd790e02a80f579142023a",
+    "name": "Grapevine",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1e1ef2289089a6703ae2feba",
+    "name": "Hack squat",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-6ae5b4dec1ff373dc7b79a02",
+    "name": "Hammer curl",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-b59a5d5812636740c526ff8e",
+    "name": "Hanging Knee Raise",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-dfb093a8657fe0caa764d499",
+    "name": "Hanging leg raise",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-b380f303953954ce5df6ffd0",
+    "name": "Hanging Windshield Wiper",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-5d7163b87d05e39a81cd0f59",
+    "name": "Heel Tap",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-42ad4d8b0a37f0f1d9ae609e",
+    "name": "Hex press",
+    "muscle_group": "Petto",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-b8dc8693a350b3c808b5a24b",
+    "name": "High Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-56c4ee71143f46287c5cd1c8",
+    "name": "High Knees",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-e98b687ceb4b845ea8c41e36",
+    "name": "High row",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-9d56a96ba4ce78e3d521047b",
+    "name": "High-Intensity Interval Running",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-149f42e9ee5ff8a7f608f80c",
+    "name": "Hill Bounds",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2876591a1706d6c29aa0a2bd",
+    "name": "Hill Repeats",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d91e862e7b161a6c209d1dbb",
+    "name": "Hip Abduction",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-4bdf2a5c86a592e2788bf62f",
+    "name": "Hip Hinge isometrico",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-2875bc848de83f2e0c3c3261",
+    "name": "Hip thrust",
+    "muscle_group": "Glutei",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-2d73143e1183ee2e0480f06b",
+    "name": "Hollow body hold",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isometrico"
+  },
+  {
+    "id": "catalog-2585c9bacb29609f44cba73d",
+    "name": "Hollow Body Rock",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-87a69abde15bd3a6b40a9e18",
+    "name": "Hop and Hold",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-553b363d0ab88401de68ac01",
+    "name": "Hop and Stick",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-62ca58e5746ddccbe249d7ff",
+    "name": "Hurdle Hop monopodalico",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-b331756b8996ec5c1590e9b8",
+    "name": "Hurdle Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-587c53e41f819262fc36e168",
+    "name": "Hyperextension",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-886098596691b489fe64310b",
+    "name": "Illinois Agility Test",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2b9c48131c4e982182050900",
+    "name": "Inchworm",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-abce875e44d58aa0ccedeaa5",
+    "name": "Ins and Outs",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-0ff48310133475a23f982611",
+    "name": "Interval Training",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-caf73bebf2a9f73693528421",
+    "name": "Intervalli 4 × 4 minuti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1f414bd81962d7538855d939",
+    "name": "Intervalli 60-60",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-56d710f1af1dbe06ee85e529",
+    "name": "Intervalli a scala",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-38d65ec7ddaf885eaf0176ec",
+    "name": "Intervalli a tempo",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-001d39c515f09177bf299849",
+    "name": "Intervalli aerobici",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f543ab46a018dd692c69a05a",
+    "name": "Intervalli anaerobici",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-151ad1356a7f1507dea3e0c4",
+    "name": "Intervalli decrescenti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d7350d1de4c9c866262b0ac5",
+    "name": "Intervalli misti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1cbd3e9bde8edf38bcedc5bf",
+    "name": "Intervalli piramidali",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ddc5d87eb2739029053134e5",
+    "name": "Intervalli progressivi",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-32b003eec20d85cae9539717",
+    "name": "Inversione caviglia con elastico",
+    "muscle_group": "Caviglia",
+    "equipment": "Elastico",
+    "category": "Stabilita"
+  },
+  {
+    "id": "catalog-c5a2d54ecc287bcf2d8c90e7",
+    "name": "Iperestensioni",
+    "muscle_group": "Schiena",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-9cd30438c3f1e48fada4d0d7",
+    "name": "Jackknife",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-1e0911262b1d8fe8e51c6b21",
+    "name": "JM press",
+    "muscle_group": "Tricipiti",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-4c449d756bc0c00d9c02946e",
+    "name": "Jogging",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-99086b4c4067b0db8655b154",
+    "name": "Jogging defaticante",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-2edeb75e1e28595a795c94fd",
+    "name": "Jogging leggero",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-5555b58e9a1460dd23eabaec",
+    "name": "Jump and Reach",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-cea5e81d207328fd27ee54f5",
+    "name": "Jump Rope",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ed7eb972a1357a1e0cacc6e1",
+    "name": "Jumping Lunge",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-350c19bfc69cf7acf1b52bce",
+    "name": "Kettlebell swing",
+    "muscle_group": "Full body",
+    "equipment": "Kettlebell",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-98992070817d84ef23bd432e",
+    "name": "Kickback con manubri",
+    "muscle_group": "Tricipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-e6e1c1c977300665cd93a814",
+    "name": "Knee-Tuck Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-1b081b170f50c14013dd5461",
+    "name": "L-Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3c5a7bd4238036d63c709132",
+    "name": "L-Sit",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-5fe3b8468a0d331afc861b14",
+    "name": "L-Sit facilitato",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9210db58b4472d2fa7f69737",
+    "name": "Landmine chest press",
+    "muscle_group": "Petto",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-4b99d1dfc87b89c45b486e53",
+    "name": "Landmine Rainbow",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-07bf85cf40f24954cb1e8eb9",
+    "name": "Landmine Rotation",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-eb288849545ab6dc94acfbb1",
+    "name": "Landmine shoulder press",
+    "muscle_group": "Spalle",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-bf9e6f27121bae61e574f0c0",
+    "name": "Lat machine",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-9e2d7fedb3c08da0e80bf1ee",
+    "name": "Lat machine presa inversa",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-911c931ed765dffc05a3494c",
+    "name": "Lateral Band Walk",
+    "muscle_group": "Glutei",
+    "equipment": "Elastico",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-1f520386094c2641e1f110ef",
+    "name": "Lateral Bound",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-cc69596d6e581ca5dc26a331",
+    "name": "Lateral Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-a820beb20b775fdf1c82b0d0",
+    "name": "Lateral Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-54af9d74e1eb9c2762ae2c64",
+    "name": "Lateral Hurdle Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-369752fde67599218f2c261b",
+    "name": "Lateral Line Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-1ecff145559304103008c50a",
+    "name": "Lateral Shuffle",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-7c89ed21a506fba379a30c02",
+    "name": "Lean-Fall-Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-865420978110315b686618b2",
+    "name": "Leg Curl",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-a8214c2c32018aaad839c800",
+    "name": "Leg curl sdraiato",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f2e9557365c2cf034c2f6c25",
+    "name": "Leg curl seduto",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-ca2bcb6b4d696f82cc62a8d0",
+    "name": "Leg extension",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-4b8ea6d1222eeb4e08ab30c0",
+    "name": "Leg press",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-684fc026cfe876162beea391",
+    "name": "Leg raise a terra",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-0af32383219a62cb29888f99",
+    "name": "Leg Raise su panca",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9d2096d92b0439e7e1973346",
+    "name": "Leg Swing frontale",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-f4f59710dad816f59b063012",
+    "name": "Leg Swing laterale",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-e619379cca2baaa60f6b283d",
+    "name": "Lento avanti con manubri",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-0c97e4deb7d93b403f2a1f9a",
+    "name": "Leopard Crawl",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-8c5350903b4d7280d7b34fe2",
+    "name": "Line Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-2065ca9f318bc148c9af5b04",
+    "name": "Long-Lever Plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-468662a1fc9dd0e984991d70",
+    "name": "Low Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-6e7a7db66e765a513947a6ac",
+    "name": "Marcia con kettlebell sopra la testa",
+    "muscle_group": "Core",
+    "equipment": "Kettlebell",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4441bd73e16015fcadc83b7c",
+    "name": "Marcia in ponte",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-d8f4ce88c143f916878b2c41",
+    "name": "Marcia tecnica",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-1ca300bc0eb514053c68c133",
+    "name": "Meadows row",
+    "muscle_group": "Schiena",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-633028497d4f14d414d3352e",
+    "name": "Medicine Ball Chest Pass",
+    "muscle_group": "Petto",
+    "equipment": "Palla",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-6bc8469e1389f72c785a29e2",
+    "name": "Medicine Ball Overhead Throw",
+    "muscle_group": "Petto",
+    "equipment": "Palla",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-927df2aeefa46e7d6f98ed47",
+    "name": "Medicine Ball Rotational Throw",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-ead27dbe82646c5760503193",
+    "name": "Medicine Ball Side Throw",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-2bcee3cbdd140f2af82f177d",
+    "name": "Medicine Ball Slam",
+    "muscle_group": "Petto",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-ea44bd03da6a31cf7d1544a3",
+    "name": "Military press",
+    "muscle_group": "Spalle",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f0eb81cc4394c94903d2cacb",
+    "name": "Mini-Hurdle Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-c09e347d658ba69bf6bcacef",
+    "name": "Mirror Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f1a3464b08ffca25f3778446",
+    "name": "Mobilità dell’anca",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-924c5bdd201f5d4d0be4c76a",
+    "name": "Mobilità della caviglia",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-9cc5caa4a2ee91feeeac9bbb",
+    "name": "Monster Walk",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-08cd011f617f2026410ecfd6",
+    "name": "Mountain climber",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-0b9389b419273f75266d0cee",
+    "name": "Mountain Climber controllato",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-aa5565d444e22a76507d70b4",
+    "name": "Multidirectional Sprint",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-7c87645311fdbb133da45c9b",
+    "name": "Navetta 5-10-5",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3b3f4c84095c8005886c637d",
+    "name": "Nordic Hamstring Curl",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-94ae9affdd971282f7136af1",
+    "name": "Offset Farmer Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-c22f7f4cc133dd11e574f5d1",
+    "name": "Overhead Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-9360606e36648fcf3b581ca6",
+    "name": "Pallof press",
+    "muscle_group": "Core",
+    "equipment": "Elastico",
+    "category": "Anti-rotazione"
+  },
+  {
+    "id": "catalog-bab7f4752126a47708e556ab",
+    "name": "Pallof Press in ginocchio",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-8e8794d4d59e5c7194e4eb16",
+    "name": "Pallof Press isometrica",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-a3bfeaa9b135fb7d256555e3",
+    "name": "Pallof Press mezzo inginocchio",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-a0fbc59738ee152618a15e1f",
+    "name": "Pallof Press sopra la testa",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-28ab9aaae3dcec226f1094bd",
+    "name": "Pallof Walkout",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-6ca89d0a3ecb97ad711ec6eb",
+    "name": "Panca con presa neutra manubri",
+    "muscle_group": "Petto",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-5b8ba18a92b87a113642297d",
+    "name": "Panca declinata con bilanciere",
+    "muscle_group": "Petto",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f91ff9a43e8792f8177ba096",
+    "name": "Panca inclinata con bilanciere",
+    "muscle_group": "Petto",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-2d7c09a24a9874a2f30f88ad",
+    "name": "Panca inclinata con manubri",
+    "muscle_group": "Petto",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-4499814e4563f8dd58344ee0",
+    "name": "Panca piana con bilanciere",
+    "muscle_group": "Petto",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-221ca843c346871a4b600e96",
+    "name": "Panca piana con manubri",
+    "muscle_group": "Petto",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a1bc50319224bb9568c4fd1a",
+    "name": "Panca stretta",
+    "muscle_group": "Tricipiti",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-3937fac3872957a9ff496ee8",
+    "name": "Pawback Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-dfd9e9716548509d6ea290f0",
+    "name": "Pectoral machine",
+    "muscle_group": "Petto",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-80ceb5ce4b4b1013fc07ec4f",
+    "name": "Pelvic Tilt",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-07b6380c453d79fc4de1cc1d",
+    "name": "Pike push-up",
+    "muscle_group": "Spalle",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-5fa0afa26ad38b69286f952a",
+    "name": "Pistol Squat",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-c80bf876dd9ec503d72e9cfc",
+    "name": "Plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-6043298ee05a4e88a2bc4c3a",
+    "name": "Plank alto",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-efad32f43de827c410955cda",
+    "name": "Plank Bird Dog",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-9e618fcc4f9ab4bbcf80c18c",
+    "name": "Plank con ginocchia appoggiate",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-9dce53a1658e72199d767e77",
+    "name": "Plank con sollevamento braccio",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-371fdd9389df860776f7c574",
+    "name": "Plank con sollevamento gamba",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-310d9b8fb4bc1f18084b5e10",
+    "name": "Plank con trascinamento del peso",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-3f10cf67e788cf6bd37269af",
+    "name": "Plank shoulder taps",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-2e94e3caca6887cc1df44362",
+    "name": "Plank sui gomiti",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-35e9d916f5233fd725e53d81",
+    "name": "Plank Walkout",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-8ba0b71d24d7665bf89c9da2",
+    "name": "Plantarflessione con elastico",
+    "muscle_group": "Atletica",
+    "equipment": "Elastico",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-a1aa95e00304a1e604d45cb2",
+    "name": "Plate pinch hold",
+    "muscle_group": "Avambracci",
+    "equipment": "Dischi",
+    "category": "Isometrico"
+  },
+  {
+    "id": "catalog-e71a6a47a6d49d70bc492f86",
+    "name": "Plyometric Push-Up",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-32765b5939be43e1be9859a6",
+    "name": "Pogo Jump",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-bc7890755a1f19265e1ba29d",
+    "name": "Power Hiking",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-27fd7bf4fd5a3edef2bddd0a",
+    "name": "Pressa 45°",
+    "muscle_group": "Gambe",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-c422adf62715a7f6075d2de4",
+    "name": "Pro-Agility Test",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-341016282125dcf56b26f580",
+    "name": "Progressione breve",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-dd6083925c038858fabddbbc",
+    "name": "Pull up assistite",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f5a37c5b252f8a40a1eb5505",
+    "name": "Pulldown",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-fccbc4b580e53a039db65431",
+    "name": "Pulley basso",
+    "muscle_group": "Schiena",
+    "equipment": "Cavi",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-943defadfec7502631f5ff3f",
+    "name": "Pullover con manubrio",
+    "muscle_group": "Schiena",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-2b300c9b7356de86768e513c",
+    "name": "Push down ai cavi",
+    "muscle_group": "Tricipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f04f270d83b9b3f01059e112",
+    "name": "Push down corda",
+    "muscle_group": "Tricipiti",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-0f1e1209186eba72b1c68266",
+    "name": "Push up",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-6948f0b9c32755aa77ecef64",
+    "name": "Push up declinato",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a74f39c3768295d1411bf23f",
+    "name": "Push up inclinato",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-02a54559033ce81f4c51d460",
+    "name": "Quadrupedia con estensione alternata",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-37d94c20ffcd729ebed516e9",
+    "name": "Quick Ground Contact Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-13c5e1207b57121605105ba0",
+    "name": "Quick Hurdle Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-f926b665424687724a34f181",
+    "name": "Rack pull",
+    "muscle_group": "Schiena",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a2c9fa59e2cd567bac860a0d",
+    "name": "Reaction Sprint",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d00cba0a5fa883f29c261b83",
+    "name": "Reactive Drop Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-7a463ccf09d749cf4d338f52",
+    "name": "Rear delt row",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-aa56f81a1bc7923521675c67",
+    "name": "Rematore chest-supported",
+    "muscle_group": "Schiena",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f8def49cf30cd05f3a5f569f",
+    "name": "Rematore con bilanciere",
+    "muscle_group": "Schiena",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-1f166b32a5f9ba29665e105f",
+    "name": "Rematore con manubrio",
+    "muscle_group": "Schiena",
+    "equipment": "Manubri",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-3f55054affce31c4ca14469a",
+    "name": "Rematore T-bar",
+    "muscle_group": "Schiena",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-d6c7778716ca854df9173a80",
+    "name": "Rematore unilaterale al cavo",
+    "muscle_group": "Schiena",
+    "equipment": "Cavi",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-636d5b6a3d4e9ef3ac389277",
+    "name": "Renegade Row",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-3adcc35f12ef40ecd214c1fb",
+    "name": "Respirazione diaframmatica",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-f8b83a6887ac304885936f2f",
+    "name": "Reverse Crunch",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-30870bdfeb41b8829e47619c",
+    "name": "Reverse hyperextension",
+    "muscle_group": "Schiena",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-d980ebc2c18b1edfb2df8620",
+    "name": "Reverse pec deck",
+    "muscle_group": "Spalle",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-27cefc0b93da3b23a6b3b882",
+    "name": "Reverse wrist curl",
+    "muscle_group": "Avambracci",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-5dcea21c1e2283a415bc5da0",
+    "name": "Ripetute brevi",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8b4b14bbe818e5b57b25cd18",
+    "name": "Ripetute brevi in salita",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-a1bbe052d5ce0158f41ff4a4",
+    "name": "Ripetute da 1.000 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-fe4071fb76d3767560478653",
+    "name": "Ripetute da 1.200 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-07fd3eccddbd6583e0caa6c7",
+    "name": "Ripetute da 1.600 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9cbfa1bb5869514844019aaa",
+    "name": "Ripetute da 100 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-376b9829fca4373d60d36b9c",
+    "name": "Ripetute da 2.000 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f27d86d76957faf20b79d8f5",
+    "name": "Ripetute da 200 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-195b8ee554b7bb1383b1671f",
+    "name": "Ripetute da 3.000 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-69bececf72b2d07f6dd8e343",
+    "name": "Ripetute da 300 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f2f4621dae767266841c2474",
+    "name": "Ripetute da 400 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-226acee573525cf83a456e1d",
+    "name": "Ripetute da 50 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ccfe56f991f7477edd3d6326",
+    "name": "Ripetute da 500 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2a51258c8db71052c7618563",
+    "name": "Ripetute da 800 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-10f5a381207b0848cbfe71ae",
+    "name": "Ripetute lunghe",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f989f656e29e99695368e523",
+    "name": "Ripetute lunghe in salita",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3124f9173142bbc6653e2a5c",
+    "name": "Ripetute medie",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b0aee1b41dc440c753e097ab",
+    "name": "RKC Plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-48a12e8009ce09a1587dd7b0",
+    "name": "Rocket Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-c334ac5eec0785e9c920c2a2",
+    "name": "Rolling dumbbell triceps extension",
+    "muscle_group": "Tricipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-0748dd75ba13304c11d58c22",
+    "name": "Rollout con bilanciere",
+    "muscle_group": "Core",
+    "equipment": "Bilanciere",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-66f4ff329217d34ca912cc20",
+    "name": "Rollout su fitball",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-5f238ccaee1b13a469ecdfd9",
+    "name": "Romanian Deadlift",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-1e7f4bde907d5aaa03cde77d",
+    "name": "Rope Climb",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-412f4dcc32edad94b0439502",
+    "name": "Rotational Medicine Ball Throw",
+    "muscle_group": "Atletica",
+    "equipment": "Palla",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ac719b09b89e2d2139b8ef27",
+    "name": "Rotazioni al cavo",
+    "muscle_group": "Core",
+    "equipment": "Cavi",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-2588800a7aa02583ed8c3724",
+    "name": "Russian twist",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-5491abbd07dc4332780b66d2",
+    "name": "Salita a ritmo soglia",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-15041cae39fa25fc65b1c83c",
+    "name": "Salita su tapis roulant",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-852e2b5027b076be63265e32",
+    "name": "Scaption raise",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f97486e50a5b4f07deda606e",
+    "name": "Scapular pull-up",
+    "muscle_group": "Schiena",
+    "equipment": "Corpo libero",
+    "category": "Tecnica"
+  },
+  {
+    "id": "catalog-e5c387792c1c0e5b7bbd91c4",
+    "name": "Scissor Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-6e7018a8e58444b6f47b1403",
+    "name": "Scissor Kick",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-68bb0eeca5814590a025db33",
+    "name": "Scoop Toss",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-5a4556bf37a646f7408b06e7",
+    "name": "Scrollate con bilanciere",
+    "muscle_group": "Spalle",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-fc966a0b0bac5697becec278",
+    "name": "Scrollate con manubri",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-7cad03576de0f1e872c0fde1",
+    "name": "Seal row",
+    "muscle_group": "Schiena",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-7c09f1bd64ea031b7ad55942",
+    "name": "Seated Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-bca1cf570902c39bc37c103b",
+    "name": "Seated toe raise",
+    "muscle_group": "Caviglia",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-e15c715127603310dca18818",
+    "name": "Short Foot",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-f2585b725b91847ba32e6c87",
+    "name": "Shot-Put Throw",
+    "muscle_group": "Petto",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-cbe3facc4efb40c1273de8c1",
+    "name": "Shoulder press",
+    "muscle_group": "Spalle",
+    "equipment": "Macchina",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-eb62a1e8eccc6f93018a18c6",
+    "name": "Shoulder Tap",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-be6ed9408c9479571f78face",
+    "name": "Shuttle Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-bebb8969179ca8a7a2bb6ce3",
+    "name": "Shuttle Sprint",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-11381c867b7a9ceb48307a1f",
+    "name": "Side plank",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-a9ce574fb28a37b68c61cec4",
+    "name": "Side Plank con abduzione della gamba",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-ea8c84c459d7c257a167aa2f",
+    "name": "Side Plank con ginocchia appoggiate",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-83c9bd5ddeee5ce50c952ae7",
+    "name": "Side Plank Star",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-d61cf713a0fef34ed62333f9",
+    "name": "Side Plank sui piedi",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-934d46a428e6b3fc5effede0",
+    "name": "Side-Lying Hip Abduction",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-e002bff616a0bb0ec1248def",
+    "name": "Single-Arm Farmer Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-40a171fdebc2fb8f2acd16ce",
+    "name": "Single-Arm Front Rack Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4f7af44ff3a0e72150039acf",
+    "name": "Single-Leg Bound",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ab27db724431675b73211292",
+    "name": "Single-Leg Box Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-e5519e51b6b9d9feaaacf535",
+    "name": "Single-Leg Broad Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-01a5f45cea2f9aba39468748",
+    "name": "Single-Leg Calf Raise",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-b6bec44f87bb0432f86ce5a7",
+    "name": "Single-Leg Cycle",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-6685c92793faa358be711d8b",
+    "name": "Single-Leg Depth Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-0480fb7e37dbbc5f13b33500",
+    "name": "Single-Leg Glute Bridge",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-5968e3df6fbe4972b4272f39",
+    "name": "Single-Leg Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-84f6dd9f975dd846eca71d97",
+    "name": "Single-Leg Hurdle Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-21e330138e16b915d05cd584",
+    "name": "Single-Leg Pogo",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-e93c9b5f524955efc7f67aff",
+    "name": "Single-Leg Romanian Deadlift",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9be578251ce07efa14b96aac",
+    "name": "Single-Leg Squat",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-9806598025dcf0a899fe41e8",
+    "name": "Sit up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-8fce9ba31f2c568b753576e7",
+    "name": "Sit-up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-30d3d9546fd8f35362c72261",
+    "name": "Sit-up con peso",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-fa8fe145a14c661709941a3f",
+    "name": "Skater Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-42e93b9bb77d8a73e8412111",
+    "name": "Skip",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Tecnica"
+  },
+  {
+    "id": "catalog-5ed281ff9b47a76782ce3afd",
+    "name": "Skip alto",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Tecnica"
+  },
+  {
+    "id": "catalog-0ff942ff21edd5c296a35480",
+    "name": "Skip basso",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2f36b7f87514d89e5aa9faad",
+    "name": "Skip medio",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-4d02dec74400504c3e3c447e",
+    "name": "Skull crusher",
+    "muscle_group": "Tricipiti",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-be62bbf2d159326cbec6b912",
+    "name": "Slam Ball",
+    "muscle_group": "Core",
+    "equipment": "Palla",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-a73e89c9d4f75194d294cc64",
+    "name": "Sled Pull",
+    "muscle_group": "Core",
+    "equipment": "Slitta",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-ef726b4c4fbf80760aa8ee98",
+    "name": "Sled Push",
+    "muscle_group": "Core",
+    "equipment": "Slitta",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-6cd512a819ae26ee19992ea2",
+    "name": "Snatch",
+    "muscle_group": "Full body",
+    "equipment": "Bilanciere",
+    "category": "Olimpico"
+  },
+  {
+    "id": "catalog-9dfd7261cdfed4279be4d4a5",
+    "name": "Soleus Raise",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-5fe78b38d196e0236c50e80a",
+    "name": "Spider curl",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-a89b15be9de98da085b5d7c8",
+    "name": "Split Squat",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-a6796eeea9cde96e22767f89",
+    "name": "Split Squat Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-fb9afa84739c3239a0f5a571",
+    "name": "Sprint",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Velocità"
+  },
+  {
+    "id": "catalog-68e498b4f66650e651d1ec97",
+    "name": "Sprint 10 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-27c3e8e7d9152d442720c257",
+    "name": "Sprint 100 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-ab870c8f029ff69f68cdcba2",
+    "name": "Sprint 20 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9acf897c85c17fb4f14c4164",
+    "name": "Sprint 30 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-5f3ad10f47883f42dbbc5434",
+    "name": "Sprint 40 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-729aff7f94f719181dda1f1f",
+    "name": "Sprint 60 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-64ac5856ea0a31cb5ac2ffb8",
+    "name": "Sprint 80 metri",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-2d905e3d938847d3a1d19968",
+    "name": "Sprint assistito",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8f7adfede6854964b4ad9129",
+    "name": "Sprint con arresto",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-0110a82e564207050c9e5be8",
+    "name": "Sprint con cambio di direzione",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-3ca6e82e03e04d5418404d78",
+    "name": "Sprint con elastico",
+    "muscle_group": "Cardio",
+    "equipment": "Elastico",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-caca293851742b6231bc700c",
+    "name": "Sprint con partenza da fermo",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-a35dcc7d1e3a7cb69c483b89",
+    "name": "Sprint con partenza lanciata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-9b6cc089b7531ca4a7e74e6a",
+    "name": "Sprint con slitta",
+    "muscle_group": "Cardio",
+    "equipment": "Slitta",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-8f118f66bb21a5e7e5757d04",
+    "name": "Sprint e cambio direzione",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-6a7ae92b2b10018dfc589c76",
+    "name": "Sprint in discesa controllata",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-0921a0c9b4b61a70129ee203",
+    "name": "Sprint in salita",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f44f65833bbb5b9d43caf0c0",
+    "name": "Sprint Interval Training",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-c03e8ac0728ba9b966211a24",
+    "name": "Sprint resistito",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b68189732bc942e36497fb76",
+    "name": "Sprint ripetuti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-6bc75f5568c5920bfefaf427",
+    "name": "Sprint-Float-Sprint",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-52edeccca7cd6511929e62e8",
+    "name": "Squat",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-fb1ebd800fe8c865c93d655f",
+    "name": "Squat con bilanciere",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-385d499f44b82da00450c930",
+    "name": "Squat dinamico",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-82790ab8e8882a0c12288ee2",
+    "name": "Squat Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-a6d003b3ffb1b65d3d48471b",
+    "name": "Stability ball rollout",
+    "muscle_group": "Core",
+    "equipment": "Fitball",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-b95df6beefec28199017b59b",
+    "name": "Stacco da terra",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a3b84a28a253d118fe4bb7a3",
+    "name": "Stacco rumeno",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-62dac041a15ebaff50b3d7e1",
+    "name": "Stacco sumo",
+    "muscle_group": "Gambe",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a8be239b47e4eb788b8ba9f5",
+    "name": "Standing Long Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-18337772cdec422e28a335c8",
+    "name": "Star Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-c8e6484566875fbbfc9a91ca",
+    "name": "Step-Down",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-72e408983887b3f300b36e01",
+    "name": "Step-Up",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-6e61adb6457ba3315cf085b0",
+    "name": "Step-Up Jump",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ab732155a64041f3c9587933",
+    "name": "Stir the Pot",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-836ff6272db24e099190e7a6",
+    "name": "Straight-arm pulldown",
+    "muscle_group": "Schiena",
+    "equipment": "Cavi",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-367baad8b31e3ac9be9e26b1",
+    "name": "Straight-Leg Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-6431f7df4dcab54d34e41b4e",
+    "name": "Stretching adduttori",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-9c53c9b9be0eeca48828ac2a",
+    "name": "Stretching flessori dell’anca",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-16436eaba4dc48818fbceb24",
+    "name": "Stretching glutei",
+    "muscle_group": "Glutei",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-c4269e52adc2f59c6c74a4ec",
+    "name": "Stretching ischiocrurali",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-aad5681af42cde3c1e9ad0ce",
+    "name": "Stretching polpacci",
+    "muscle_group": "Polpacci",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-5541738bf1c1d783cf4626aa",
+    "name": "Stretching quadricipiti",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-442d7961ee0f952b6f8451af",
+    "name": "Stretching soleo",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Mobilità"
+  },
+  {
+    "id": "catalog-d6b59057098aeadb333a2bec",
+    "name": "Stride",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-5f6c9e828919da51ac20ba87",
+    "name": "Suitcase Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-73cd1b16c4fb83061ad18a0b",
+    "name": "Superman",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-88c14d6a4c465d8959af490d",
+    "name": "Svend press",
+    "muscle_group": "Petto",
+    "equipment": "Disco",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-823bc3e0155c7318a880da68",
+    "name": "Swimmer",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4efa53b3b94a39acb6516cb6",
+    "name": "T-Test",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-e9fa5aefaaa2d240396b70b8",
+    "name": "Tapis roulant",
+    "muscle_group": "Cardio",
+    "equipment": "Macchina",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-2c693ef637bc4415c4487c8c",
+    "name": "Tate press",
+    "muscle_group": "Tricipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-cc6a9afbfc366ce180225628",
+    "name": "Tempo Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-10ab2cdafb99c671c3a3e52a",
+    "name": "Test cronometrato",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-d9bcc1145c1b44ec33bc8a6b",
+    "name": "Threshold Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-73f4aad17cfef7f863e9ff65",
+    "name": "Thruster",
+    "muscle_group": "Full body",
+    "equipment": "Bilanciere",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-a2f6b9b6acaba6cadde367ba",
+    "name": "Tibialis raise",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-036bfa95de360cbc673613a1",
+    "name": "Time Trial",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-f4161694e8933cdfee6740b9",
+    "name": "Toe Curl",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-fd481c937dac8ce8bd34727d",
+    "name": "Toe Raise",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-655680274bbf54ccb402947b",
+    "name": "Toe Touch",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-ec3edba6eef0b6fbb2656b9f",
+    "name": "Toe Yoga",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Forza"
+  },
+  {
+    "id": "catalog-71154cc10ee9eddb5a8681e1",
+    "name": "Toes to bar",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-f7eb8dc8e8552c5f09d28c52",
+    "name": "Towel scrunches",
+    "muscle_group": "Caviglia",
+    "equipment": "Corpo libero",
+    "category": "Rinforzo"
+  },
+  {
+    "id": "catalog-f0a7b019d23b2f8c638714c5",
+    "name": "Trail Running",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-b9b47c2ac44ebe9418987b0b",
+    "name": "Trazioni alla sbarra",
+    "muscle_group": "Schiena",
+    "equipment": "Corpo libero",
+    "category": "Multi-articolare"
+  },
+  {
+    "id": "catalog-f61f3a11b8dd88c684932f51",
+    "name": "Triceps extension machine",
+    "muscle_group": "Tricipiti",
+    "equipment": "Macchina",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-41459f1e23ba12525f57cdbb",
+    "name": "Triple Broad Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ba2049c40442ae733274df13",
+    "name": "Triple Hop",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-dc9baaabcd4fc5ae7ef6a5b2",
+    "name": "Tuck Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-892c01fecb1377d189f6a74a",
+    "name": "Tuck-up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-1f5f32a0214a9a90edca7aad",
+    "name": "Turkish Get-Up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-4aa5128c22eecbd51f8c3cb7",
+    "name": "V-up",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-e6fa28454c268052f22f2b73",
+    "name": "Vertical Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-ee765fa8e75bfc8928aa930c",
+    "name": "Vogatore",
+    "muscle_group": "Cardio",
+    "equipment": "Macchina",
+    "category": "Cardio"
+  },
+  {
+    "id": "catalog-3f302013772a90ace8e3f7f6",
+    "name": "Waiter Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-d31120b41052e51cd5eadf38",
+    "name": "Waiter Carry a un braccio",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-21a7d515b0f2544111df0272",
+    "name": "Wall Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-48b5de8f6c2cc18bb924618d",
+    "name": "Wall Switch",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-e356886617ae70250cefd64a",
+    "name": "Weighted Jump Squat",
+    "muscle_group": "Gambe",
+    "equipment": "Corpo libero",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-7e11009c0922cac22a0938d5",
+    "name": "Wicket Drill",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-5aefdc7e09bb09e6f25ce053",
+    "name": "Windshield Wiper",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-7b1fc2b59c88ed2cb4524310",
+    "name": "World’s Greatest Stretch",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Riscaldamento"
+  },
+  {
+    "id": "catalog-17d55ba60a98cccebf142348",
+    "name": "Wrist curl",
+    "muscle_group": "Avambracci",
+    "equipment": "Bilanciere",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-d220403ec83eaa7c7fe79a6f",
+    "name": "Wrist roller",
+    "muscle_group": "Avambracci",
+    "equipment": "Attrezzo",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-bbcf99fa9242d8476452abfb",
+    "name": "Y raise",
+    "muscle_group": "Spalle",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  },
+  {
+    "id": "catalog-472cf4959ede919c85b065cf",
+    "name": "Yasso 800",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-568bd59e761901f3170d9079",
+    "name": "Zercher Carry",
+    "muscle_group": "Core",
+    "equipment": "Corpo libero",
+    "category": "Core"
+  },
+  {
+    "id": "catalog-9076261f0b6c88baa1b3e308",
+    "name": "Zig-Zag Hurdle Jump",
+    "muscle_group": "Atletica",
+    "equipment": "Box/ostacoli",
+    "category": "Pliometria"
+  },
+  {
+    "id": "catalog-d038d6fefb6fc920d830db97",
+    "name": "Zig-Zag Run",
+    "muscle_group": "Cardio",
+    "equipment": "Corpo libero",
+    "category": "Corsa"
+  },
+  {
+    "id": "catalog-113cc50fec2cb9708a9bb8ec",
+    "name": "Zottman curl",
+    "muscle_group": "Bicipiti",
+    "equipment": "Manubri",
+    "category": "Isolamento"
+  }
+]

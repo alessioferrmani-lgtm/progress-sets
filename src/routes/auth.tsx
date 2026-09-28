@@ -1,138 +1,25 @@
-import { createFileRoute, redirect, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
-import { toast } from "sonner";
-
+function safeNext(value: unknown) {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") && !value.includes("\\") ? value : "/home";
+}
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" ? s.next : undefined,
-  }),
+  ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      throw redirect({
-        to: search.next?.startsWith("/") ? search.next : "/home",
-      });
-    }
-  },
-  component: AuthPage,
+    if (data.session) throw redirect({ to: safeNext(search.next) });
+  }, component: AuthPage,
 });
-
 function AuthPage() {
-  const navigate = useNavigate();
-  const { next } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } =
-        mode === "signin"
-          ? await supabase.auth.signInWithPassword({ email, password })
-          : await supabase.auth.signUp({
-              email,
-              password,
-              options: { emailRedirectTo: `${window.location.origin}/home` },
-            });
-      if (error) throw error;
-      toast.success(mode === "signin" ? "Bentornato!" : "Account creato");
-      navigate({ to: next && next.startsWith("/") ? next : "/home" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Errore");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    setLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) {
-        toast.error(
-          result.error instanceof Error ? result.error.message : "Impossibile accedere con Google",
-        );
-        setLoading(false);
-        return;
-      }
-      if (result.redirected) return;
-      // Tokens set — navigate.
-      navigate({ to: next && next.startsWith("/") ? next : "/home" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossibile accedere con Google");
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="ios-card w-full max-w-sm p-6">
-        <h1 className="text-2xl font-bold text-label">Allenamento Palestra</h1>
-        <p className="mt-1 text-sm text-label-secondary">
-          {mode === "signin" ? "Accedi al tuo account" : "Crea un nuovo account"}
-        </p>
-        {mode === "signin" && (
-          <div className="mt-4 flex items-center gap-3 rounded-xl bg-fill-secondary px-4 py-3">
-            <span
-              aria-hidden="true"
-              className="flex size-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
-            >
-              ✓
-            </span>
-            <p className="text-sm text-label-secondary">
-              L'accesso resta memorizzato su questo dispositivo
-            </p>
-          </div>
-        )}
-        <form onSubmit={submit} className="mt-5 space-y-3">
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl bg-fill-secondary px-4 py-3 text-base text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
-          />
-          <input
-            type="password"
-            required
-            minLength={6}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl bg-fill-secondary px-4 py-3 text-base text-label placeholder:text-label-tertiary outline-none focus:ring-2 focus:ring-accent"
-          />
-          <button type="submit" disabled={loading} className="ios-btn-primary w-full">
-            {loading ? "..." : mode === "signin" ? "Accedi" : "Registrati"}
-          </button>
-          <div className="flex items-center gap-3 py-1 text-xs text-label-tertiary">
-            <span className="h-px flex-1 bg-separator" /> oppure{" "}
-            <span className="h-px flex-1 bg-separator" />
-          </div>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={signInWithGoogle}
-            className="w-full rounded-xl border border-separator bg-background px-4 py-3 text-base font-medium text-label active:opacity-70 disabled:opacity-50"
-          >
-            Accedi con Google
-          </button>
-        </form>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-4 w-full text-center text-sm text-accent"
-        >
-          {mode === "signin" ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}
-        </button>
-      </div>
-    </div>
-  );
+  const { next } = Route.useSearch();
+  return <main className="flex min-h-dvh items-center justify-center bg-background p-6">
+    <section className="ios-card w-full max-w-sm p-7 text-center">
+      <img src="/progress-sets-track-flame-icon-192.png" alt="" className="mx-auto size-24 rounded-[24px]" />
+      <h1 className="mt-5 text-3xl font-bold text-label">Progress Sets</h1>
+      <p className="mt-3 text-sm leading-relaxed text-label-secondary">Le tue schede, l’atletica e i tuoi progressi. Ora su ChatGPT Sites.</p>
+      <a href={`/signin-with-chatgpt?return_to=${encodeURIComponent(safeNext(next))}`} target="_top" className="ios-btn-primary mt-7 block w-full">Accedi con ChatGPT</a>
+      <p className="mt-4 text-xs leading-relaxed text-label-tertiary">Allenamenti e routine vengono salvati nel tuo account. Non serve una nuova password.</p>
+    </section>
+  </main>;
 }

@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { RUNNING_DRILLS, runningDrillById } from "@/lib/running-drills";
+import { readPreference, writePreference } from "@/lib/site-preferences";
 
-const CONFIG_STORAGE_KEY = "progress-sets:home-warmup-drills";
+const CONFIG_STORAGE_KEY = "warmup-drills";
 const DEFAULT_DRILL_IDS = [
   "marcia-tecnica",
   "a-march",
@@ -56,44 +57,34 @@ export function CustomizableWarmupReminder() {
   const [draftIds, setDraftIds] = useState(DEFAULT_DRILL_IDS);
   const [search, setSearch] = useState("");
   const currentDay = todayKey();
-  const completionStorageKey = `progress-sets:running-warmup:${currentDay}`;
+  const completionStorageKey = `warmup-${currentDay}`;
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const configured = readDrillIds(window.localStorage.getItem(CONFIG_STORAGE_KEY));
+    let cancelled = false;
+    void readPreference(CONFIG_STORAGE_KEY).then(value => {
+      if (cancelled) return;
+      const configured = readDrillIds(JSON.stringify(value));
       setDrillIds(configured.length > 0 ? configured : DEFAULT_DRILL_IDS);
-    } catch {
-      setDrillIds(DEFAULT_DRILL_IDS);
-    } finally {
       setConfigReady(true);
-    }
+    }).catch((error: Error) => { if (!cancelled) toast.error(error.message); });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
     if (!configReady) return;
     setCompletionReady(false);
-    try {
-      const stored = window.localStorage.getItem(completionStorageKey);
-      const parsed = stored ? (JSON.parse(stored) as unknown) : [];
+    let cancelled = false;
+    void readPreference(completionStorageKey).then(parsed => {
+      if (cancelled) return;
       const valid = Array.isArray(parsed)
         ? parsed.filter((id): id is string => typeof id === "string" && drillIds.includes(id))
         : [];
       setCompleted([...new Set(valid)]);
-    } catch {
-      setCompleted([]);
-    } finally {
       setCompletionReady(true);
-    }
+    }).catch((error: Error) => { if (!cancelled) toast.error(error.message); });
+    return () => { cancelled = true; };
   }, [completionStorageKey, configReady, drillIds]);
-
-  useEffect(() => {
-    if (!configReady || !completionReady) return;
-    try {
-      window.localStorage.setItem(completionStorageKey, JSON.stringify(completed));
-    } catch {
-      // The checklist remains usable when browser storage is unavailable.
-    }
-  }, [completed, completionReady, completionStorageKey, configReady]);
 
   const selectedDrills = drillIds
     .map((id) => runningDrillById(id))
@@ -108,10 +99,15 @@ export function CustomizableWarmupReminder() {
     );
   }, [search]);
 
+  const persistCompleted = async (next: string[]) => {
+    if (!configReady || !completionReady || saving) return;
+    setSaving(true);
+    try { await writePreference(completionStorageKey, next); setCompleted(next); }
+    catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile salvare"); }
+    finally { setSaving(false); }
+  };
   const toggleCompleted = (id: string) => {
-    setCompleted((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
+    void persistCompleted(completed.includes(id) ? completed.filter(item => item !== id) : [...completed, id]);
   };
 
   const openEditor = () => {
@@ -136,20 +132,21 @@ export function CustomizableWarmupReminder() {
     });
   };
 
-  const saveConfiguration = () => {
+  const saveConfiguration = async () => {
+    if (!configReady || saving) return;
     if (draftIds.length === 0) {
       toast.error("Seleziona almeno un’andatura");
       return;
     }
-    setDrillIds(draftIds);
-    setCompleted((current) => current.filter((id) => draftIds.includes(id)));
+    setSaving(true);
     try {
-      window.localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(draftIds));
-    } catch {
-      // The in-memory configuration still applies for this session.
-    }
-    setEditorOpen(false);
-    toast.success("Riscaldamento Home aggiornato");
+      await writePreference(CONFIG_STORAGE_KEY, draftIds);
+      setDrillIds(draftIds);
+      setCompleted((current) => current.filter((id) => draftIds.includes(id)));
+      setEditorOpen(false);
+      toast.success("Riscaldamento aggiornato");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile salvare"); }
+    finally { setSaving(false); }
   };
 
   const resetDraft = () => setDraftIds(DEFAULT_DRILL_IDS);
@@ -226,7 +223,7 @@ export function CustomizableWarmupReminder() {
             {finished > 0 && (
               <button
                 type="button"
-                onClick={() => setCompleted([])}
+                onClick={() => void persistCompleted([])}
                 className="text-xs font-semibold text-accent"
               >
                 Azzera
@@ -261,7 +258,7 @@ export function CustomizableWarmupReminder() {
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-fill" />
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent">Home</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent">Atletica</p>
                 <h2 id="running-warmup-editor-title" className="text-xl font-bold text-label">
                   Imposta le andature
                 </h2>
@@ -284,7 +281,7 @@ export function CustomizableWarmupReminder() {
                 <div className="flex items-center gap-2">
                   <ListFilter className="size-4 text-accent" />
                   <h3 className="text-sm font-semibold text-label">
-                    Ordine Home ({draftIds.length})
+                    Ordine andature ({draftIds.length})
                   </h3>
                 </div>
                 {draftIds.length === 0 ? (
@@ -395,7 +392,7 @@ export function CustomizableWarmupReminder() {
                 disabled={draftIds.length === 0}
                 className="min-h-11 rounded-full bg-accent px-4 text-sm font-semibold text-accent-foreground disabled:opacity-40"
               >
-                Salva Home
+                {saving ? "Salvataggio…" : "Salva routine"}
               </button>
             </div>
           </section>

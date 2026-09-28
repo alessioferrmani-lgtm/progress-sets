@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RestTimerBar } from "@/components/RestTimerBar";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { InterruptedWorkoutPrompt } from "@/components/InterruptedWorkoutPrompt";
+import { SitesAgentTools } from "@/components/SitesAgentTools";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -32,6 +33,7 @@ function AuthedLayout() {
       }
     >
       <Outlet />
+      <SitesAgentTools />
       <RestTimerBar />
       <BottomTabBar />
       <InterruptedWorkoutPrompt />

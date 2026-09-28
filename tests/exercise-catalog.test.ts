@@ -187,7 +187,9 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
     "utf8",
   );
   assert.match(sheet, /RunningDrillIllustration/);
-  assert.match(sheet, /localStorage/);
+  assert.match(sheet, /readPreference/);
+  assert.match(sheet, /writePreference/);
+  assert.doesNotMatch(sheet, /localStorage/);
   assert.match(sheet, /Salva routine/);
   assert.match(sheet, /Sposta .* sopra/);
 
@@ -212,5 +214,6 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   );
   assert.match(homeReminder, /data-testid="customize-running-warmup"/);
   assert.match(homeReminder, /CONFIG_STORAGE_KEY/);
-  assert.match(homeReminder, /Salva Home/);
+  assert.match(homeReminder, /Salva routine/);
+  assert.match(homeReminder, /writePreference/);
 });
