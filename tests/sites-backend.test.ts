@@ -6,6 +6,7 @@ import { executeQuery } from "../sites/query-engine.ts";
 import { handleApi } from "../sites/api.ts";
 import type { SitesQuery } from "../src/integrations/sites/query.ts";
 import type { DatabaseBinding } from "../sites/database.ts";
+import { importProgress } from "../sites/progress-import.ts";
 
 function setup() {
   const sqlite = new DatabaseSync(":memory:");
@@ -129,4 +130,72 @@ test("Sites: le query rifiutano SQL arbitrario e dati invalidi senza mutazioni",
   await assert.rejects(()=>insert('workout_sessions',{started_at:'oggi'}),/Data non valida/);
   await assert.rejects(()=>insert('workout_templates',{name:'ok',secret:'x'}),/Campo/);
   assert.equal((await query('workout_templates')).data.length,0);
+});
+
+function backupFixture() {
+  return {application:"Progress Sets",schema_version:1,export_complete:true,export_warnings:[],
+    profile:{user_id:"old-user",weight_kg:80,display_name:"Atleta"},
+    weight_history:[{id:"w",user_id:"old-user",weight_kg:80,logged_at:"2026-01-01T10:00:00Z"}],
+    gym:{programs:[{id:"p",name:"Programma",duration_weeks:4,current_week:3}],
+      exercises:[{id:"e",name:"Squat",is_default:true,user_id:null}],
+      templates:[{id:"t",name:"Seduta A",program_id:"p",program_week:3,session_key:"A"}],
+      template_exercises:[{id:"te",template_id:"t",exercise_id:"e",target_sets:2,target_reps:6}],
+      sessions:[{id:"s",template_id:"t",started_at:"2026-01-01T10:00:00Z",ended_at:"2026-01-01T12:00:00Z",calories_burned:400},{id:"empty",started_at:"2026-01-01T12:00:01Z",ended_at:"2026-01-01T12:00:03Z"}],
+      logged_sets:[{id:"a",session_id:"s",exercise_id:"e",set_number:1,weight_kg:60,reps:6,completed_at:"2026-01-01T10:05:00Z"},{id:"b",session_id:"s",exercise_id:"e",set_number:1,weight_kg:60,reps:6,completed_at:"2026-01-01T10:05:00.050Z"}]},
+    athletics:{test_types:[],tests:[],races:[],interval_sessions:[],interval_reps:[],performance_log:[]}};
+}
+test("Import: anteprima senza scritture, copia atomica, proprietà e storico peso",async()=>{
+  const {db,query,api}=setup(); await api("auth");
+  const backup=backupFixture(); const original=JSON.stringify(backup);
+  const preview=await importProgress(db,"alice",{backup,skipEmpty:true,preview:true});
+  assert.equal(preview.skippedEmpty,1);assert.equal(preview.duplicateSets,1);
+  assert.equal((await query("workout_templates")).data.length,0);
+  assert.equal(JSON.stringify(backup),original);
+  await importProgress(db,"alice",{backup,skipEmpty:true,preview:false});
+  assert.equal((await query("workout_sessions")).data.length,1);
+  assert.equal((await query("logged_sets")).data.length,1);
+  assert.equal((await query("weight_logs")).data.length,1);
+  assert.equal((await query("weight_logs")).data[0].logged_at,"2026-01-01T10:00:00.000Z");
+  assert.equal((await query("profiles")).data[0].weight_kg,80);
+  assert.equal((await query("profiles")).data[0].display_name,"alice"); // preserve existing values
+  assert.equal((await query("training_programs")).data[0].current_week,3);
+  assert.equal((await query("workout_sessions")).data[0].calories_burned,400);
+  assert.equal((await query("workout_sessions",{},"bob")).data.length,0);
+  const result=await importProgress(db,"alice",{backup,skipEmpty:true,preview:false});
+  assert.equal(result.alreadyImported,true);
+  assert.equal((await query("logged_sets")).data.length,1);
+  await importProgress(db,"bob",{backup,skipEmpty:true,preview:false});
+  assert.equal((await query("workout_sessions",{},"bob")).data.length,1);
+  assert.notEqual((await query("workout_sessions")).data[0].id,(await query("workout_sessions",{},"bob")).data[0].id);
+});
+test("Import: replay con data esportazione diversa non duplica e i programmi mancanti restano visibili",async()=>{
+  const {db,query}=setup();const backup:any=backupFixture();delete backup.gym.programs;
+  const result=await importProgress(db,"alice",{backup,skipEmpty:false,preview:false});
+  assert.equal(result.counts.workout_sessions,2);
+  assert.equal((await query("training_programs")).data[0].name,"Programma importato");
+  backup.exported_at="2026-02-01T10:00:00Z";
+  await importProgress(db,"alice",{backup,skipEmpty:false,preview:false});
+  assert.equal((await query("workout_sessions")).data.length,2);
+  assert.equal((await query("weight_logs")).data.length,1);
+});
+test("Import: backup incompleti, riferimenti estranei e serie discordanti non scrivono nulla",async()=>{
+  const {db,query,api}=setup();
+  assert.equal((await api("import",{backup:backupFixture(),skipEmpty:true,preview:false},null)).status,401);
+  assert.equal((await api("import",{backup:backupFixture(),skipEmpty:true,preview:false},"alice","https://evil.test")).status,403);
+  const incomplete=backupFixture();incomplete.export_complete=false;
+  await assert.rejects(()=>importProgress(db,"alice",{backup:incomplete,skipEmpty:true,preview:false}),/incompleto/);
+  const mismatch=backupFixture();mismatch.gym.logged_sets[1].weight_kg=70;
+  await assert.rejects(()=>importProgress(db,"alice",{backup:mismatch,skipEmpty:true,preview:false}),/diversi/);
+  const missing=backupFixture();missing.gym.logged_sets[0].exercise_id="another-user-exercise";
+  await assert.rejects(()=>importProgress(db,"alice",{backup:missing,skipEmpty:true,preview:false}),/record collegato/);
+  assert.equal((await query("profiles")).data.length,0);
+  assert.equal((await query("workout_sessions")).data.length,0);
+});
+test("Import: un vincolo fallito annulla anche profilo e schede",async()=>{
+  const {db,query,insert}=setup();await insert("workout_sessions",{});
+  const backup:any=backupFixture();backup.gym.sessions[0].ended_at=null;backup.gym.sessions[0].template_id=null;
+  await assert.rejects(()=>importProgress(db,"alice",{backup,skipEmpty:true,preview:false}),/UNIQUE/);
+  assert.equal((await query("profiles")).data.length,0);
+  assert.equal((await query("workout_templates")).data.length,0);
+  assert.equal((await query("workout_sessions")).data.length,1);
 });

@@ -201,6 +201,12 @@ function ProfilePage() {
 
       <ul className="ios-list mt-6">
         <li>
+          <Link to="/profile/import" className="ios-list-row">
+            <span className="min-w-0 flex-1 text-sm text-label">Importa dati dalla vecchia app</span>
+            <ChevronRight className="h-4 w-4 text-label-tertiary" />
+          </Link>
+        </li>
+        <li>
           <Link to="/workouts" className="ios-list-row">
             <span className="min-w-0 flex-1 text-sm text-label">Le mie schede</span>
             <ChevronRight className="h-4 w-4 text-label-tertiary" />

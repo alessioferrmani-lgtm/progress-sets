@@ -9,7 +9,7 @@ const tables = {
   logged_sets:schema.loggedSets,test_types:schema.testTypes,tests:schema.tests,races:schema.races,
   interval_sessions:schema.intervalSessions,interval_reps:schema.intervalReps,performance_log:schema.performanceLog,
 };
-type TableName = keyof typeof tables;
+export type TableName = keyof typeof tables;
 const shared = new Set(["exercises","test_types"]);
 const refs: Record<string, Record<string, TableName>> = {
   workout_templates:{program_id:"training_programs"},template_exercises:{template_id:"workout_templates",exercise_id:"exercises"},
@@ -56,7 +56,7 @@ function normalize(table: TableName, row: Row) {
   for (const [key,meta] of Object.entries(columns(table))) { if(meta.dataType==="boolean" && result[key]!=null) result[key]=!!result[key]; }
   return result;
 }
-function validateRow(table: TableName, raw: unknown, uid: string, update=false): Row {
+export function validateRow(table: TableName, raw: unknown, uid: string, update=false): Row {
   if (!raw || typeof raw!=="object" || Array.isArray(raw)) return bad("Dati non validi");
   const row: Row={}; const definitions=columns(table);
   for(const [key,value] of Object.entries(raw)) {

@@ -1,6 +1,7 @@
 import { database, type DatabaseBinding } from "./database.ts";
 import { executeQuery, QueryError } from "./query-engine.ts";
 import { ensureCatalog } from "./catalog.ts";
+import { importProgress } from "./progress-import.ts";
 export type Env = { DB?: DatabaseBinding; ASSETS?: {fetch(request: Request): Promise<Response>}; };
 function json(value:unknown,status=200) { return new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}}); }
 export function readIdentity(request:Request) {
@@ -39,6 +40,7 @@ export async function handleApi(request:Request,env:Env) {
     if(Number(request.headers.get("Content-Length")??0)>1_000_000)throw new QueryError("Richiesta troppo grande");
     const raw=await request.text();if(raw.length>1_000_000)throw new QueryError("Richiesta troppo grande");
     let body:any;try{body=JSON.parse(raw);}catch{throw new QueryError("Dati non validi");}
+    if(path==="/api/sites/import")return json({data:await importProgress(db,user.id,body),error:null});
     if(path==="/api/sites/query")return json(await executeQuery(db,user.id,body));
     if(path==="/api/sites/preferences") {
       const key=preferenceKey(body?.key);const value=JSON.stringify(body.value);

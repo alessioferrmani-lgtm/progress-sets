@@ -16,6 +16,29 @@ modificato: la migrazione vive sul branch `codex/migrate-to-sites`.
   restano soltanto cache di supporto, non l'archivio degli allenamenti.
 - Importazione del testo delle schede eseguita localmente, senza chiavi AI.
 
+## Copia dei dati dalla vecchia app
+
+Da Profilo → Importa dati si può incollare o caricare un export JSON completo
+di Progress Sets. Il server verifica il backup prima della conferma e applica
+la copia in un'unica transazione. Gli identificativi sono rimappati per account,
+le riesecuzioni non duplicano i record e i dati già presenti non sono sovrascritti.
+È possibile escludere gli allenamenti conclusi senza serie; serie con la stessa
+identità e gli stessi carichi/ripetizioni vengono accorpate conservando la prima
+registrazione. Se carichi o ripetizioni discordano l'importazione si ferma.
+Date e calorie storiche non sono ricalcolate. I programmi mancanti negli export
+precedenti vengono mantenuti raggruppati con un avviso. Il nuovo export include
+anche i metadati dei programmi. Le routine locali assenti dal vecchio JSON non
+sono recuperabili da quel backup. Il limite è 1000 record per importazione.
+
+## Icona iPhone
+
+L'apple-touch-icon e le immagini del manifest usano la copia pubblica già
+esistente nel repository GitHub, fissata a una revisione immutabile. Questo
+evita il login del gateway Sites per la sola immagine. Il manifest richiede
+le credenziali della sessione; database e pagine restano privati su Sites.
+Un collegamento iOS già installato può richiedere una nuova aggiunta alla Home;
+il comportamento finale deve essere verificato sul dispositivo reale.
+
 Il modulo chiamato `supabase/client` rimane un adattatore di compatibilità per
 l'interfaccia esistente: le richieste attive passano a `/api/sites/*`, non a
 Supabase. I file Postgres originali sono conservati in `docs/lovable-migrations`
