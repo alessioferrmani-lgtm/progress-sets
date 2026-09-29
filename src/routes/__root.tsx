@@ -115,10 +115,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "apple-touch-icon",
-        href: "/progress-sets-track-flame-apple-touch-icon.png",
+        // Public, immutable brand asset only: private Sites gate same-origin icon requests.
+        // Workout/profile data remains on Sites and never goes to GitHub.
+        href: "https://raw.githubusercontent.com/alessioferrmani-lgtm/progress-sets/eaf36abad4f01e6fa670771ca51aeaf2365587c7/public/progress-sets-track-flame-apple-touch-icon.png",
         sizes: "180x180",
       },
-      { rel: "manifest", href: "/manifest.webmanifest?v=3" },
+      { rel: "manifest", href: "/manifest.webmanifest?v=4", crossOrigin: "use-credentials" },
     ],
   }),
   shellComponent: RootShell,

@@ -22,6 +22,7 @@ export async function loadProgressExport() {
     racesResult,
     intervalsResult,
     performanceResult,
+    programsResult,
   ] = await Promise.all([
     safeExportOne(
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
@@ -61,6 +62,11 @@ export async function loadProgressExport() {
     safeExportRows(
       supabase.from("performance_log").select("*").eq("user_id", userId).order("date"),
       "Registro prestazioni",
+      warnings,
+    ),
+    safeExportRows(
+      supabase.from("training_programs").select("*").eq("user_id", userId).order("created_at"),
+      "Programmi a settimane",
       warnings,
     ),
   ]);
@@ -149,6 +155,7 @@ export async function loadProgressExport() {
     profile,
     weight_history: weightHistory,
     gym: {
+      programs: programsResult,
       templates: workoutTemplates,
       template_exercises: templateExercises,
       sessions: workoutSessions,

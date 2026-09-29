@@ -9,19 +9,19 @@
   "theme_color": "#08090C",
   "icons": [
     {
-      "src": "/progress-sets-track-flame-icon-192.png",
+      "src": "https://raw.githubusercontent.com/alessioferrmani-lgtm/progress-sets/eaf36abad4f01e6fa670771ca51aeaf2365587c7/public/progress-sets-track-flame-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/progress-sets-track-flame-icon-512.png",
+      "src": "https://raw.githubusercontent.com/alessioferrmani-lgtm/progress-sets/eaf36abad4f01e6fa670771ca51aeaf2365587c7/public/progress-sets-track-flame-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/progress-sets-track-flame-icon-1024.png",
+      "src": "https://raw.githubusercontent.com/alessioferrmani-lgtm/progress-sets/eaf36abad4f01e6fa670771ca51aeaf2365587c7/public/progress-sets-track-flame-icon-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"

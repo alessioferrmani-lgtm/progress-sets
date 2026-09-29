@@ -19,6 +19,7 @@ import { Route as AuthenticatedWorkoutsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAthleticsIndexRouteImport } from './routes/_authenticated/athletics/index'
 import { Route as AuthenticatedWorkoutsNewRouteImport } from './routes/_authenticated/workouts/new'
 import { Route as AuthenticatedWorkoutsFreeRouteImport } from './routes/_authenticated/workouts/free'
+import { Route as AuthenticatedProfileImportRouteImport } from './routes/_authenticated/profile/import'
 import { Route as AuthenticatedProfileExportRouteImport } from './routes/_authenticated/profile/export'
 import { Route as AuthenticatedAthleticsTestsRouteImport } from './routes/_authenticated/athletics/tests'
 import { Route as AuthenticatedAthleticsRacesRouteImport } from './routes/_authenticated/athletics/races'
@@ -83,6 +84,12 @@ const AuthenticatedWorkoutsFreeRoute =
     id: '/workouts/free',
     path: '/workouts/free',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileImportRoute =
+  AuthenticatedProfileImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedProfileRoute,
   } as any)
 const AuthenticatedProfileExportRoute =
   AuthenticatedProfileExportRouteImport.update({
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/profile/export': typeof AuthenticatedProfileExportRoute
+  '/profile/import': typeof AuthenticatedProfileImportRoute
   '/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/athletics/': typeof AuthenticatedAthleticsIndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/profile/export': typeof AuthenticatedProfileExportRoute
+  '/profile/import': typeof AuthenticatedProfileImportRoute
   '/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/athletics': typeof AuthenticatedAthleticsIndexRoute
@@ -197,6 +206,7 @@ export interface FileRoutesById {
   '/_authenticated/athletics/races': typeof AuthenticatedAthleticsRacesRouteWithChildren
   '/_authenticated/athletics/tests': typeof AuthenticatedAthleticsTestsRouteWithChildren
   '/_authenticated/profile/export': typeof AuthenticatedProfileExportRoute
+  '/_authenticated/profile/import': typeof AuthenticatedProfileImportRoute
   '/_authenticated/workouts/free': typeof AuthenticatedWorkoutsFreeRoute
   '/_authenticated/workouts/new': typeof AuthenticatedWorkoutsNewRoute
   '/_authenticated/athletics/': typeof AuthenticatedAthleticsIndexRoute
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/athletics/races'
     | '/athletics/tests'
     | '/profile/export'
+    | '/profile/import'
     | '/workouts/free'
     | '/workouts/new'
     | '/athletics/'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/athletics/races'
     | '/athletics/tests'
     | '/profile/export'
+    | '/profile/import'
     | '/workouts/free'
     | '/workouts/new'
     | '/athletics'
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/_authenticated/athletics/races'
     | '/_authenticated/athletics/tests'
     | '/_authenticated/profile/export'
+    | '/_authenticated/profile/import'
     | '/_authenticated/workouts/free'
     | '/_authenticated/workouts/new'
     | '/_authenticated/athletics/'
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workouts/free'
       preLoaderRoute: typeof AuthenticatedWorkoutsFreeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/import': {
+      id: '/_authenticated/profile/import'
+      path: '/import'
+      fullPath: '/profile/import'
+      preLoaderRoute: typeof AuthenticatedProfileImportRouteImport
+      parentRoute: typeof AuthenticatedProfileRoute
     }
     '/_authenticated/profile/export': {
       id: '/_authenticated/profile/export'
@@ -477,10 +497,12 @@ const AuthenticatedAthleticsRouteRouteWithChildren =
 
 interface AuthenticatedProfileRouteChildren {
   AuthenticatedProfileExportRoute: typeof AuthenticatedProfileExportRoute
+  AuthenticatedProfileImportRoute: typeof AuthenticatedProfileImportRoute
 }
 
 const AuthenticatedProfileRouteChildren: AuthenticatedProfileRouteChildren = {
   AuthenticatedProfileExportRoute: AuthenticatedProfileExportRoute,
+  AuthenticatedProfileImportRoute: AuthenticatedProfileImportRoute,
 }
 
 const AuthenticatedProfileRouteWithChildren =
