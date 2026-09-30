@@ -1,7 +1,9 @@
+import { WorkoutSetControls } from "@/components/WorkoutSetControls";
+import { addWorkoutSet, configureRows, restoreWorkoutRows, recordedMeasurement, type WorkoutRow } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Dumbbell, Minus, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Check, ChevronDown, Dumbbell, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -30,18 +32,13 @@ export const Route = createFileRoute("/_authenticated/workouts/free")({
 
 const DEFAULT_REST_SECONDS = 90;
 
-type FreeRow = {
-  set_number: number;
-  weight: string;
-  reps: string;
-  completed: boolean;
-  completedAt?: number;
-  logId?: string;
-};
+type FreeRow = WorkoutRow;
 
 function FreeWorkoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isFinishing, setIsFinishing] = useState(false);
+  const finishingRef = useRef(false);
   const timer = useRestTimer();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -53,11 +50,13 @@ function FreeWorkoutPage() {
   const [startedAt, setStartedAt] = useState(Date.now());
   const [now, setNow] = useState(Date.now());
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
-  const [isFinishing, setIsFinishing] = useState(false);
+  const savingSet = useRef(false);
+  const [isSavingSet, setIsSavingSet] = useState(false);
 
   const activeWorkout = useQuery({
     queryKey: ["active-workout-bootstrap", "free"],
     queryFn: ensureFreeWorkout,
+    enabled: !isFinishing,
     staleTime: Infinity,
     retry: 1,
   });
@@ -108,35 +107,19 @@ function FreeWorkoutPage() {
       exerciseById.has(id),
     );
     if (ids.length > 0 && !previous.data) return;
-    const loggedByKey = new Map(
-      activeWorkout.data.loggedSets.map((set) => [`${set.exercise_id}:${set.set_number}`, set]),
-    );
     const rows: Record<string, FreeRow[]> = {};
-    ids.forEach((id) => {
-      const saved = activeWorkout.data!.draft.rowsByExercise[id] ?? [];
-      const completedNumbers = activeWorkout
-        .data!.loggedSets.filter((set) => set.exercise_id === id)
-        .map((set) => set.set_number);
-      const count = Math.max(1, saved.length, ...completedNumbers, 0);
-      const previousSets = previous.data?.get(id);
-      rows[id] = Array.from({ length: count }, (_, index) => {
-        const setNumber = index + 1;
-        const completed = loggedByKey.get(`${id}:${setNumber}`);
-        const savedRow = saved[index];
-        const previousRow = previousSets?.get(setNumber) ?? previousSets?.get(1);
-        return {
-          set_number: setNumber,
-          weight: String(completed?.weight_kg ?? savedRow?.weight ?? previousRow?.weight_kg ?? ""),
-          reps: String(completed?.reps ?? savedRow?.reps ?? previousRow?.reps ?? ""),
-          completed: Boolean(completed),
-          completedAt: completed ? new Date(completed.completed_at).getTime() : undefined,
-          logId: completed?.id,
-        };
+    ids.forEach(id => {
+      rows[id] = restoreWorkoutRows({
+        saved: activeWorkout.data!.draft.rowsByExercise[id] ?? [],
+        logged: activeWorkout.data!.loggedSets.filter(set => set.exercise_id === id),
+        previous: previous.data?.get(id),
       });
     });
     setSelectedIds(ids);
     setActiveIdx(Math.min(activeWorkout.data.draft.activeIdx, Math.max(ids.length - 1, 0)));
     setRowsByExercise(rows);
+    const restoredId=ids[Math.min(activeWorkout.data.draft.activeIdx, Math.max(ids.length-1,0))];
+    setActiveSetIdx(Math.max(0,Math.min(activeWorkout.data.draft.activeSetIdx ?? 0,(rows[restoredId]?.length ?? 1)-1)));
     setStartedAt(new Date(activeWorkout.data.session.startedAt).getTime());
     setInitialized(true);
   }, [activeWorkout.data, exerciseById, exercisesQuery.data, initialized, previous.data]);
@@ -162,6 +145,7 @@ function FreeWorkoutPage() {
 
   const persistWorkout = useCallback(
     (nextActiveIdx = activeIdx) => {
+      if (finishingRef.current) return;
       if (!session || !initialized) return;
       saveActiveWorkoutDraft({
         version: 1,
@@ -170,17 +154,18 @@ function FreeWorkoutPage() {
         sessionStartedAt: session.startedAt,
         elapsedSec: getWorkoutElapsedSeconds(session.startedAt),
         activeIdx: nextActiveIdx,
+        activeSetIdx,
         exerciseIds: selectedIds,
         rowsByExercise: Object.fromEntries(
           Object.entries(rowsByExercise).map(([id, list]) => [
             id,
-            list.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+            list.map(({ completed, completedAt, logId, ...draft }) => draft),
           ]),
         ),
         updatedAt: new Date().toISOString(),
       });
     },
-    [activeIdx, initialized, rowsByExercise, selectedIds, session],
+    [activeIdx, activeSetIdx, initialized, rowsByExercise, selectedIds, session],
   );
 
   useEffect(() => {
@@ -220,7 +205,7 @@ function FreeWorkoutPage() {
     });
   };
 
-  const confirmSet = async () => {
+  const saveSet = async () => {
     if (!sessionId || !activeExercise || !activeRow || !activeExerciseId) return;
     if (activeRow.completed) {
       if (!activeRow.logId) return;
@@ -241,12 +226,9 @@ function FreeWorkoutPage() {
       timer.skip();
       return;
     }
-    const weight = Number(activeRow.weight || 0);
-    const reps = Number.parseInt(activeRow.reps || "0", 10);
-    if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) {
-      toast.error("Inserisci carico e ripetizioni validi");
-      return;
-    }
+    let measurement;
+    try { measurement = recordedMeasurement(activeRow); }
+    catch(error) { toast.error(error instanceof Error ? error.message : "Valore non valido"); return; }
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return toast.error("Sessione scaduta: accedi di nuovo");
     const completedRows = Object.values(rowsByExercise)
@@ -260,8 +242,7 @@ function FreeWorkoutPage() {
       session_id: sessionId,
       exercise_id: activeExercise.id,
       set_number: activeRow.set_number,
-      weight_kg: weight,
-      reps,
+      ...measurement,
       rest_taken_sec: last ? Math.round((Date.now() - last) / 1000) : null,
     });
     if (error) return toast.error(error.message);
@@ -284,6 +265,13 @@ function FreeWorkoutPage() {
       timer.skip();
       setShowCompletionPrompt(true);
     }
+  };
+
+  const confirmSet = async () => {
+    if (savingSet.current || isFinishing) return;
+    savingSet.current = true; setIsSavingSet(true);
+    try { await saveSet(); } catch(error) { toast.error(error instanceof Error ? error.message : "Salvataggio non riuscito"); }
+    finally { savingSet.current = false; setIsSavingSet(false); }
   };
 
   const skipExercise = () => {
@@ -315,6 +303,8 @@ function FreeWorkoutPage() {
       [exercise.id]: [
         {
           set_number: 1,
+          side: "both",
+          reps_type: "count",
           weight: String(previous.data?.get(exercise.id)?.get(1)?.weight_kg ?? ""),
           reps: String(previous.data?.get(exercise.id)?.get(1)?.reps ?? ""),
           completed: false,
@@ -330,35 +320,31 @@ function FreeWorkoutPage() {
   const addSet = () => {
     if (!activeExerciseId) return;
     setRowsByExercise((current) => {
-      const list = [...(current[activeExerciseId] ?? [])];
-      const previousRow = list[list.length - 1];
-      list.push({
-        set_number: list.length + 1,
-        weight: previousRow?.weight ?? "",
-        reps: previousRow?.reps ?? "",
-        completed: false,
-      });
+      const list = addWorkoutSet(current[activeExerciseId] ?? []);
       return { ...current, [activeExerciseId]: list };
     });
     setActiveSetIdx(rows.length);
   };
 
   const finish = async () => {
-    if (!session || isFinishing) return;
-    setIsFinishing(true);
+    if (!session || isFinishing || savingSet.current) return;
+    if (Object.values(rowsByExercise).flat().some(row => row.clock?.startedAt != null)) return toast.error("Ferma il cronometro della serie prima di terminare");
     persistWorkout();
+    finishingRef.current = true;
+    setIsFinishing(true);
     try {
       await finishActiveWorkout(session, elapsed, completedSets > 0);
       timer.skip();
-      queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", "free"] });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["active-workout"] }),
         queryClient.invalidateQueries({ queryKey: ["dash"] }),
         queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
       ]);
-      navigate({ to: "/sessions/$sessionId/summary", params: { sessionId: session.id } });
+      await navigate({ to: "/sessions/$sessionId/summary", params: { sessionId: session.id } });
+      queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", "free"] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossibile salvare l'allenamento");
+      finishingRef.current = false;
       setIsFinishing(false);
     }
   };
@@ -378,7 +364,7 @@ function FreeWorkoutPage() {
   }
 
   return (
-    <main className="workout-screen mx-auto flex w-full max-w-md flex-col px-4 pb-8 pt-[calc(env(safe-area-inset-top)+10px)]">
+    <main className="workout-screen workout-screen-free mx-auto flex w-full max-w-md flex-col">
       <section className="workout-top-shell shrink-0">
         <header className="workout-screen-header flex shrink-0 items-center gap-3">
           <button
@@ -403,7 +389,7 @@ function FreeWorkoutPage() {
               className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground disabled:opacity-50"
               aria-label="Termina allenamento"
             >
-              Termina allenamento
+              Fine
             </button>
           )}
         </header>
@@ -449,8 +435,9 @@ function FreeWorkoutPage() {
             exerciseName={activeExercise.name}
             exercisePosition={activeIdx + 1}
             exerciseCount={selectedIds.length}
-            seriesPosition={activeSetIdx + 1}
-            seriesCount={rows.length}
+            seriesPosition={activeRow.side && activeRow.side !== "both" ? Math.ceil((activeSetIdx + 1) / 2) : activeSetIdx + 1}
+            side={activeRow.side}
+            seriesCount={activeRow.side && activeRow.side !== "both" ? Math.ceil(rows.length / 2) : rows.length}
             completedSets={completedSets}
             totalSets={totalSets}
             onSkip={skipExercise}
@@ -498,55 +485,24 @@ function FreeWorkoutPage() {
 
             <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
               <span>Recupero suggerito: 1:30</span>
-              <span>
-                Serie {activeSetIdx + 1} di {rows.length}
-              </span>
+
             </div>
 
-            <div className="workout-set-picker mt-5 flex gap-2 overflow-x-auto pb-1">
-              {rows.map((row, index) => (
-                <button
-                  key={row.set_number}
-                  type="button"
-                  onClick={() => setActiveSetIdx(index)}
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
-                    index === activeSetIdx
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : row.completed
-                        ? "border-success bg-success/15 text-success"
-                        : "border-separator bg-fill text-label-secondary"
-                  }`}
-                >
-                  {row.set_number}
-                </button>
-              ))}
-            </div>
-
-            <div className="workout-values mt-4 grid grid-cols-2 gap-3">
-              <NumberCell
-                label="Carico kg"
-                value={activeRow.weight}
-                onChange={(value) => updateRow("weight", value)}
-                step={2.5}
-                disabled={activeRow.completed}
-              />
-              <NumberCell
-                label="Ripetizioni"
-                value={activeRow.reps}
-                onChange={(value) => updateRow("reps", value)}
-                step={1}
-                integer
-                disabled={activeRow.completed}
-              />
-            </div>
+            <WorkoutSetControls rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
+              anotherClockRunning={Object.values(rowsByExercise).flat().some(row => row !== activeRow && row.clock?.startedAt != null)}
+              onField={updateRow}
+              onPatch={patch => setRowsByExercise(current => ({...current,[activeExerciseId!]: current[activeExerciseId!].map((row,i) => i === activeSetIdx ? {...row,...patch} : row)}))}
+              onConfigure={(unilateral,type) => {setRowsByExercise(current => ({...current,[activeExerciseId!]: configureRows(current[activeExerciseId!],unilateral,type)}));setActiveSetIdx(0);}}
+            />
 
             <button
               type="button"
               onClick={confirmSet}
+              disabled={isSavingSet || isFinishing}
               className={`workout-confirm mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 font-semibold text-white ${activeRow.completed ? "bg-success" : "bg-accent"}`}
             >
               <Check className="size-5" />{" "}
-              {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
+              {isSavingSet ? "Salvataggio…" : activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
             </button>
             <button
               type="button"
@@ -628,62 +584,5 @@ function FreeWorkoutPage() {
         />
       )}
     </main>
-  );
-}
-
-function NumberCell({
-  label,
-  value,
-  onChange,
-  step,
-  integer,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  step: number;
-  integer?: boolean;
-  disabled?: boolean;
-}) {
-  const increment = (direction: 1 | -1) => {
-    const next = Math.max(0, Number(value || 0) + direction * step);
-    onChange(integer ? String(Math.round(next)) : String(Math.round(next * 100) / 100));
-  };
-  return (
-    <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
-      <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
-        {label}
-      </div>
-      <div className="workout-value-control mt-3 flex items-center justify-center gap-2">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => increment(-1)}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label disabled:opacity-40"
-          aria-label={`Diminuisci ${label}`}
-        >
-          <Minus className="size-4" />
-        </button>
-        <input
-          type="number"
-          inputMode="decimal"
-          disabled={disabled}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onFocus={(event) => event.target.select()}
-          className="workout-value-input w-full min-w-0 bg-transparent py-1 text-center text-3xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
-        />
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => increment(1)}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label disabled:opacity-40"
-          aria-label={`Aumenta ${label}`}
-        >
-          <Plus className="size-4" />
-        </button>
-      </div>
-    </div>
   );
 }

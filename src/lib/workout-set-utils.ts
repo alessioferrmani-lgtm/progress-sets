@@ -2,6 +2,7 @@ export type EditableWorkoutRow = {
   weight: string;
   reps?: string;
   completed: boolean;
+  side?: "both" | "left" | "right";
 };
 
 /**
@@ -19,9 +20,12 @@ export function updateSetFieldAndPropagate<T extends EditableWorkoutRow>(
   field: "weight" | "reps",
   value: string,
 ): T[] {
+  if (rows[rowIndex]?.completed) return rows;
+  const side = rows[rowIndex]?.side ?? "both";
+  const firstForSide = rows.findIndex(row => (row.side ?? "both") === side) === rowIndex;
   return rows.map((row, index) => {
     if (index === rowIndex) return { ...row, [field]: value };
-    if (rowIndex === 0 && index > rowIndex && !row.completed) {
+    if (firstForSide && index > rowIndex && !row.completed && (row.side ?? "both") === side) {
       return { ...row, [field]: value };
     }
     return row;

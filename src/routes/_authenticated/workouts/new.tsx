@@ -1,3 +1,5 @@
+import { Switch } from "@/components/ui/switch";
+import { targetValue } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -66,6 +68,7 @@ type Row = {
   objective: string | null;
   rir: string | null;
   alternative: string | null;
+  is_unilateral: boolean;
   target_sets: number;
   target_reps: number | null;
   reps_type: RepsType;
@@ -113,6 +116,7 @@ export function TemplateEditor({
           objective: e.objective,
           rir: e.rir,
           alternative: e.alternative,
+          is_unilateral: e.is_unilateral ?? false,
           target_sets: e.target_sets,
           target_reps: e.target_reps,
           reps_type: e.reps_type,
@@ -135,6 +139,7 @@ export function TemplateEditor({
         objective: null,
         rir: null,
         alternative: null,
+        is_unilateral: false,
         target_sets: 3,
         target_reps: 10,
         reps_type: "count",
@@ -211,6 +216,7 @@ export function TemplateEditor({
         objective: r.objective,
         rir: r.rir,
         alternative: r.alternative,
+        is_unilateral: r.is_unilateral,
         target_sets: r.target_sets,
         target_reps: r.reps_type === "count" ? r.target_reps : null,
         reps_type: r.reps_type,
@@ -341,6 +347,10 @@ export function TemplateEditor({
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
+            <label className="mt-3 flex items-center justify-between gap-2 text-sm text-label-secondary">
+              <span>Monopodalico / unilaterale <small className="block text-xs">Serie separate SX e DX</small></span>
+              <Switch checked={r.is_unilateral} onCheckedChange={value=>setRows(all=>all.map((x,i)=>i===idx?{...x,is_unilateral:value}:x))} aria-label="Monopodalico / unilaterale" />
+            </label>
             <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
               <NumField
                 label="Serie"
@@ -360,20 +370,19 @@ export function TemplateEditor({
                     setRows((rr) =>
                       rr.map((x, i) => {
                         if (i !== idx) return x;
-                        const asNum = Number(s);
-                        const isCount = /^\d+(-\d+)?$/.test(s.trim());
+                        const isCount = /^\d+(?:\s*[-–]\s*\d+)?(?:\s+(?:per|\/).*)?$/.test(s.trim());
                         return {
                           ...x,
                           reps_display: s,
                           reps_type: isCount
                             ? "count"
-                            : /metri|km/i.test(s)
+                            : /\b(?:m|metri|km)\b/i.test(s)
                               ? "distance"
-                              : /sec|min/i.test(s)
+                              : /\b(?:s|sec|secondi|min|minuti)\b/i.test(s)
                                 ? "time"
                                 : "unspecified",
                           target_reps:
-                            isCount && Number.isFinite(asNum) ? Math.round(asNum) : x.target_reps,
+                            isCount ? targetValue(s, "count") : null,
                         };
                       }),
                     );
@@ -430,6 +439,7 @@ type ImportedExercise = {
   name: string;
   muscle_group: string;
   sets: number;
+  is_unilateral: boolean;
   reps_type: RepsType;
   reps_value: number | null;
   reps_display: string;
@@ -588,6 +598,7 @@ function WorkoutImport() {
             objective: exercise.objective,
             rir: exercise.rir,
             alternative: exercise.alternative,
+            is_unilateral: exercise.is_unilateral ?? false,
             target_sets: exercise.sets,
             target_reps: exercise.reps_type === "count" ? (exercise.reps_value ?? null) : null,
             reps_type: exercise.reps_type,
@@ -717,6 +728,10 @@ function WorkoutImport() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                    <label className="mt-3 flex items-center justify-between gap-2 text-sm text-label-secondary">
+                      <span>Serie separate SX / DX</span>
+                      <Switch checked={exercise.is_unilateral} onCheckedChange={is_unilateral=>updateExercise(ti,ei,{is_unilateral})} aria-label="Monopodalico / unilaterale" />
+                    </label>
                     <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
                       <ImportNumber
                         label="Serie"
@@ -729,19 +744,18 @@ function WorkoutImport() {
                           value={exercise.reps_display}
                           onChange={(e) => {
                             const s = e.target.value;
-                            const asNum = Number(s);
-                            const isCount = /^\d+(-\d+)?$/.test(s.trim());
+                                const isCount = /^\d+(?:\s*[-–]\s*\d+)?(?:\s+(?:per|\/).*)?$/.test(s.trim());
                             updateExercise(ti, ei, {
                               reps_display: s,
                               reps_type: isCount
                                 ? "count"
-                                : /metri|km/i.test(s)
+                                : /\b(?:m|metri|km)\b/i.test(s)
                                   ? "distance"
-                                  : /sec|min/i.test(s)
+                                  : /\b(?:s|sec|secondi|min|minuti)\b/i.test(s)
                                     ? "time"
                                     : "unspecified",
                               reps_value:
-                                isCount && Number.isFinite(asNum) ? Math.round(asNum) : null,
+                                isCount ? targetValue(s, "count") : null,
                             });
                           }}
                           className="rounded-lg bg-background px-2 py-1.5 text-center text-sm text-label outline-none"

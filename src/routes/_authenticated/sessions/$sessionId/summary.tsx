@@ -1,3 +1,4 @@
+import { measurementUnit, setLabel, type Measurement, type SetSide } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
@@ -35,6 +36,10 @@ type SessionSet = {
   setNumber: number;
   weightKg: number;
   reps: number;
+  side: SetSide;
+  repsType: Measurement;
+  durationSec: number | null;
+  distanceM: number | null;
   restTakenSec: number | null;
   completedAt: string;
 };
@@ -92,7 +97,7 @@ function SummaryPage() {
       const { data: rows, error: setsError } = await supabase
         .from("logged_sets")
         .select(
-          "id,exercise_id,set_number,weight_kg,reps,rest_taken_sec,completed_at,exercise:exercises(name,muscle_group)",
+          "id,exercise_id,set_number,weight_kg,reps,side,reps_type,duration_sec,distance_m,rest_taken_sec,completed_at,exercise:exercises(name,muscle_group)",
         )
         .eq("session_id", sessionId)
         .order("completed_at", { ascending: true });
@@ -105,6 +110,10 @@ function SummaryPage() {
           set_number: number;
           weight_kg: number | string;
           reps: number;
+          side?: SetSide;
+          reps_type?: Measurement;
+          duration_sec?: number | null;
+          distance_m?: number | null;
           rest_taken_sec: number | null;
           completed_at: string;
           exercise: { name: string; muscle_group: string | null } | null;
@@ -117,6 +126,10 @@ function SummaryPage() {
           setNumber: typed.set_number,
           weightKg: Number(typed.weight_kg),
           reps: typed.reps,
+          side: typed.side ?? "both",
+          repsType: typed.reps_type ?? "count",
+          durationSec: typed.duration_sec ?? null,
+          distanceM: typed.distance_m ?? null,
           restTakenSec: typed.rest_taken_sec,
           completedAt: typed.completed_at,
         };
@@ -273,17 +286,18 @@ function SummaryPage() {
       const updates = sets.map((set) => {
         const draft = draftSets[set.id];
         const weightKg = Number(draft?.weightKg.replace(",", "."));
-        const reps = Number.parseInt(draft?.reps ?? "", 10);
+        const value = Number((draft?.reps ?? "").replace(",", "."));
+        const reps = set.repsType === "count" || set.repsType === "unspecified" ? value : 0;
         const restTakenSec = draft?.restTakenSec.trim()
           ? Number.parseInt(draft.restTakenSec, 10)
           : null;
         if (!Number.isFinite(weightKg) || weightKg < 0)
           throw new Error(`Carico non valido nella serie ${set.setNumber}`);
-        if (!Number.isInteger(reps) || reps < 1)
+        if (!Number.isFinite(value) || value <= 0 || ((set.repsType === "count" || set.repsType === "unspecified") && !Number.isInteger(value)))
           throw new Error(`Ripetizioni non valide nella serie ${set.setNumber}`);
         if (restTakenSec !== null && (!Number.isInteger(restTakenSec) || restTakenSec < 0))
           throw new Error(`Recupero non valido nella serie ${set.setNumber}`);
-        return { id: set.id, weightKg, reps, restTakenSec };
+        return { id: set.id, weightKg, reps, restTakenSec, durationSec: set.repsType === "time" ? value : null, distanceM: set.repsType === "distance" ? value : null };
       });
 
       for (const update of updates) {
@@ -292,6 +306,8 @@ function SummaryPage() {
           .update({
             weight_kg: update.weightKg,
             reps: update.reps,
+            duration_sec: update.durationSec,
+            distance_m: update.distanceM,
             rest_taken_sec: update.restTakenSec,
           })
           .eq("id", update.id)
@@ -344,7 +360,7 @@ function SummaryPage() {
             set.id,
             {
               weightKg: String(set.weightKg),
-              reps: String(set.reps),
+              reps: String(set.repsType === "time" ? set.durationSec ?? 0 : set.repsType === "distance" ? set.distanceM ?? 0 : set.reps),
               restTakenSec: set.restTakenSec == null ? "" : String(set.restTakenSec),
             },
           ]),
@@ -358,10 +374,12 @@ function SummaryPage() {
     if (!summary.data) return;
     const sets = summary.data.exercises.flatMap((exercise) =>
       exercise.sets.map((set) => ({
-        exerciseName: exercise.name,
+        exerciseName: exercise.name + (set.side === "left" ? " · SX" : set.side === "right" ? " · DX" : ""),
         setNumber: set.setNumber,
         weightKg: set.weightKg,
         reps: set.reps,
+        durationSec: set.durationSec,
+        distanceM: set.distanceM,
         completedAt: set.completedAt,
         restTakenSec: set.restTakenSec,
       })),
@@ -576,7 +594,7 @@ function SummaryPage() {
                         {isEditing ? (
                           <div className="grid grid-cols-[42px_1fr_1fr_1fr] items-end gap-2">
                             <span className="pb-2.5 text-sm font-semibold text-label-secondary">
-                              S{set.setNumber}
+                              {setLabel({set_number:set.setNumber,side:set.side})}
                             </span>
                             <label className="text-[10px] font-semibold uppercase text-label-tertiary">
                               Kg
@@ -599,12 +617,12 @@ function SummaryPage() {
                               />
                             </label>
                             <label className="text-[10px] font-semibold uppercase text-label-tertiary">
-                              Rip.
+                              {measurementUnit(set.repsType)}
                               <input
                                 type="number"
-                                inputMode="numeric"
-                                min="1"
-                                step="1"
+                                inputMode="decimal"
+                                min="0.1"
+                                step={set.repsType === "count" ? "1" : "0.1"}
                                 value={draftSets[set.id]?.reps ?? ""}
                                 onChange={(event) =>
                                   setDraftSets((current) => ({
@@ -637,13 +655,13 @@ function SummaryPage() {
                             </label>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[52px_1fr] items-center gap-3">
+                          <div className="grid grid-cols-[76px_1fr] items-center gap-3">
                             <span className="text-sm font-semibold text-label-secondary">
-                              Serie {set.setNumber}
+                              Serie {setLabel({set_number:set.setNumber,side:set.side})}
                             </span>
                             <div>
                               <div className="text-sm font-semibold tabular-nums text-label">
-                                {set.reps} rip. × {set.weightKg} kg
+                                {set.repsType === "time" ? set.durationSec : set.repsType === "distance" ? set.distanceM : set.reps} {measurementUnit(set.repsType)} · {set.weightKg} kg
                               </div>
                               <div className="mt-0.5 text-xs text-label-tertiary">
                                 Recupero:{" "}

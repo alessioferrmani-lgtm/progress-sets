@@ -144,6 +144,36 @@ function backupFixture() {
       logged_sets:[{id:"a",session_id:"s",exercise_id:"e",set_number:1,weight_kg:60,reps:6,completed_at:"2026-01-01T10:05:00Z"},{id:"b",session_id:"s",exercise_id:"e",set_number:1,weight_kg:60,reps:6,completed_at:"2026-01-01T10:05:00.050Z"}]},
     athletics:{test_types:[],tests:[],races:[],interval_sessions:[],interval_reps:[],performance_log:[]}};
 }
+
+test("Sites: misure SX/DX, secondi e metri persistono senza volume fittizio",async()=>{
+  const {query,insert}=setup();
+  const e=(await insert("exercises",{name:"Side plank"})).data;
+  const t=(await insert("workout_templates",{name:"Unilaterale"})).data;
+  await insert("template_exercises",{template_id:t.id,exercise_id:e.id,is_unilateral:true,reps_type:"time",target_sets:3});
+  assert.equal((await query("template_exercises")).data[0].is_unilateral,true);
+  const s=(await insert("workout_sessions",{template_id:t.id})).data;
+  for(const [set_number,side,duration_sec] of [[1,"left",30.5],[2,"right",28.7]] as const)
+    await insert("logged_sets",{session_id:s.id,exercise_id:e.id,set_number,side,reps_type:"time",duration_sec,reps:0,weight_kg:10});
+  const sets=(await query("logged_sets",{orders:[{column:"set_number",ascending:true}]})).data;
+  assert.deepEqual(sets.map((r:any)=>[r.side,r.duration_sec,r.reps]),[["left",30.5,0],["right",28.7,0]]);
+  assert.equal(sets.reduce((n:number,r:any)=>n+r.weight_kg*r.reps,0),0);
+  assert.equal((await query("logged_sets",{},"bob")).data.length,0);
+  await query("logged_sets",{action:"update",payload:{duration_sec:32.4},filters:[eq("id",sets[0].id)]});
+  assert.equal((await query("logged_sets",{filters:[eq("id",sets[0].id)]})).data[0].duration_sec,32.4);
+  await assert.rejects(()=>insert("logged_sets",{session_id:s.id,exercise_id:e.id,set_number:3,reps_type:"time",duration_sec:30,reps:30}),/tempo/);
+  await assert.rejects(()=>insert("logged_sets",{session_id:s.id,exercise_id:e.id,set_number:3,side:"wrong"}),/Valore/);
+});
+
+test("Sites: il backup mantiene le nuove unità e rifiuta durate discordanti",async()=>{
+  const {db,query}=setup();const backup:any=backupFixture();
+  backup.gym.template_exercises[0].is_unilateral=true;
+  backup.gym.logged_sets=backup.gym.logged_sets.map((r:any,i:number)=>({...r,set_number:i+1,side:i?"right":"left",reps_type:"time",reps:0,duration_sec:i?31:30}));
+  await importProgress(db,"alice",{backup,skipEmpty:true,preview:false});
+  const sets=(await query("logged_sets")).data;
+  assert.equal(sets.length,2);assert.deepEqual(sets.map((r:any)=>r.duration_sec).sort(),[30,31]);
+  const conflicting=structuredClone(backup);conflicting.gym.logged_sets[1].set_number=1;
+  await assert.rejects(()=>importProgress(db,"alice",{backup:conflicting,skipEmpty:true,preview:true}),/diversi/);
+});
 test("Import: anteprima senza scritture, copia atomica, proprietà e storico peso",async()=>{
   const {db,query,api}=setup(); await api("auth");
   const backup=backupFixture(); const original=JSON.stringify(backup);
