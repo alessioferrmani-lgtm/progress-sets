@@ -34,6 +34,7 @@ export const templateExercises = sqliteTable("template_exercises", {
   exercise_id:text("exercise_id").notNull().references(()=>exercises.id,{onDelete:"restrict"}),order_index:integer("order_index").notNull().default(0),
   objective:text("objective"),rir:text("rir"),alternative:text("alternative"), target_sets:integer("target_sets").notNull().default(3),
   target_reps:real("target_reps"), reps_type:text("reps_type").notNull().default("count"),reps_display:text("reps_display"),
+  is_unilateral:integer("is_unilateral",{mode:"boolean"}).notNull().default(false),
   target_weight_kg:real("target_weight_kg"),rest_seconds:integer("rest_seconds").notNull().default(90),created_at:created(),
 },t=>[index("idx_template_exercises_owner_parent").on(t.user_id,t.template_id,t.order_index)]);
 export const sessions = sqliteTable("workout_sessions", {
@@ -48,6 +49,7 @@ export const loggedSets = sqliteTable("logged_sets", {
   id:id(),user_id:owner(),session_id:text("session_id").notNull().references(()=>sessions.id,{onDelete:"cascade"}),
   exercise_id:text("exercise_id").notNull().references(()=>exercises.id,{onDelete:"restrict"}), set_number:integer("set_number").notNull(),
   weight_kg:real("weight_kg").notNull().default(0),reps:real("reps").notNull().default(0),completed_at:text("completed_at").notNull().default(now),rest_taken_sec:real("rest_taken_sec"),
+  side:text("side").notNull().default("both"),reps_type:text("reps_type").notNull().default("count"),duration_sec:real("duration_sec"),distance_m:real("distance_m"),
 },t=>[index("idx_sets_owner_session").on(t.user_id,t.session_id),
   uniqueIndex("idx_set_identity").on(t.session_id,t.exercise_id,t.set_number),
   check("set_values",sql`${t.weight_kg} >= 0 and ${t.reps} >= 0 and ${t.set_number} > 0`),

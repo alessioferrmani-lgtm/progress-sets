@@ -77,10 +77,15 @@ export function validateRow(table: TableName, raw: unknown, uid: string, update=
   if(table==="exercises") row.is_default=0;
   if(table==="test_types") row.is_custom=1;
   if(Object.hasOwn(definitions,"updated_at")) row.updated_at=new Date().toISOString();
-  for(const field of ["weight_kg","target_weight_kg","reps","target_reps","rest_seconds","rest_sec","rest_taken_sec","calories_burned","order_index"]) if(row[field]!=null && row[field]<0) bad(`Il campo ${field} non può essere negativo`);
+  for(const field of ["duration_sec","distance_m","weight_kg","target_weight_kg","reps","target_reps","rest_seconds","rest_sec","rest_taken_sec","calories_burned","order_index"]) if(row[field]!=null && row[field]<0) bad(`Il campo ${field} non può essere negativo`);
   for(const field of ["set_number","target_sets","rep_number","current_week","duration_weeks","program_week"]) if(row[field]!=null && (!Number.isInteger(row[field]) || row[field]<1 || row[field]>1000)) bad(`Valore non valido: ${field}`);
-  const enums: Record<string,string[]>={sex:["M","F","O"],activity_level:["sedentary","light","moderate","high","athlete"],result_type:["TIME","DISTANCE"],reps_type:["count","time","distance","unspecified"]};
+  const enums: Record<string,string[]>={side:["both","left","right"],sex:["M","F","O"],activity_level:["sedentary","light","moderate","high","athlete"],result_type:["TIME","DISTANCE"],reps_type:["count","time","distance","unspecified"]};
   for(const [field,allowed] of Object.entries(enums)) if(row[field]!=null && !allowed.includes(row[field])) bad(`Valore non valido: ${field}`);
+  if(table==="logged_sets") {
+    if(row.reps_type==="time" && (!(row.duration_sec>0) || (row.reps??0)!==0 || row.distance_m!=null)) bad("Serie a tempo non valida");
+    if(row.reps_type==="distance" && (!(row.distance_m>0) || (row.reps??0)!==0 || row.duration_sec!=null)) bad("Serie a distanza non valida");
+    if((row.reps_type==="count" || row.reps_type==="unspecified") && (!Number.isInteger(row.reps??0) || row.duration_sec!=null || row.distance_m!=null)) bad("Serie a ripetizioni non valida");
+  }
   for(const field of ["started_at","ended_at","completed_at","created_at","logged_at"]) if(row[field]!=null) {
     if(!Number.isFinite(Date.parse(row[field]))) bad(`Data non valida: ${field}`);
     row[field]=new Date(row[field]).toISOString();

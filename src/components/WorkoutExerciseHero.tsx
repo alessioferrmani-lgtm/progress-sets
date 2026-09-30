@@ -11,6 +11,7 @@ type WorkoutExerciseHeroProps = {
   objective?: string | null;
   rir?: string | null;
   alternative?: string | null;
+  side?: "both" | "left" | "right";
   onSkip: () => void;
 };
 
@@ -29,6 +30,7 @@ export function WorkoutExerciseHero({
   objective,
   rir,
   alternative,
+  side,
   onSkip,
 }: WorkoutExerciseHeroProps) {
   const seriesProgress = Math.min(
@@ -55,14 +57,16 @@ export function WorkoutExerciseHero({
           <h2 className="workout-exercise-hero-title mt-3 text-[2rem] font-bold leading-[1.05] tracking-tight text-label">
             {exerciseName}
           </h2>
-          {objective ? (
-            <p className="mt-2 text-xs leading-relaxed text-label-secondary">{objective}</p>
-          ) : null}
-          {alternative ? (
-            <p className="mt-1 text-[11px] text-label-tertiary">Alternativa: {alternative}</p>
-          ) : null}
+          {(objective || alternative) && (
+            <details className="mt-2 text-sm text-label-secondary">
+              <summary className="cursor-pointer">Indicazioni esercizio</summary>
+              {objective && <p className="mt-2 leading-relaxed">{objective}</p>}
+              {alternative && <p className="mt-1 leading-relaxed">Alternativa: {alternative}</p>}
+            </details>
+          )}
           <p className="workout-exercise-hero-series mt-3 text-sm font-medium text-label-secondary">
             Serie <span className="text-accent">{seriesPosition}</span> di {seriesCount}
+            {side === "left" ? " · SX" : side === "right" ? " · DX" : ""}
             {rir ? ` · RIR ${rir}` : ""}
           </p>
           <button

@@ -1,3 +1,4 @@
+import type { SetMetadata, SetClock } from "./set-measurement";
 import { supabase } from "@/integrations/supabase/client";
 import { computeCaloriesForSession } from "@/lib/calories";
 import { fetchMyProfile } from "@/lib/profile-queries";
@@ -5,7 +6,8 @@ import { fetchMyProfile } from "@/lib/profile-queries";
 const STORAGE_KEY = "progress_sets_active_workout_v1";
 const MAX_RECOVERED_DURATION_SEC = 4 * 60 * 60;
 
-export type ActiveWorkoutRowDraft = {
+export type ActiveWorkoutRowDraft = SetMetadata & {
+  clock?: SetClock;
   set_number: number;
   weight: string;
   reps: string;
@@ -19,6 +21,7 @@ export type ActiveWorkoutDraft = {
   sessionStartedAt: string;
   elapsedSec: number;
   activeIdx: number;
+  activeSetIdx?: number;
   /** Exercise ids selected during a free workout. */
   exerciseIds?: string[];
   rowsByExercise: Record<string, ActiveWorkoutRowDraft[]>;
@@ -35,7 +38,7 @@ export type ActiveWorkoutSession = {
   lastCompletedAt: string | null;
 };
 
-export type RecoveredLoggedSet = {
+export type RecoveredLoggedSet = SetMetadata & {
   id: string;
   exercise_id: string;
   set_number: number;
@@ -260,7 +263,7 @@ export function ensureActiveWorkout(templateId: string): Promise<ActiveWorkoutBo
     if (!session) throw new Error("Impossibile iniziare l'allenamento");
     const { data: loggedSets, error: setsError } = await supabase
       .from("logged_sets")
-      .select("id,exercise_id,set_number,weight_kg,reps,completed_at")
+      .select("id,exercise_id,set_number,weight_kg,reps,completed_at,side,reps_type,duration_sec,distance_m")
       .eq("session_id", session.id)
       .order("completed_at");
     if (setsError) throw setsError;
@@ -297,7 +300,7 @@ export function ensureFreeWorkout(): Promise<ActiveWorkoutBootstrap> {
     if (!session) throw new Error("Impossibile iniziare l'allenamento libero");
     const { data: loggedSets, error: setsError } = await supabase
       .from("logged_sets")
-      .select("id,exercise_id,set_number,weight_kg,reps,completed_at")
+      .select("id,exercise_id,set_number,weight_kg,reps,completed_at,side,reps_type,duration_sec,distance_m")
       .eq("session_id", session.id)
       .order("completed_at");
     if (setsError) throw setsError;

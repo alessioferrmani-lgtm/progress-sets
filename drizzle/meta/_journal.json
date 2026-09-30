@@ -15,6 +15,13 @@
       "when": 1790542596847,
       "tag": "0001_derived_records",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790718684909,
+      "tag": "0002_abandoned_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

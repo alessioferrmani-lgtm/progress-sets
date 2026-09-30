@@ -1,4 +1,5 @@
 export type ParsedExercise = {
+  is_unilateral: boolean;
   name: string;
   sets: number;
   reps_type: "count" | "time" | "distance" | "unspecified";
@@ -21,13 +22,15 @@ export type ParsedTemplate = {
 };
 
 type ExerciseDraft = {
+  unilateral?: boolean;
+  weight?: number | null;
   name: string;
   sets?: number;
   reps?: string;
   rest?: string;
 };
 
-const FIELD = /^(serie|set|ripetizioni|reps?|recupero|rest)\s*:\s*(.+)$/i;
+const FIELD = /^(serie|set|ripetizioni|reps?|recupero|rest|monopodalico|unilaterale|carico|kg)\s*:\s*(.+)$/i;
 const DAY = /^(?:giorno|day)\s*[:-]?\s*(.+)$/i;
 const NAMED_DAY =
   /^(luned[i\u00ec]|marted[i\u00ec]|mercoled[i\u00ec]|gioved[i\u00ec]|venerd[i\u00ec]|sabato|domenica|push|pull|gambe|legs|upper|lower)\s*:?$/i;
@@ -241,6 +244,7 @@ function parsePrescription(
   const weightMatch = prescription.match(/(\d+(?:[.,]\d+)?)\s*kg\b/i);
   return {
     name,
+    is_unilateral: isUnilateral(name + " " + repsDisplay),
     sets: Number(compact[1]),
     reps_type: reps.type,
     reps_value: reps.value,
@@ -272,6 +276,11 @@ function applyField(draft: ExerciseDraft, rawKey: string, rawValue: string) {
   const value = rawValue.trim();
   if (key === "serie" || key === "set") draft.sets = positiveInteger(value) ?? 3;
   else if (key.startsWith("rip") || key.startsWith("rep")) draft.reps = normalizeRepsText(value);
+  else if (key === "monopodalico" || key === "unilaterale") draft.unilateral = /^(s[iì]|yes|true|sx\s*\/\s*dx)$/i.test(value);
+  else if (key === "carico" || key === "kg") {
+    const weight = Number(value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(",", "."));
+    draft.weight = Number.isFinite(weight) ? weight : null;
+  }
   else draft.rest = value;
 }
 
@@ -280,12 +289,13 @@ function toExercise(draft: ExerciseDraft): ParsedExercise {
   const reps = parseReps(repsDisplay);
   return {
     name: draft.name,
+    is_unilateral: draft.unilateral ?? isUnilateral(draft.name + " " + repsDisplay),
     sets: draft.sets && draft.sets > 0 ? Math.round(draft.sets) : 3,
     reps_type: reps.type,
     reps_value: reps.value,
     reps_display: repsDisplay,
     rest_sec: parseDuration(draft.rest) ?? 90,
-    target_weight_kg: null,
+    target_weight_kg: draft.weight ?? null,
     objective: null,
     rir: null,
     alternative: null,
@@ -329,4 +339,7 @@ function parseDuration(value?: string): number | null {
 function positiveInteger(value: string): number | null {
   const number = Number(value.trim());
   return Number.isInteger(number) && number > 0 ? number : null;
+}
+export function isUnilateral(text: string): boolean {
+  return /\bmonopodal\w*|\bunilater\w*|\bsingle[ -]leg\b|(?:per\s+|\/)(?:gamba|lato|piede|braccio)\b/i.test(text);
 }

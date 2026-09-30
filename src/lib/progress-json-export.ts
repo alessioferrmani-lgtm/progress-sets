@@ -149,6 +149,12 @@ export async function loadProgressExport() {
   return {
     schema_version: 1,
     application: "Progress Sets",
+    set_measurements: {
+      side: "both = bilaterale; left = sinistro; right = destro. Ogni lato è una serie registrata indipendente.",
+      set_number: "Sequenza univoca per esercizio; per SX/DX: numero della coppia = ceil(set_number / 2).",
+      reps_type: "count: reps; time: duration_sec; distance: distance_m. Per tempo e distanza reps è zero.",
+      volume: "Somma weight_kg × reps delle serie a ripetizioni; non moltiplicare di nuovo per due i lati.",
+    },
     exported_at: new Date().toISOString(),
     export_complete: warnings.length === 0,
     export_warnings: warnings,

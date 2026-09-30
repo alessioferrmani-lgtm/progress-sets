@@ -63,7 +63,7 @@ function WorkoutTemplateDetail() {
   }
 
   const data = template.data;
-  const totalSets = data.exercises.reduce((total, exercise) => total + exercise.target_sets, 0);
+  const totalSets = data.exercises.reduce((total, exercise) => total + exercise.target_sets * (exercise.is_unilateral ? 2 : 1), 0);
 
   return (
     <>
@@ -115,7 +115,7 @@ function WorkoutTemplateDetail() {
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-label-secondary">
                     <span className="inline-flex items-center gap-1">
                       <Dumbbell className="size-3.5" />
-                      {exercise.target_sets} serie ·{" "}
+                      {exercise.target_sets} serie{exercise.is_unilateral ? " per lato (SX/DX)" : ""} ·{" "}
                       {exercise.reps_display ?? exercise.target_reps ?? "—"}
                     </span>
                     <span className="inline-flex items-center gap-1">

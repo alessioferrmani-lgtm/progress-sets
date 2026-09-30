@@ -1,11 +1,13 @@
+import { WorkoutSetControls } from "@/components/WorkoutSetControls";
+import { addWorkoutSet, configureRows, restoreWorkoutRows, recordedMeasurement, targetValue, type WorkoutRow } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchPreviousSets, fetchTemplate } from "@/lib/workout-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useRestTimer } from "@/lib/rest-timer-store";
 import { toast } from "sonner";
-import { X, Check, Plus, Minus } from "lucide-react";
+import { X, Check, Plus } from "lucide-react";
 import { updateSetFieldAndPropagate } from "@/lib/workout-set-utils";
 import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
@@ -23,19 +25,14 @@ export const Route = createFileRoute("/_authenticated/workouts/$templateId/run")
   component: RunPage,
 });
 
-type Row = {
-  set_number: number;
-  weight: string;
-  reps: string;
-  completed: boolean;
-  completedAt?: number;
-  logId?: string;
-};
+type Row = WorkoutRow;
 
 function RunPage() {
   const { templateId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isFinishing, setIsFinishing] = useState(false);
+  const finishingRef = useRef(false);
 
   const { data: templateData } = useQuery({
     queryKey: ["template", templateId],
@@ -54,6 +51,7 @@ function RunPage() {
   const activeWorkout = useQuery({
     queryKey: ["active-workout-bootstrap", templateId],
     queryFn: () => ensureActiveWorkout(templateId),
+    enabled: !isFinishing,
     staleTime: Infinity,
     retry: 1,
   });
@@ -73,58 +71,28 @@ function RunPage() {
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, Row[]>>({});
   const [rowsInitialized, setRowsInitialized] = useState(false);
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
-  const [isFinishing, setIsFinishing] = useState(false);
+  const savingSet = useRef(false);
+  const [isSavingSet, setIsSavingSet] = useState(false);
 
   // Rebuild both completed sets (database) and unconfirmed fields (local draft).
   useEffect(() => {
     if (!templateData || !previous || !activeWorkoutData || rowsInitialized) return;
-    const completedByKey = new Map<string, (typeof activeWorkoutData.loggedSets)[number]>();
-    activeWorkoutData.loggedSets.forEach((set) => {
-      completedByKey.set(`${set.exercise_id}:${set.set_number}`, set);
-    });
     const next: Record<string, Row[]> = {};
-    templateData.exercises.forEach((ex) => {
-      const prevMap = previous.get(ex.exercise_id);
-      const firstPrevious = prevMap?.get(1);
-      const savedRows = activeWorkoutData.draft.rowsByExercise[ex.id] ?? [];
-      const completedSetNumbers = activeWorkoutData.loggedSets
-        .filter((set) => set.exercise_id === ex.exercise_id)
-        .map((set) => set.set_number);
-      const rowCount = Math.max(ex.target_sets, savedRows.length, ...completedSetNumbers, 0);
-      next[ex.id] = Array.from({ length: rowCount }, (_, i) => {
-        const setNum = i + 1;
-        const p = prevMap?.get(setNum);
-        const completed = completedByKey.get(`${ex.exercise_id}:${setNum}`);
-        const saved = savedRows[i];
-        const kg =
-          completed?.weight_kg ??
-          saved?.weight ??
-          p?.weight_kg ??
-          firstPrevious?.weight_kg ??
-          ex.target_weight_kg ??
-          0;
-        const reps =
-          completed?.reps ??
-          saved?.reps ??
-          p?.reps ??
-          firstPrevious?.reps ??
-          ex.target_reps ??
-          null;
-        return {
-          set_number: setNum,
-          weight: kg ? String(kg) : "",
-          reps: reps ? String(reps) : "",
-          completed: Boolean(completed),
-          completedAt: completed ? new Date(completed.completed_at).getTime() : undefined,
-          logId: completed?.id,
-        };
+    templateData.exercises.forEach(ex => {
+      next[ex.id] = restoreWorkoutRows({
+        targetSets: ex.target_sets, unilateral: ex.is_unilateral, type: ex.reps_type,
+        targetWeight: ex.target_weight_kg, target: targetValue(ex.reps_display, ex.reps_type, ex.target_reps),
+        saved: activeWorkoutData.draft.rowsByExercise[ex.id] ?? [],
+        logged: activeWorkoutData.loggedSets.filter(set => set.exercise_id === ex.exercise_id),
+        previous: previous.get(ex.exercise_id),
       });
     });
     setRowsByExercise(next);
     setActiveIdx(
       Math.min(activeWorkoutData.draft.activeIdx, Math.max(templateData.exercises.length - 1, 0)),
     );
-    setActiveSetIdx(0);
+    const restoredExercise = templateData.exercises[Math.min(activeWorkoutData.draft.activeIdx, Math.max(templateData.exercises.length - 1, 0))];
+    setActiveSetIdx(Math.max(0,Math.min(activeWorkoutData.draft.activeSetIdx ?? 0, (next[restoredExercise?.id]?.length ?? 1) - 1)));
     setRowsInitialized(true);
   }, [activeWorkoutData, previous, rowsInitialized, templateData]);
 
@@ -140,6 +108,7 @@ function RunPage() {
 
   const persistWorkout = useCallback(
     (nextActiveIdx = activeIdx) => {
+      if (finishingRef.current) return;
       const bootstrap = activeWorkoutData;
       if (!bootstrap || !rowsInitialized || restoredTimerSessionId !== bootstrap.session.id) return;
       saveActiveWorkoutDraft({
@@ -149,10 +118,11 @@ function RunPage() {
         sessionStartedAt: bootstrap.session.startedAt,
         elapsedSec: getWorkoutElapsedSeconds(bootstrap.session.startedAt),
         activeIdx: nextActiveIdx,
+        activeSetIdx,
         rowsByExercise: Object.fromEntries(
           Object.entries(rowsByExercise).map(([exerciseId, exerciseRows]) => [
             exerciseId,
-            exerciseRows.map(({ set_number, weight, reps }) => ({ set_number, weight, reps })),
+            exerciseRows.map(({ completed, completedAt, logId, ...draft }) => draft),
           ]),
         ),
         updatedAt: new Date().toISOString(),
@@ -160,6 +130,7 @@ function RunPage() {
     },
     [
       activeIdx,
+      activeSetIdx,
       activeWorkoutData,
       restoredTimerSessionId,
       rowsInitialized,
@@ -213,7 +184,7 @@ function RunPage() {
     .flat()
     .filter((r) => r.completed).length;
 
-  const confirmSet = async (rowIdx: number) => {
+  const saveSet = async (rowIdx: number) => {
     if (!sessionId || !activeEx) return;
     const row = rows[rowIdx];
     if (row.completed) {
@@ -246,18 +217,9 @@ function RunPage() {
       toast.success("Spunta rimossa: ora puoi correggere la serie");
       return;
     }
-    const weight = Number((row.weight || "0").replace(",", "."));
-    const isCount = activeEx.reps_type === "count";
-    // For time/distance/unspecified sets we don't require a numeric rep count.
-    const reps = isCount ? Number((row.reps || "0").replace(",", ".")) : 1;
-    if (
-      !Number.isFinite(weight) ||
-      weight < 0 ||
-      (isCount && (!Number.isInteger(reps) || reps < 1))
-    ) {
-      toast.error("Inserisci carico e ripetizioni validi");
-      return;
-    }
+    let measurement;
+    try { measurement = recordedMeasurement(row); }
+    catch(error) { toast.error(error instanceof Error ? error.message : "Valore non valido"); return; }
     // Compute rest_taken vs previous completed set in this session (any exercise)
     const allCompleted = Object.values(rowsByExercise)
       .flat()
@@ -277,8 +239,7 @@ function RunPage() {
       session_id: sessionId,
       exercise_id: activeEx.exercise_id,
       set_number: row.set_number,
-      weight_kg: weight,
-      reps,
+      ...measurement,
       rest_taken_sec: restTaken,
     });
     if (error) {
@@ -311,6 +272,13 @@ function RunPage() {
     }
   };
 
+  const confirmSet = async (rowIdx: number) => {
+    if (savingSet.current || isFinishing) return;
+    savingSet.current = true; setIsSavingSet(true);
+    try { await saveSet(rowIdx); } catch(error) { toast.error(error instanceof Error ? error.message : "Salvataggio non riuscito"); }
+    finally { savingSet.current = false; setIsSavingSet(false); }
+  };
+
   const skipExercise = () => {
     if (!activeEx) return;
     const nextIndex = activeIdx + 1;
@@ -326,27 +294,29 @@ function RunPage() {
   };
 
   const finish = async () => {
-    if (!sessionId || !activeWorkout.data || isFinishing) return;
-    setIsFinishing(true);
+    if (!sessionId || !activeWorkout.data || isFinishing || savingSet.current) return;
+    if (Object.values(rowsByExercise).flat().some(row => row.clock?.startedAt != null)) return toast.error("Ferma il cronometro della serie prima di terminare");
     persistWorkout();
+    finishingRef.current = true;
+    setIsFinishing(true);
     try {
       await finishActiveWorkout(activeWorkout.data.session, elapsed, completedSets > 0);
     } catch (reason) {
       toast.error(
         `Impossibile salvare l'allenamento: ${reason instanceof Error ? reason.message : "errore sconosciuto"}`,
       );
+      finishingRef.current = false;
       setIsFinishing(false);
       return;
     }
     timer.skip();
-    queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", templateId] });
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["active-workout"] }),
       queryClient.invalidateQueries({ queryKey: ["dash"] }),
       queryClient.invalidateQueries({ queryKey: ["previous-sets"] }),
     ]);
-    navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
-    setIsFinishing(false);
+    await navigate({ to: "/sessions/$sessionId/summary", params: { sessionId } });
+    queryClient.removeQueries({ queryKey: ["active-workout-bootstrap", templateId] });
   };
 
   const cancel = async () => {
@@ -415,7 +385,7 @@ function RunPage() {
                   (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
                 }
               >
-                {ex.exercise.name} · {done}/{ex.target_sets}
+                {ex.exercise.name} · {done}/{list.length || ex.target_sets}
               </button>
             );
           })}
@@ -426,8 +396,9 @@ function RunPage() {
             exerciseName={activeEx.exercise.name}
             exercisePosition={activeIdx + 1}
             exerciseCount={exercises.length}
-            seriesPosition={activeSetIdx + 1}
-            seriesCount={rows.length}
+            seriesPosition={activeRow.side && activeRow.side !== "both" ? Math.ceil((activeSetIdx + 1) / 2) : activeSetIdx + 1}
+            side={activeRow.side}
+            seriesCount={activeRow.side && activeRow.side !== "both" ? Math.ceil(rows.length / 2) : rows.length}
             completedSets={completedSets}
             totalSets={totalSets}
             objective={activeEx.objective}
@@ -442,7 +413,6 @@ function RunPage() {
         activeRow &&
         (() => {
           const isCount = activeEx.reps_type === "count";
-          const previousSet = previous?.get(activeEx.exercise_id)?.get(activeRow.set_number);
           return (
             <div className="workout-screen-content flex min-h-0 flex-col gap-3 px-4 pb-6">
               <div className="workout-set-card ios-card overflow-hidden p-4">
@@ -464,90 +434,17 @@ function RunPage() {
                   {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
                 </div>
 
-                <div className="workout-set-picker mt-5 flex gap-2 overflow-x-auto pb-1">
-                  {rows.map((row, index) => (
-                    <button
-                      key={row.set_number}
-                      type="button"
-                      onClick={() => setActiveSetIdx(index)}
-                      className={
-                        "flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold " +
-                        (index === activeSetIdx
-                          ? "border-accent bg-accent text-accent-foreground"
-                          : row.completed
-                            ? "border-success bg-success/15 text-success"
-                            : "border-separator bg-fill text-label-secondary")
-                      }
-                      aria-label={`Seleziona serie ${row.set_number}`}
-                    >
-                      {row.set_number}
-                    </button>
-                  ))}
-                </div>
-
-                {previousSet && (
-                  <div className="workout-previous mt-4 rounded-xl bg-fill-secondary px-3 py-2 text-center text-xs text-label-secondary">
-                    Precedente: {previousSet.weight_kg} kg × {previousSet.reps}
-                  </div>
-                )}
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
-                    <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
-                      Carico kg
-                    </div>
-                    <NumberCell
-                      value={activeRow.weight}
-                      disabled={activeRow.completed}
-                      large
-                      step={2.5}
-                      onChange={(value) =>
-                        setRowsByExercise((current) => ({
-                          ...current,
-                          [activeEx.id]: updateSetFieldAndPropagate(
-                            current[activeEx.id] ?? [],
-                            activeSetIdx,
-                            "weight",
-                            value,
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="workout-value-card rounded-2xl bg-fill-secondary p-3 text-center">
-                    <div className="workout-value-label text-xs font-semibold uppercase tracking-wide text-label-tertiary">
-                      {isCount ? "Ripetizioni" : "Target"}
-                    </div>
-                    {isCount ? (
-                      <NumberCell
-                        value={activeRow.reps}
-                        disabled={activeRow.completed}
-                        large
-                        step={1}
-                        integer
-                        onChange={(value) =>
-                          setRowsByExercise((current) => ({
-                            ...current,
-                            [activeEx.id]: updateSetFieldAndPropagate(
-                              current[activeEx.id] ?? [],
-                              activeSetIdx,
-                              "reps",
-                              value,
-                            ),
-                          }))
-                        }
-                      />
-                    ) : (
-                      <div className="mt-4 text-3xl font-semibold text-label">
-                        {activeEx.reps_display ?? "—"}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <WorkoutSetControls rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
+                  anotherClockRunning={Object.values(rowsByExercise).flat().some(row => row !== activeRow && row.clock?.startedAt != null)}
+                  onField={(field,value) => setRowsByExercise(current => ({...current,[activeEx.id]: updateSetFieldAndPropagate(current[activeEx.id] ?? [],activeSetIdx,field,value)}))}
+                  onPatch={patch => setRowsByExercise(current => ({...current,[activeEx.id]: current[activeEx.id].map((row,i) => i === activeSetIdx ? {...row,...patch} : row)}))}
+                  onConfigure={(unilateral,type) => {setRowsByExercise(current => ({...current,[activeEx.id]: configureRows(current[activeEx.id],unilateral,type)}));setActiveSetIdx(0);}}
+                />
 
                 <button
                   type="button"
                   onClick={() => confirmSet(activeSetIdx)}
+                  disabled={isSavingSet || isFinishing}
                   aria-label={activeRow.completed ? "Rimuovi spunta serie" : "Conferma serie"}
                   className={
                     "workout-confirm " +
@@ -556,25 +453,14 @@ function RunPage() {
                   }
                 >
                   <Check className="size-5" />
-                  {activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
+                  {isSavingSet ? "Salvataggio…" : activeRow.completed ? "Serie completata · correggi" : "Conferma serie"}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setRowsByExercise((current) => {
-                      const list = [...(current[activeEx.id] ?? [])];
-                      const nextNum = list.length + 1;
-                      const prev = previous?.get(activeEx.exercise_id)?.get(nextNum);
-                      const reference = list[list.length - 1] ?? list[0];
-                      list.push({
-                        set_number: nextNum,
-                        weight: String(
-                          prev?.weight_kg ?? reference?.weight ?? activeEx.target_weight_kg ?? "",
-                        ),
-                        reps: String(prev?.reps ?? reference?.reps ?? activeEx.target_reps ?? ""),
-                        completed: false,
-                      });
+                      const list = addWorkoutSet(current[activeEx.id] ?? []);
                       return { ...current, [activeEx.id]: list };
                     });
                     setActiveSetIdx(rows.length);
@@ -595,76 +481,6 @@ function RunPage() {
           onFinish={finish}
         />
       )}
-    </div>
-  );
-}
-
-function NumberCell({
-  value,
-  onChange,
-  disabled,
-  step,
-  integer,
-  large,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  disabled?: boolean;
-  step: number;
-  integer?: boolean;
-  large?: boolean;
-}) {
-  const inc = (dir: 1 | -1) => {
-    const n = Number(value || 0) + dir * step;
-    if (n < 0) return;
-    onChange(integer ? String(Math.round(n)) : String(Math.round(n * 100) / 100));
-  };
-  return (
-    <div
-      className={
-        (large ? "mt-3 flex items-center justify-center gap-2" : "flex items-center gap-1") +
-        " workout-value-control"
-      }
-    >
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => inc(-1)}
-        className={
-          large
-            ? "flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label active:opacity-70 disabled:opacity-40"
-            : "flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
-        }
-        aria-label="Diminuisci"
-      >
-        <Minus className="h-3 w-3" />
-      </button>
-      <input
-        type="number"
-        inputMode="decimal"
-        disabled={disabled}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={(e) => e.target.select()}
-        className={
-          large
-            ? "workout-value-input w-full min-w-0 bg-transparent py-1 text-center text-4xl font-semibold tabular-nums text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
-            : "w-full min-w-0 rounded-md bg-fill-secondary py-1.5 text-center text-sm font-medium text-label outline-none focus:ring-2 focus:ring-accent disabled:opacity-70"
-        }
-      />
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => inc(1)}
-        className={
-          large
-            ? "flex size-10 shrink-0 items-center justify-center rounded-full bg-fill text-label active:opacity-70 disabled:opacity-40"
-            : "flex h-7 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-label active:opacity-70 disabled:opacity-40"
-        }
-        aria-label="Aumenta"
-      >
-        <Plus className="h-3 w-3" />
-      </button>
     </div>
   );
 }

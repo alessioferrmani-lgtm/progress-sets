@@ -123,6 +123,10 @@ export type Database = {
       }
       logged_sets: {
         Row: {
+          side?: "both" | "left" | "right"
+          reps_type?: "count" | "time" | "distance" | "unspecified"
+          duration_sec?: number | null
+          distance_m?: number | null
           completed_at: string
           exercise_id: string
           id: string
@@ -134,6 +138,10 @@ export type Database = {
           weight_kg: number
         }
         Insert: {
+          side?: "both" | "left" | "right"
+          reps_type?: "count" | "time" | "distance" | "unspecified"
+          duration_sec?: number | null
+          distance_m?: number | null
           completed_at?: string
           exercise_id: string
           id?: string
@@ -145,6 +153,10 @@ export type Database = {
           weight_kg?: number
         }
         Update: {
+          side?: "both" | "left" | "right"
+          reps_type?: "count" | "time" | "distance" | "unspecified"
+          duration_sec?: number | null
+          distance_m?: number | null
           completed_at?: string
           exercise_id?: string
           id?: string
@@ -297,6 +309,7 @@ export type Database = {
       }
       template_exercises: {
         Row: {
+          is_unilateral?: boolean
           alternative: string | null
           created_at: string
           exercise_id: string
@@ -314,6 +327,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          is_unilateral?: boolean
           alternative?: string | null
           created_at?: string
           exercise_id: string
@@ -331,6 +345,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          is_unilateral?: boolean
           alternative?: string | null
           created_at?: string
           exercise_id?: string

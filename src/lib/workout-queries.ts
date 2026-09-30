@@ -1,3 +1,4 @@
+import type { SetMetadata } from "./set-measurement";
 import { supabase } from "@/integrations/supabase/client";
 export { isAthleticsExercise, isGymExercise } from "@/lib/exercise-categories";
 
@@ -37,6 +38,7 @@ export type TemplateExercise = {
   objective: string | null;
   rir: string | null;
   alternative: string | null;
+  is_unilateral?: boolean;
   target_sets: number;
   target_reps: number | null;
   reps_type: RepsType;
@@ -51,7 +53,7 @@ export type Session = {
   started_at: string;
   ended_at: string | null;
 };
-export type LoggedSet = {
+export type LoggedSet = SetMetadata & {
   id: string;
   session_id: string;
   exercise_id: string;
@@ -130,7 +132,7 @@ export async function fetchTemplate(id: string): Promise<{
   const { data: ex, error: ee } = await supabase
     .from("template_exercises")
     .select(
-      "id,template_id,exercise_id,order_index,objective,rir,alternative,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
+      "id,template_id,exercise_id,order_index,objective,rir,alternative,is_unilateral,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
     )
     .eq("template_id", id)
     .order("order_index");
@@ -144,8 +146,8 @@ export async function fetchTemplate(id: string): Promise<{
 /** For a set of exercise IDs, return the most recent completed set per (exercise, set_number). */
 export async function fetchPreviousSets(
   exerciseIds: string[],
-): Promise<Map<string, Map<number, { weight_kg: number; reps: number }>>> {
-  const map = new Map<string, Map<number, { weight_kg: number; reps: number }>>();
+): Promise<Map<string, Map<number, { weight_kg: number; reps: number } & SetMetadata>>> {
+  const map = new Map<string, Map<number, { weight_kg: number; reps: number } & SetMetadata>>();
   if (exerciseIds.length === 0) return map;
   const { data: u } = await supabase.auth.getUser();
   const userId = u.user?.id;
@@ -153,19 +155,19 @@ export async function fetchPreviousSets(
   const latestSessionForExercise = new Map<string, string>();
   const rowsByExerciseSession = new Map<
     string,
-    Array<{ set_number: number; weight_kg: number; reps: number; completed_at: string }>
+    Array<{ set_number: number; weight_kg: number; reps: number; completed_at: string } & SetMetadata>
   >();
   const { data: data2 } = await supabase
     .from("logged_sets")
     .select(
-      "session_id,exercise_id,set_number,weight_kg,reps,completed_at,workout_sessions!inner(user_id,started_at)",
+      "session_id,exercise_id,set_number,weight_kg,reps,completed_at,side,reps_type,duration_sec,distance_m,workout_sessions!inner(user_id,started_at)",
     )
     .in("exercise_id", exerciseIds)
     .eq("workout_sessions.user_id", userId)
     .order("completed_at", { ascending: false })
     .limit(1000);
   (data2 ?? []).forEach((row) => {
-    const r = row as unknown as {
+    const r = row as unknown as SetMetadata & {
       session_id: string;
       exercise_id: string;
       set_number: number;
@@ -183,9 +185,9 @@ export async function fetchPreviousSets(
   });
   latestSessionForExercise.forEach((sessionId, exerciseId) => {
     const rows = rowsByExerciseSession.get(exerciseId + "::" + sessionId) ?? [];
-    const inner = new Map<number, { weight_kg: number; reps: number }>();
+    const inner = new Map<number, { weight_kg: number; reps: number } & SetMetadata>();
     rows.forEach((r) =>
-      inner.set(r.set_number, { weight_kg: Number(r.weight_kg), reps: r.reps }),
+      inner.set(r.set_number, { ...r, weight_kg: Number(r.weight_kg), reps: r.reps }),
     );
     map.set(exerciseId, inner);
   });

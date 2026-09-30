@@ -8,6 +8,16 @@ const layout = readFileSync("src/routes/_authenticated/route.tsx", "utf8");
 const run = readFileSync("src/routes/_authenticated/workouts/$templateId/run.tsx", "utf8");
 const free = readFileSync("src/routes/_authenticated/workouts/free.tsx", "utf8");
 const hero = readFileSync("src/components/WorkoutExerciseHero.tsx", "utf8");
+test("la chiusura non riavvia il bootstrap e non riscrive la bozza", () => {
+  for (const source of [run, free]) {
+    assert.match(source, /enabled: !isFinishing/);
+    assert.match(source, /if \(finishingRef\.current\) return/);
+    const finish = source.slice(source.indexOf("const finish = async"), source.indexOf("const cancel ="));
+    assert.ok(finish.indexOf("finishingRef.current = true") < finish.indexOf("await finishActiveWorkout"));
+    assert.ok(finish.indexOf("await navigate") < finish.indexOf("queryClient.removeQueries"));
+    assert.ok(finish.indexOf("await navigate") >= 0);
+  }
+});
 const openSessionMigration = readFileSync(
   "supabase/migrations/20260827120000_prevent_duplicate_open_workouts.sql",
   "utf8",
