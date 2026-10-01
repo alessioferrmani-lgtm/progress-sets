@@ -60,15 +60,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#08090C" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Progress Sets" },
+      { name: "apple-mobile-web-app-title", content: "PRYME" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { title: "Progress Sets" },
+      { title: "PRYME" },
       {
         name: "description",
         content:
           "Esecuzione guidata delle tue schede di palestra con timer di recupero automatico.",
       },
-      { property: "og:title", content: "Allenamento Palestra" },
+      { property: "og:title", content: "PRYME" },
       {
         property: "og:description",
         content:
@@ -76,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Allenamento Palestra" },
+      { name: "twitter:title", content: "PRYME" },
       {
         name: "twitter:description",
         content:
