@@ -414,7 +414,7 @@ function SummaryPage() {
         navigator.canShare({ files: [file] })
       ) {
         await navigator.share({
-          title: "Allenamento Progress Sets",
+          title: "Allenamento PRYME",
           files: [file],
         });
         toast.success(`File FIT pronto per Zepp: ${filename}`);

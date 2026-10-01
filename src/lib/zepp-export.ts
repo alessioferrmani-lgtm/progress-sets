@@ -54,7 +54,7 @@ export function buildZeppTcx(workout: ZeppExportWorkout) {
     completedAt: isoDate(set.completedAt, "Data serie"),
   }));
   const notes = [
-    `Progress Sets - ${workout.name}`,
+    `PRYME - ${workout.name}`,
     "Serie registrate:",
     ...sets.map(
       (set, index) =>
@@ -105,7 +105,7 @@ export function buildZeppTcx(workout: ZeppExportWorkout) {
     </Activity>
   </Activities>
   <Author xsi:type="Device_t">
-    <Name>Progress Sets</Name><UnitId>0</UnitId><ProductID>0</ProductID>
+    <Name>PRYME</Name><UnitId>0</UnitId><ProductID>0</ProductID>
     <Version><VersionMajor>1</VersionMajor><VersionMinor>0</VersionMinor><BuildMajor>0</BuildMajor><BuildMinor>0</BuildMinor></Version>
   </Author>
 </TrainingCenterDatabase>

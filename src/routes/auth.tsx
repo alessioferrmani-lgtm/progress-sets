@@ -16,7 +16,7 @@ function AuthPage() {
   return <main className="flex min-h-dvh items-center justify-center bg-background p-6">
     <section className="ios-card w-full max-w-sm p-7 text-center">
       <img src="/progress-sets-track-flame-icon-192.png" alt="" className="mx-auto size-24 rounded-[24px]" />
-      <h1 className="mt-5 text-3xl font-bold text-label">Progress Sets</h1>
+      <h1 className="mt-5 text-3xl font-bold text-label">PRYME</h1>
       <p className="mt-3 text-sm leading-relaxed text-label-secondary">Le tue schede, l’atletica e i tuoi progressi. Ora su ChatGPT Sites.</p>
       <a href={`/signin-with-chatgpt?return_to=${encodeURIComponent(safeNext(next))}`} target="_top" className="ios-btn-primary mt-7 block w-full">Accedi con ChatGPT</a>
       <p className="mt-4 text-xs leading-relaxed text-label-tertiary">Allenamenti e routine vengono salvati nel tuo account. Non serve una nuova password.</p>
