@@ -68,6 +68,7 @@ type Row = {
   objective: string | null;
   rir: string | null;
   alternative: string | null;
+  superset_group?: string | null;
   is_unilateral: boolean;
   target_sets: number;
   target_reps: number | null;
@@ -117,6 +118,7 @@ export function TemplateEditor({
           rir: e.rir,
           alternative: e.alternative,
           is_unilateral: e.is_unilateral ?? false,
+          superset_group: e.superset_group ?? null,
           target_sets: e.target_sets,
           target_reps: e.target_reps,
           reps_type: e.reps_type,
@@ -217,6 +219,7 @@ export function TemplateEditor({
         rir: r.rir,
         alternative: r.alternative,
         is_unilateral: r.is_unilateral,
+        superset_group: r.superset_group?.trim() || null,
         target_sets: r.target_sets,
         target_reps: r.reps_type === "count" ? r.target_reps : null,
         reps_type: r.reps_type,
@@ -349,6 +352,7 @@ export function TemplateEditor({
             </div>
             <label className="mt-3 flex items-center justify-between gap-2 text-sm text-label-secondary">
               <span>Monopodalico / unilaterale <small className="block text-xs">Serie separate SX e DX</small></span>
+<label className="text-sm text-label-secondary">Blocco superserie (stesso nome per A e B)<input className="ios-input mt-1 w-full" aria-label="Blocco superserie" value={r.superset_group ?? ""} onChange={e=>setRows(all=>all.map((x,i)=>i===idx?{...x,superset_group:e.target.value}:x))} placeholder="Nessuna" /></label>
               <Switch checked={r.is_unilateral} onCheckedChange={value=>setRows(all=>all.map((x,i)=>i===idx?{...x,is_unilateral:value}:x))} aria-label="Monopodalico / unilaterale" />
             </label>
             <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
@@ -439,6 +443,7 @@ type ImportedExercise = {
   name: string;
   muscle_group: string;
   sets: number;
+  superset_group?: string | null;
   is_unilateral: boolean;
   reps_type: RepsType;
   reps_value: number | null;
@@ -599,6 +604,7 @@ function WorkoutImport() {
             rir: exercise.rir,
             alternative: exercise.alternative,
             is_unilateral: exercise.is_unilateral ?? false,
+            superset_group: exercise.superset_group?.trim() || null,
             target_sets: exercise.sets,
             target_reps: exercise.reps_type === "count" ? (exercise.reps_value ?? null) : null,
             reps_type: exercise.reps_type,
@@ -730,6 +736,7 @@ function WorkoutImport() {
                     </div>
                     <label className="mt-3 flex items-center justify-between gap-2 text-sm text-label-secondary">
                       <span>Serie separate SX / DX</span>
+<label className="text-sm text-label-secondary">Blocco superserie<input className="ios-input mt-1 w-full" aria-label="Blocco superserie" value={exercise.superset_group ?? ""} onChange={e=>updateExercise(ti,ei,{superset_group:e.target.value})} placeholder="Nessuna" /></label>
                       <Switch checked={exercise.is_unilateral} onCheckedChange={is_unilateral=>updateExercise(ti,ei,{is_unilateral})} aria-label="Monopodalico / unilaterale" />
                     </label>
                     <div className="mt-2 grid grid-cols-4 gap-2 text-xs">

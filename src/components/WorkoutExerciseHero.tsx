@@ -12,6 +12,7 @@ type WorkoutExerciseHeroProps = {
   rir?: string | null;
   alternative?: string | null;
   side?: "both" | "left" | "right";
+  superset?: Array<{name: string; label: string; active: boolean; onSelect: () => void}>;
   onSkip: () => void;
 };
 
@@ -31,6 +32,7 @@ export function WorkoutExerciseHero({
   rir,
   alternative,
   side,
+  superset,
   onSkip,
 }: WorkoutExerciseHeroProps) {
   const seriesProgress = Math.min(
@@ -52,11 +54,12 @@ export function WorkoutExerciseHero({
       <div className="workout-exercise-hero-top relative flex items-start justify-between gap-5">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-label-tertiary">
-            Esercizio {exercisePosition} di {exerciseCount}
+            {superset ? "Superserie" : "Esercizio"} {exercisePosition} di {exerciseCount}
           </p>
           <h2 className="workout-exercise-hero-title mt-3 text-[2rem] font-bold leading-[1.05] tracking-tight text-label">
-            {exerciseName}
+            {superset ? "Giro " + seriesPosition + " di " + seriesCount : exerciseName}
           </h2>
+          {superset && <div className="mt-3 space-y-2" aria-label="Sottoesercizi della superserie">{superset.map(child => <button key={child.label} type="button" onClick={child.onSelect} aria-pressed={child.active} className={"flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm " + (child.active ? "bg-accent/15 text-accent ring-1 ring-accent" : "bg-fill text-label-secondary")}><span className="font-bold">{child.label}</span><span>{child.name}</span></button>)}<p className="text-xs text-label-secondary">A e B senza pausa. Recupero a fine giro.</p></div>}
           {(objective || alternative) && (
             <details className="mt-2 text-sm text-label-secondary">
               <summary className="cursor-pointer">Indicazioni esercizio</summary>

@@ -12,6 +12,8 @@ Ripetizioni: valore o intervallo con unità
 Monopodalico: sì oppure no
 Carico: numero kg
 Recupero: numero secondi
+Superserie: nome del blocco (solo per esercizi abbinati)
+Nota: eventuali indicazioni da conservare
 
 Regole:
 - Per le ripetizioni usa `6` o `6-8`.
@@ -20,6 +22,7 @@ Regole:
 - Per un esercizio eseguito separatamente sui due lati aggiungi `per gamba`, `per lato`, `per piede` o `per braccio` a Ripetizioni e imposta `Monopodalico: sì`.
 - Le Serie sono il numero PER LATO: `Serie: 3` con monopodalico sì significa 3 SX e 3 DX. Non raddoppiare il numero nel testo.
 - Per gli esercizi bilaterali usa `Monopodalico: no`.
+- Per una superserie, assegna lo stesso nome del blocco ai due esercizi, nell'ordine A poi B. L'app registra A1, B1, A2, B2; nessun timer fra A e B, recupero dopo B. Il recupero del blocco è quello del secondo esercizio.
 - Il carico è quello registrato per una singola esecuzione/lato; mantieni la convenzione della scheda. Se non è specificato, ometti la riga Carico. Non inventare pesi.
 - Mantieni l’ordine originale e le unità esplicite. Non convertire secondi o metri in ripetizioni.
 - Se mancano serie, ripetizioni/unità o recupero, chiedimi il dato prima di produrre il testo definitivo.

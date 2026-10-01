@@ -13,7 +13,7 @@ import { WorkoutRecoveryCard } from "@/components/WorkoutRecoveryCard";
 import { WorkoutCompletionPrompt } from "@/components/WorkoutCompletionPrompt";
 import { WorkoutExerciseHero } from "@/components/WorkoutExerciseHero";
 import { insertLoggedSet } from "@/lib/logged-sets";
-import { findNextAfterCompletion } from "@/lib/workout-navigation";
+import { nextGroupedSet, workoutBlocks } from "@/lib/workout-navigation";
 import {
   ensureActiveWorkout,
   finishActiveWorkout,
@@ -31,6 +31,7 @@ function RunPage() {
   const { templateId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [activeIdx, setActiveIdx] = useState(0);
   const [isFinishing, setIsFinishing] = useState(false);
   const finishingRef = useRef(false);
 
@@ -40,6 +41,9 @@ function RunPage() {
   });
 
   const exercises = useMemo(() => templateData?.exercises ?? [], [templateData?.exercises]);
+  const blocks = useMemo(() => workoutBlocks(exercises), [exercises]);
+  const activeBlockIndex = blocks.findIndex(block => block.includes(activeIdx));
+  const activeBlock = blocks[activeBlockIndex] ?? [];
   const exerciseIds = useMemo(() => exercises.map((e) => e.exercise_id), [exercises]);
 
   const { data: previous } = useQuery({
@@ -66,7 +70,6 @@ function RunPage() {
     setRestoredTimerSessionId(activeWorkoutData.session.id);
   }, [activeWorkoutData]);
 
-  const [activeIdx, setActiveIdx] = useState(0);
   const [activeSetIdx, setActiveSetIdx] = useState(0);
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, Row[]>>({});
   const [rowsInitialized, setRowsInitialized] = useState(false);
@@ -254,8 +257,8 @@ function RunPage() {
       next[activeEx.id] = list;
       return next;
     });
-    const next = findNextAfterCompletion(
-      exercises.map((ex) => ex.id),
+    const { next, rest } = nextGroupedSet(
+      exercises,
       rowsByExercise,
       {
         exerciseIndex: activeIdx,
@@ -263,7 +266,10 @@ function RunPage() {
       },
     );
     if (next) {
-      timer.start(activeEx.rest_seconds, activeEx.exercise_id, activeEx.exercise.name);
+      if (rest) {
+        const restExercise = exercises[activeBlock[activeBlock.length - 1]] ?? activeEx;
+        timer.start(restExercise.rest_seconds, activeEx.exercise_id, activeBlock.length > 1 ? "Superserie" : activeEx.exercise.name);
+      } else timer.skip();
       setActiveIdx(next.exerciseIndex);
       setActiveSetIdx(next.setIndex);
     } else {
@@ -369,10 +375,11 @@ function RunPage() {
 
         {/* Exercise tabs */}
         <div className="workout-screen-tabs scrollbar-none flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
-          {exercises.map((ex, i) => {
-            const list = rowsByExercise[ex.id] ?? [];
+          {blocks.map((block, blockIndex) => {
+            const i = block[0]; const ex = exercises[i];
+            const list = block.flatMap(index => rowsByExercise[exercises[index].id] ?? []);
             const done = list.filter((r) => r.completed).length;
-            const isActive = i === activeIdx;
+            const isActive = block.includes(activeIdx);
             return (
               <button
                 key={ex.id}
@@ -385,7 +392,7 @@ function RunPage() {
                   (isActive ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
                 }
               >
-                {ex.exercise.name} · {done}/{list.length || ex.target_sets}
+                {block.length > 1 ? "Superserie " + (blockIndex + 1) : ex.exercise.name} · {done}/{list.length || ex.target_sets}
               </button>
             );
           })}
@@ -394,8 +401,9 @@ function RunPage() {
         {activeEx && activeRow && (
           <WorkoutExerciseHero
             exerciseName={activeEx.exercise.name}
-            exercisePosition={activeIdx + 1}
-            exerciseCount={exercises.length}
+            superset={activeBlock.length > 1 ? activeBlock.map((index, childIndex) => ({name: exercises[index].exercise.name, label: String.fromCharCode(65 + childIndex), active: index === activeIdx, onSelect: () => { setActiveIdx(index); setActiveSetIdx(Math.min(activeSetIdx, Math.max(0,(rowsByExercise[exercises[index].id]?.length ?? 1)-1))); }})) : undefined}
+            exercisePosition={activeBlockIndex + 1}
+            exerciseCount={blocks.length}
             seriesPosition={activeRow.side && activeRow.side !== "both" ? Math.ceil((activeSetIdx + 1) / 2) : activeSetIdx + 1}
             side={activeRow.side}
             seriesCount={activeRow.side && activeRow.side !== "both" ? Math.ceil(rows.length / 2) : rows.length}
@@ -430,7 +438,7 @@ function RunPage() {
                 </div>
 
                 <div className="workout-rest-meta mb-4 flex items-center justify-between gap-3 text-xs text-label-secondary">
-                  <span>Recupero target: {activeEx.rest_seconds}s</span>
+                  <span>{activeBlock.length > 1 ? "Recupero a fine giro" : "Recupero target"}: {(activeBlock.length > 1 ? exercises[activeBlock[activeBlock.length-1]].rest_seconds : activeEx.rest_seconds)}s</span>
                   {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
                 </div>
 

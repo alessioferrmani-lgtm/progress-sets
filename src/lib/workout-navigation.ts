@@ -7,6 +7,43 @@ export type WorkoutSetLocation = {
   setIndex: number;
 };
 
+export type GroupedExercise = { id: string; superset_group?: string | null };
+
+/** A block owns its children; ordinary exercises remain single-child blocks. */
+export function workoutBlocks(exercises: GroupedExercise[]): number[][] {
+  const blocks: number[][] = [];
+  exercises.forEach((exercise, index) => {
+    const group = exercise.superset_group?.trim();
+    const existing = group ? blocks.find(block => exercises[block[0]].superset_group?.trim() === group) : undefined;
+    if (existing) existing.push(index);
+    else blocks.push([index]);
+  });
+  return blocks;
+}
+
+/** Round-major order inside a superset: A1 B1 A2 B2, without losing saved rows. */
+export function nextGroupedSet<Row extends WorkoutNavigationRow>(
+  exercises: GroupedExercise[], rows: Record<string, Row[]>, current: WorkoutSetLocation,
+): { next: WorkoutSetLocation | null; rest: boolean } {
+  const blocks = workoutBlocks(exercises);
+  const positions = blocks.flatMap((block, blockIndex) => {
+    const count = Math.max(0, ...block.map(i => rows[exercises[i].id]?.length ?? 0));
+    return Array.from({length: count}, (_, setIndex) => block.flatMap(exerciseIndex =>
+      rows[exercises[exerciseIndex].id]?.[setIndex] ? [{exerciseIndex, setIndex, blockIndex}] : [],
+    )).flat();
+  });
+  const index = positions.findIndex(p => p.exerciseIndex === current.exerciseIndex && p.setIndex === current.setIndex);
+  if (index < 0) return {next: null, rest: false};
+  for (let offset = 1; offset < positions.length; offset++) {
+    const candidate = positions[(index + offset) % positions.length];
+    if (!rows[exercises[candidate.exerciseIndex].id][candidate.setIndex].completed) {
+      const sameRound = candidate.blockIndex === positions[index].blockIndex && candidate.setIndex === current.setIndex;
+      return {next: {exerciseIndex: candidate.exerciseIndex, setIndex: candidate.setIndex}, rest: !sameRound};
+    }
+  }
+  return {next: null, rest: false};
+}
+
 /**
  * Finds the next uncompleted set in workout order, wrapping around only when
  * an earlier set was skipped manually. The current set is never returned.

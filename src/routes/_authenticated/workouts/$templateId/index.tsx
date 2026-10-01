@@ -1,3 +1,4 @@
+import { workoutBlocks } from "@/lib/workout-navigation";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Dumbbell, Pencil, Play, Timer, Trash2, X } from "lucide-react";
@@ -101,11 +102,13 @@ function WorkoutTemplateDetail() {
         </Link>
 
         <section className="mt-5 space-y-3" aria-label="Esercizi della scheda">
-          {data.exercises.map((exercise, index) => (
+          {workoutBlocks(data.exercises).map((block, blockIndex) => <div key={data.exercises[block[0]].id} className={block.length > 1 ? "rounded-2xl border border-accent/50 p-2 space-y-2" : ""}>
+            {block.length > 1 && <div className="px-2 py-1 text-sm font-semibold text-accent">Superserie · {data.exercises[block[0]].superset_group}<p className="text-xs font-normal text-label-secondary">Nessuna pausa tra A e B · recupero a fine giro</p></div>}
+            {block.map((index, childIndex) => { const exercise=data.exercises[index]; return (
             <article key={exercise.id} className="ios-card p-4">
               <div className="flex items-start gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill text-sm font-bold text-accent">
-                  {index + 1}
+                  {block.length > 1 ? String.fromCharCode(65 + childIndex) : blockIndex + 1}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="font-semibold text-label">{exercise.exercise.name}</h2>
@@ -132,7 +135,8 @@ function WorkoutTemplateDetail() {
                 </div>
               </div>
             </article>
-          ))}
+          );})}
+          </div>)}
         </section>
 
         <div className="mt-7 grid grid-cols-2 gap-3">

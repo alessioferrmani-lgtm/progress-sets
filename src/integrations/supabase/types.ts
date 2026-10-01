@@ -309,6 +309,7 @@ export type Database = {
       }
       template_exercises: {
         Row: {
+          superset_group?: string | null
           is_unilateral?: boolean
           alternative: string | null
           created_at: string
@@ -327,6 +328,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          superset_group?: string | null
           is_unilateral?: boolean
           alternative?: string | null
           created_at?: string
@@ -345,6 +347,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          superset_group?: string | null
           is_unilateral?: boolean
           alternative?: string | null
           created_at?: string
