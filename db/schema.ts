@@ -34,6 +34,7 @@ export const templateExercises = sqliteTable("template_exercises", {
   exercise_id:text("exercise_id").notNull().references(()=>exercises.id,{onDelete:"restrict"}),order_index:integer("order_index").notNull().default(0),
   objective:text("objective"),rir:text("rir"),alternative:text("alternative"), target_sets:integer("target_sets").notNull().default(3),
   target_reps:real("target_reps"), reps_type:text("reps_type").notNull().default("count"),reps_display:text("reps_display"),
+  superset_group:text("superset_group"),
   is_unilateral:integer("is_unilateral",{mode:"boolean"}).notNull().default(false),
   target_weight_kg:real("target_weight_kg"),rest_seconds:integer("rest_seconds").notNull().default(90),created_at:created(),
 },t=>[index("idx_template_exercises_owner_parent").on(t.user_id,t.template_id,t.order_index)]);

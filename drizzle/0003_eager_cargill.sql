@@ -1,0 +1,1 @@
+ALTER TABLE `template_exercises` ADD `superset_group` text;

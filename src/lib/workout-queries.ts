@@ -38,6 +38,7 @@ export type TemplateExercise = {
   objective: string | null;
   rir: string | null;
   alternative: string | null;
+  superset_group?: string | null;
   is_unilateral?: boolean;
   target_sets: number;
   target_reps: number | null;
@@ -132,7 +133,7 @@ export async function fetchTemplate(id: string): Promise<{
   const { data: ex, error: ee } = await supabase
     .from("template_exercises")
     .select(
-      "id,template_id,exercise_id,order_index,objective,rir,alternative,is_unilateral,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
+      "id,template_id,exercise_id,order_index,objective,rir,alternative,superset_group,is_unilateral,target_sets,target_reps,reps_type,reps_display,target_weight_kg,rest_seconds,exercise:exercises(id,name)",
     )
     .eq("template_id", id)
     .order("order_index");

@@ -1,4 +1,5 @@
 export type ParsedExercise = {
+  superset_group?: string | null;
   is_unilateral: boolean;
   name: string;
   sets: number;
@@ -22,6 +23,8 @@ export type ParsedTemplate = {
 };
 
 type ExerciseDraft = {
+  superset?: string;
+  note?: string;
   unilateral?: boolean;
   weight?: number | null;
   name: string;
@@ -30,7 +33,7 @@ type ExerciseDraft = {
   rest?: string;
 };
 
-const FIELD = /^(serie|set|ripetizioni|reps?|recupero|rest|monopodalico|unilaterale|carico|kg)\s*:\s*(.+)$/i;
+const FIELD = /^(serie|set|ripetizioni|reps?|recupero|rest|monopodalico|unilaterale|carico|kg|superserie|superset|nota|note)\s*:\s*(.+)$/i;
 const DAY = /^(?:giorno|day)\s*[:-]?\s*(.+)$/i;
 const NAMED_DAY =
   /^(luned[i\u00ec]|marted[i\u00ec]|mercoled[i\u00ec]|gioved[i\u00ec]|venerd[i\u00ec]|sabato|domenica|push|pull|gambe|legs|upper|lower)\s*:?$/i;
@@ -281,6 +284,8 @@ function applyField(draft: ExerciseDraft, rawKey: string, rawValue: string) {
     const weight = Number(value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(",", "."));
     draft.weight = Number.isFinite(weight) ? weight : null;
   }
+  else if (key === "superserie" || key === "superset") draft.superset = value;
+  else if (key === "nota" || key === "note") draft.note = value;
   else draft.rest = value;
 }
 
@@ -289,6 +294,7 @@ function toExercise(draft: ExerciseDraft): ParsedExercise {
   const reps = parseReps(repsDisplay);
   return {
     name: draft.name,
+    superset_group: draft.superset || null,
     is_unilateral: draft.unilateral ?? isUnilateral(draft.name + " " + repsDisplay),
     sets: draft.sets && draft.sets > 0 ? Math.round(draft.sets) : 3,
     reps_type: reps.type,
@@ -296,7 +302,7 @@ function toExercise(draft: ExerciseDraft): ParsedExercise {
     reps_display: repsDisplay,
     rest_sec: parseDuration(draft.rest) ?? 90,
     target_weight_kg: draft.weight ?? null,
-    objective: null,
+    objective: draft.note || null,
     rir: null,
     alternative: null,
   };
@@ -337,7 +343,7 @@ function parseDuration(value?: string): number | null {
 }
 
 function positiveInteger(value: string): number | null {
-  const number = Number(value.trim());
+  const number = Number(value.trim().match(/^([0-9]+)(?:\s+per\s+(?:lato|gamba|braccio|piede))?$/i)?.[1]);
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 export function isUnilateral(text: string): boolean {
