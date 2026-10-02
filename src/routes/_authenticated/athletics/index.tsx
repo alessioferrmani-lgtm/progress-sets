@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchIntervalSessions, formatDistance, formatTime } from "@/lib/athletics-queries";
+import { RunComparison } from "@/components/RunComparison";
 import { ContinuousRunSheet } from "@/components/ContinuousRunSheet";
 import { CONTINUOUS_RUN, runPace } from "@/lib/continuous-run";
 import { RunningWarmupSheet } from "@/components/RunningWarmupSheet";
@@ -147,6 +148,7 @@ function AthleticsOverview() {
                     {` · ${formatDistance(distance)} · ${formatTime(elapsed)}`}
                     {session.signature === CONTINUOUS_RUN && ` · ${runPace(distance, elapsed)}`}
                   </div>
+                  <RunComparison session={session} all={sessions} />
                 </div>
                 {session.calories_burned != null && (
                   <span className="text-xs font-semibold text-label-secondary">

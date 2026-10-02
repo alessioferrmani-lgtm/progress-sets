@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StrengthComparison } from "@/components/StrengthComparison";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
 import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
@@ -470,6 +471,7 @@ function SummaryPage() {
   return (
     <>
       <div className="mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-[calc(env(safe-area-inset-top)+12px)]">
+        <StrengthComparison sessionId={sessionId} startedAt={data.startedAt} sets={data.exercises.flatMap(e=>e.sets)} />
         <header className="flex items-center gap-3">
           <button
             type="button"
