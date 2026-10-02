@@ -277,5 +277,5 @@ test("Atletica azzera i riepiloghi a mezzanotte e permette di eliminare le ripet
   assert.match(athletics, /from\("interval_sessions"\)/);
   assert.match(athletics, /\.delete\(\)/);
   assert.match(athletics, /from\("performance_log"\)/);
-  assert.match(athletics, /Sessione di ripetute eliminata/);
+  assert.match(athletics, /Allenamento eliminato/);
 });

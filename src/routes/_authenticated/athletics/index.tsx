@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchIntervalSessions, formatDistance, formatTime } from "@/lib/athletics-queries";
+import { ContinuousRunSheet } from "@/components/ContinuousRunSheet";
+import { CONTINUOUS_RUN, runPace } from "@/lib/continuous-run";
 import { RunningWarmupSheet } from "@/components/RunningWarmupSheet";
 import { CustomizableWarmupReminder } from "@/components/CustomizableWarmupReminder";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/athletics/")({
 });
 
 function AthleticsOverview() {
+  const [runOpen, setRunOpen] = useState(false);
   const [warmupOpen, setWarmupOpen] = useState(false);
   const queryClient = useQueryClient();
   const sessionsQ = useQuery({ queryKey: ["interval_sessions"], queryFn: fetchIntervalSessions });
@@ -34,7 +37,7 @@ function AthleticsOverview() {
   const totals = todaySessions.reduce(
     (sum, session) => {
       sum.distance += session.interval_reps.reduce((n, rep) => n + rep.distance_m, 0);
-      sum.reps += session.interval_reps.length;
+      if(session.signature !== CONTINUOUS_RUN) sum.reps += session.interval_reps.length;
       sum.calories += session.calories_burned ?? 0;
       return sum;
     },
@@ -58,7 +61,7 @@ function AthleticsOverview() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["interval_sessions"] });
       queryClient.invalidateQueries({ queryKey: ["performance_log"] });
-      toast.success("Sessione di ripetute eliminata");
+      toast.success("Allenamento eliminato");
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Impossibile eliminare la sessione"),
@@ -66,7 +69,7 @@ function AthleticsOverview() {
 
   const confirmDelete = (sessionId: string) => {
     if (
-      window.confirm("Eliminare questa sessione di ripetute? L'operazione non si può annullare.")
+      window.confirm("Eliminare questo allenamento? L'operazione non si può annullare.")
     ) {
       removeSession.mutate(sessionId);
     }
@@ -74,6 +77,8 @@ function AthleticsOverview() {
 
   return (
     <div className="pb-24">
+      <button onClick={()=>setRunOpen(true)} className="mb-3 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground"><Plus className="h-4 w-4" /> Nuova corsa continua</button>
+      <ContinuousRunSheet open={runOpen} onClose={()=>setRunOpen(false)} />
       <Link
         to="/workouts/intervals/new"
         className="flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-sm font-semibold text-accent-foreground active:scale-[0.97]"
@@ -110,7 +115,7 @@ function AthleticsOverview() {
       <RunningWarmupSheet open={warmupOpen} onClose={() => setWarmupOpen(false)} />
 
       <h2 className="mt-6 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">
-        Allenamenti atletica
+        Storico corsa e ripetute
       </h2>
       {sessionsQ.isLoading ? (
         <div className="ios-card p-6 text-center text-sm text-label-secondary">Caricamento…</div>
@@ -122,7 +127,7 @@ function AthleticsOverview() {
         <div className="ios-card p-6 text-center">
           <Timer className="mx-auto h-6 w-6 text-label-tertiary" />
           <p className="mt-2 text-sm text-label-secondary">
-            Nessuna sessione di ripetute registrata.
+            Nessun allenamento di corsa registrato.
           </p>
         </div>
       ) : (
@@ -132,7 +137,7 @@ function AthleticsOverview() {
             const elapsed = session.interval_reps.reduce((n, rep) => n + rep.time_sec, 0);
             return (
               <li key={session.id} className="ios-list-row">
-                <Repeat2 className="h-4 w-4 text-accent" />
+                {session.signature === CONTINUOUS_RUN ? <RouteIcon className="h-4 w-4 text-accent" /> : <Repeat2 className="h-4 w-4 text-accent" />}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-label">
                     {session.signature || "Sessione ripetute"}
@@ -140,6 +145,7 @@ function AthleticsOverview() {
                   <div className="mt-0.5 text-xs text-label-secondary">
                     {format(new Date(`${session.date}T12:00:00`), "d MMM yyyy", { locale: it })}
                     {` · ${formatDistance(distance)} · ${formatTime(elapsed)}`}
+                    {session.signature === CONTINUOUS_RUN && ` · ${runPace(distance, elapsed)}`}
                   </div>
                 </div>
                 {session.calories_burned != null && (
