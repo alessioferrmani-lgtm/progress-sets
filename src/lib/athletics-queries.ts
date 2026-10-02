@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
+import { fetchMyProfile } from "./profile-queries";
+import { computeCaloriesForRace } from "./calories";
+
 export type TestType = {
   id: string;
   user_id: string | null;
@@ -75,9 +78,10 @@ export async function fetchIntervalSessions(): Promise<IntervalSessionRow[]> {
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
+  const profile = await fetchMyProfile().catch(() => null);
   return (data ?? []).map((session) => ({
     ...session,
-    calories_burned: session.calories_burned == null ? null : Number(session.calories_burned),
+    calories_burned: session.calories_burned == null && profile ? computeCaloriesForRace(profile, {distance_m:(session.interval_reps??[]).reduce((n,r)=>n+Number(r.distance_m),0),time_sec:(session.interval_reps??[]).reduce((n,r)=>n+Number(r.time_sec),0)}) : session.calories_burned == null ? null : Number(session.calories_burned),
     interval_reps: [...(session.interval_reps ?? [])]
       .map((rep) => ({
         ...rep,

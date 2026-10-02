@@ -221,28 +221,9 @@ export function computeCaloriesForRace(
 ): number | null {
   if (!isPositive(profile.weight_kg) || !isPositive(r.distance_m) || !isPositive(r.time_sec))
     return null;
-  const duration_min = r.time_sec / 60;
-  if (duration_min <= 0) return null;
-  const age = ageFromDOB(profile.date_of_birth);
-  if (isPlausibleHeartRate(r.avg_hr) && age !== null && profile.sex) {
-    return round(
-      caloriesFromHR({
-        avg_hr: r.avg_hr,
-        weight_kg: profile.weight_kg,
-        age,
-        sex: profile.sex,
-        duration_min,
-      }),
-    );
-  }
-  const met = metForRun(r.distance_m, r.time_sec);
-  return round(
-    caloriesFromMET({
-      met,
-      weight_kg: profile.weight_kg,
-      duration_min,
-    }),
-  );
+  // Approximate net energy cost on level ground: 1 kcal/kg/km.
+  // Distance avoids underestimating short, fast repetitions with fixed MET bands.
+  return round(profile.weight_kg * r.distance_m / 1000);
 }
 
 function round(n: number): number {

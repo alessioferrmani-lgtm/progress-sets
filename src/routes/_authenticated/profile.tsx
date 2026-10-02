@@ -13,6 +13,7 @@ import {
   type Sex,
 } from "@/lib/calories";
 import { ChevronRight, LogOut, Mail, Check, Settings } from "lucide-react";
+import { siteRequest } from "@/integrations/sites/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -39,6 +40,27 @@ function ProfilePage() {
     enabled: !!user,
   });
 
+  const [photoVersion, setPhotoVersion] = useState(0);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  async function changePhoto(file?: File) {
+    setPhotoBusy(true);
+    try {
+      let body: unknown = {remove:true};
+      if(file) {
+        if(!file.type.startsWith("image/") || file.size>20_000_000) throw new Error("Scegli una foto fino a 20 MB");
+        const bitmap=await createImageBitmap(file);
+        const canvas=document.createElement("canvas");canvas.width=512;canvas.height=512;
+        const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Impossibile elaborare la foto");
+        const side=Math.min(bitmap.width,bitmap.height);
+        ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,512,512);bitmap.close();
+        body={image:canvas.toDataURL("image/jpeg",0.85)};
+      }
+      const result=await siteRequest("avatar",body);if(result.error)throw result.error;
+      setPhotoFailed(!file);setPhotoVersion(v=>v+1);toast.success(file?"Foto aggiornata":"Foto rimossa");
+    }catch(e){toast.error(e instanceof Error?e.message:"Errore nel salvataggio della foto");}
+    finally{setPhotoBusy(false);}
+  }
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [dob, setDob] = useState("");
@@ -86,7 +108,7 @@ function ProfilePage() {
           className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold text-accent"
           style={{ background: "var(--color-accent-soft)" }}
         >
-          {initial}
+          {!photoFailed ? <img src={`/api/sites/avatar?v=${photoVersion}`} alt="Foto profilo" className="h-14 w-14 rounded-full object-cover" onError={()=>setPhotoFailed(true)} /> : initial}
         </div>
         <div className="min-w-0">
           <div className="truncate text-base font-semibold text-label">
@@ -98,6 +120,13 @@ function ProfilePage() {
         </div>
       </div>
 
+      <div className="mt-3 flex items-center gap-4 text-sm text-accent">
+        <label className={photoBusy?"opacity-50":"cursor-pointer"}>
+          {photoBusy?"Salvataggio foto…":"Scegli foto profilo"}
+          <input type="file" accept="image/*" disabled={photoBusy} className="sr-only" onChange={e=>{const file=e.target.files?.[0];if(file)void changePhoto(file);e.target.value="";}} />
+        </label>
+        {!photoFailed && <button disabled={photoBusy} onClick={()=>void changePhoto()}>Rimuovi</button>}
+      </div>
       {/* Physical data */}
       <section className="mt-6">
         <h2 className="flex items-center gap-1 px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-label-secondary">

@@ -2,7 +2,7 @@ import { database, type DatabaseBinding } from "./database.ts";
 import { executeQuery, QueryError } from "./query-engine.ts";
 import { ensureCatalog } from "./catalog.ts";
 import { importProgress } from "./progress-import.ts";
-export type Env = { DB?: DatabaseBinding; ASSETS?: {fetch(request: Request): Promise<Response>}; };
+export type Env = { PROFILE_PHOTOS?: {get(key:string):Promise<any>;put(key:string,data:Uint8Array,options:any):Promise<any>;delete(key:string):Promise<void>}; DB?: DatabaseBinding; ASSETS?: {fetch(request: Request): Promise<Response>}; };
 function json(value:unknown,status=200) { return new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}}); }
 export function readIdentity(request:Request) {
   const id=request.headers.get("oai-authenticated-user-id");
@@ -30,6 +30,12 @@ export async function handleApi(request:Request,env:Env) {
       return json({data:{user},error:null});
     }
     if(!user)return json({data:null,error:{message:"Accedi con ChatGPT per continuare",code:"UNAUTHENTICATED"}},401);
+    if(path==="/api/sites/avatar"&&request.method==="GET") {
+      if(!env.PROFILE_PHOTOS)return json({error:{message:"Foto non disponibile"}},503);
+      const photo=await env.PROFILE_PHOTOS.get(`avatars/${user.id}`);
+      if(!photo)return new Response(null,{status:404});
+      return new Response(photo.body,{headers:{"Content-Type":"image/jpeg","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
+    }
     const db=database(env);
     if(path==="/api/sites/preferences"&&request.method==="GET") {
       const key=preferenceKey(url.searchParams.get("key"));
@@ -40,6 +46,16 @@ export async function handleApi(request:Request,env:Env) {
     if(Number(request.headers.get("Content-Length")??0)>1_000_000)throw new QueryError("Richiesta troppo grande");
     const raw=await request.text();if(raw.length>1_000_000)throw new QueryError("Richiesta troppo grande");
     let body:any;try{body=JSON.parse(raw);}catch{throw new QueryError("Dati non validi");}
+    if(path==="/api/sites/avatar") {
+      if(!env.PROFILE_PHOTOS)return json({error:{message:"Salvataggio foto non disponibile"}},503);
+      const key=`avatars/${user.id}`;
+      if(body.remove===true){await env.PROFILE_PHOTOS.delete(key);return json({data:true,error:null});}
+      if(typeof body.image!=="string"||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(body.image))throw new QueryError("Immagine non valida");
+      const bytes=Uint8Array.from(atob(body.image.split(",")[1]),c=>c.charCodeAt(0));
+      if(bytes.length>500000||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)throw new QueryError("Immagine non valida o troppo grande");
+      await env.PROFILE_PHOTOS.put(key,bytes,{httpMetadata:{contentType:"image/jpeg"}});
+      return json({data:true,error:null});
+    }
     if(path==="/api/sites/import")return json({data:await importProgress(db,user.id,body),error:null});
     if(path==="/api/sites/query")return json(await executeQuery(db,user.id,body));
     if(path==="/api/sites/preferences") {

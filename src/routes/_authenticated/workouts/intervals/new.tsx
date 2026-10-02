@@ -128,6 +128,11 @@ function NewIntervalPage() {
         </label>
       </div>
 
+      <p className="mt-3 text-sm text-label-secondary">Per una corsa continua inserisci un’unica distanza con il tempo totale. Per le ripetute aggiungi ogni tratto.</p>
+      <div className="ios-card mt-3 p-3 text-sm text-label">
+        Kcal stimate: {profileQ.data && reps.length ? computeCaloriesForRace(profileQ.data,{distance_m:reps.reduce((n,r)=>n+r.distance_m,0),time_sec:reps.reduce((n,r)=>n+r.time_sec,0)}) ?? "—" : "—"}
+        <p className="mt-1 text-sm text-label-secondary">Stima da peso e distanza su terreno pianeggiante. Recuperi esclusi. {!profileQ.data?.weight_kg && "Inserisci il peso nel profilo."}</p>
+      </div>
       <section className="ios-card mt-3 p-3">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-label-secondary">
           Nuova ripetuta
