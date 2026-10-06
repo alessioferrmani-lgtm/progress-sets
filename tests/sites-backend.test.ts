@@ -6,6 +6,7 @@ import { executeQuery } from "../sites/query-engine.ts";
 import { handleApi } from "../sites/api.ts";
 import type { SitesQuery } from "../src/integrations/sites/query.ts";
 import type { DatabaseBinding } from "../sites/database.ts";
+import { importRequestedRace } from "../sites/race-import.ts";
 import { importProgress } from "../sites/progress-import.ts";
 
 function setup() {
@@ -228,4 +229,26 @@ test("Import: un vincolo fallito annulla anche profilo e schede",async()=>{
   assert.equal((await query("profiles")).data.length,0);
   assert.equal((await query("workout_templates")).data.length,0);
   assert.equal((await query("workout_sessions")).data.length,1);
+});
+
+
+test("Skopje: importa nel profilo corretto una sola volta, mantiene i parziali e rispetta la cancellazione", async () => {
+  const {db, insert, query} = setup();
+  const owner = "nGz8jO9jNuiAN9oc4keDjNYyaA4b3mdQnVClooMNpwVUbyh71cFByR";
+  await insert("profiles", {display_name:"Alessio"}, owner);
+  await importRequestedRace(db);
+  await importRequestedRace(db);
+  assert.equal((await query("races")).data.length, 0);
+  const rows = (await query("races", {}, owner)).data;
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].distance_m, 9810);
+  assert.equal(rows[0].time_sec, 2694);
+  const splits = JSON.parse(rows[0].splits_json);
+  assert.equal(splits.length, 10);
+  assert.equal(splits.reduce((n:number, s:any) => n+s.distance_m, 0), 9810);
+  assert.equal(splits[9].pace_sec, 250);
+  assert.equal((await query("performance_log", {}, owner)).data.length, 1);
+  await query("races", {action:"delete", filters:[eq("id",rows[0].id)]}, owner);
+  await importRequestedRace(db);
+  assert.equal((await query("races", {}, owner)).data.length, 0);
 });

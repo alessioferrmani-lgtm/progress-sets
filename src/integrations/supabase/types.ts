@@ -261,6 +261,11 @@ export type Database = {
       }
       races: {
         Row: {
+          splits_json: string | null
+          start_time: string | null
+          time_kind: string | null
+          official_distance_m: number | null
+          official_time_sec: number | null
           avg_hr: number | null
           calories_burned: number | null
           category: string | null
@@ -276,6 +281,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          splits_json?: string | null
+          start_time?: string | null
+          time_kind?: string | null
+          official_distance_m?: number | null
+          official_time_sec?: number | null
           avg_hr?: number | null
           calories_burned?: number | null
           category?: string | null
@@ -291,6 +301,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          splits_json?: string | null
+          start_time?: string | null
+          time_kind?: string | null
+          official_distance_m?: number | null
+          official_time_sec?: number | null
           avg_hr?: number | null
           calories_burned?: number | null
           category?: string | null

@@ -65,6 +65,7 @@ export const tests = sqliteTable("tests", {
   calories_burned:real("calories_burned"),created_at:created(),
 },t=>[index("idx_tests_owner_type_date").on(t.user_id,t.test_type_id,t.date)]);
 export const races = sqliteTable("races", {
+  splits_json:text("splits_json"),start_time:text("start_time"),time_kind:text("time_kind"),official_distance_m:real("official_distance_m"),official_time_sec:real("official_time_sec"),
   id:id(),user_id:owner(),name:text("name").notNull(),date:date(),distance_m:real("distance_m").notNull(),time_sec:real("time_sec").notNull(),
   location:text("location"),placement:integer("placement"),category:text("category"),avg_hr:real("avg_hr"),notes:text("notes"),calories_burned:real("calories_burned"),created_at:created(),
 },t=>[index("idx_races_owner_date").on(t.user_id,t.date)]);

@@ -6,7 +6,7 @@ export function readRunMeta(notes:string|null):RunMeta {
 }
 export function packRunNotes(meta:RunMeta,notes:string){return "@PRYME_RUN:"+JSON.stringify(meta)+"\n"+notes;}
 type Session={id:string;date:string;created_at:string;signature:string|null;notes:string|null;interval_reps:{distance_m:number;time_sec:number;rest_sec:number|null}[]};
-export function similarRuns(current:Session,all:Session[]) {
+export function similarRuns<T extends Session>(current:T,all:T[]):T[] {
  const continuous=current.signature===CONTINUOUS_RUN;
  const distance=current.interval_reps.reduce((n,r)=>n+r.distance_m,0);
  const meta=readRunMeta(current.notes);

@@ -28,6 +28,11 @@ export type TestRow = {
 };
 
 export type RaceRow = {
+  splits_json: string | null;
+  start_time: string | null;
+  time_kind: string | null;
+  official_distance_m: number | null;
+  official_time_sec: number | null;
   id: string;
   name: string;
   date: string;
@@ -141,7 +146,7 @@ export async function fetchRaces(): Promise<RaceRow[]> {
   const { data, error } = await supabase
     .from("races")
     .select(
-      "id,name,date,location,distance_m,time_sec,placement,category,avg_hr,notes,calories_burned,created_at",
+      "id,name,date,location,distance_m,time_sec,placement,category,avg_hr,notes,calories_burned,created_at,splits_json,start_time,time_kind,official_distance_m,official_time_sec",
     )
     .order("date", { ascending: false });
   if (error) throw error;
