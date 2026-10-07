@@ -349,7 +349,7 @@ function RunPage() {
     <div className="workout-screen mx-auto flex w-full max-w-md flex-col">
       <section className="workout-top-shell shrink-0">
         {/* Header */}
-        <div className="workout-screen-header ios-blur sticky top-0 z-10 flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <div className="workout-screen-header relative flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
           <button
             onClick={cancel}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label"

@@ -682,7 +682,7 @@ function SummaryPage() {
         </section>
 
         {isEditing && (
-          <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+12px)] z-10 mt-5 grid grid-cols-2 gap-3 rounded-3xl border border-separator bg-background/95 p-3 shadow-2xl backdrop-blur-xl">
+          <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+12px)] z-10 mt-5 grid grid-cols-2 gap-3 rounded-3xl border border-separator bg-background p-3 shadow-2xl">
             <button
               type="button"
               onClick={() => setIsEditing(false)}

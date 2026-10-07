@@ -1,3 +1,4 @@
+import { BottomSheet } from "@/components/BottomSheet";
 import { MonthCalendarSection } from "@/components/MonthCalendarSection";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,22 +17,9 @@ import { fetchMyProfile, upsertMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
 import { formatVolumeKg } from "@/lib/dashboard-format";
 import { fetchAllTests, fetchIntervalSessions, fetchRaces } from "@/lib/athletics-queries";
-import {
-  Flame,
-  Trophy,
-  ChevronRight,
-  ArrowRight,
-  History,
-  UserCog,
-  Scale,
-  X,
-} from "lucide-react";
+import { Flame, Trophy, ChevronRight, ArrowRight, History, UserCog, Scale, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  subDays,
-  format,
-  isSameDay,
-} from "date-fns";
+import { subDays, format, isSameDay } from "date-fns";
 import { it } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -311,7 +299,6 @@ function RecentSessionsSection({
   );
 }
 
-
 function ProfileBanner({
   profile,
   loading,
@@ -405,54 +392,30 @@ function WeightReminder({
         </div>
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end bg-black/50"
-          onClick={() => setOpen(false)}
+      <BottomSheet open={open} onClose={() => setOpen(false)} title="Aggiorna peso">
+        {oldWeight && (
+          <p className="mb-3 text-sm text-label-secondary">Peso precedente: {oldWeight} kg</p>
+        )}
+        <label className="mt-5 block text-xs font-semibold uppercase text-label-secondary">
+          Nuovo peso (kg)
+          <input
+            autoFocus
+            inputMode="decimal"
+            value={weight}
+            onChange={(event) => setWeight(event.target.value)}
+            className="mt-2 w-full rounded-xl bg-fill px-4 py-3 text-2xl font-semibold text-label outline-none ring-accent focus:ring-2"
+            placeholder="75,0"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={updateWeight.isPending}
+          onClick={saveWeight}
+          className="mt-5 w-full rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground disabled:opacity-50"
         >
-          <div
-            className="w-full rounded-t-[28px] bg-background px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-fill" />
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-label">Aggiorna peso</h2>
-                {oldWeight && (
-                  <p className="text-sm text-label-secondary">Peso precedente: {oldWeight} kg</p>
-                )}
-              </div>
-              <button
-                type="button"
-                aria-label="Chiudi"
-                onClick={() => setOpen(false)}
-                className="flex size-8 items-center justify-center rounded-full bg-fill text-label-secondary"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <label className="mt-5 block text-xs font-semibold uppercase text-label-secondary">
-              Nuovo peso (kg)
-              <input
-                autoFocus
-                inputMode="decimal"
-                value={weight}
-                onChange={(event) => setWeight(event.target.value)}
-                className="mt-2 w-full rounded-xl bg-fill px-4 py-3 text-2xl font-semibold text-label outline-none ring-accent focus:ring-2"
-                placeholder="75,0"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={updateWeight.isPending}
-              onClick={saveWeight}
-              className="mt-5 w-full rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground disabled:opacity-50"
-            >
-              {updateWeight.isPending ? "Salvataggio…" : "Salva nuovo peso"}
-            </button>
-          </div>
-        </div>
-      )}
+          {updateWeight.isPending ? "Salvataggio…" : "Salva nuovo peso"}
+        </button>
+      </BottomSheet>
     </>
   );
 }
