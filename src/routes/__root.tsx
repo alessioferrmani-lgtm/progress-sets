@@ -183,6 +183,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeManager />
       <AuthInvalidator />
+      <div className="pryme-statusbar-cover" aria-hidden="true" />
       <Outlet />
       <Toaster position="top-center" />
     </QueryClientProvider>

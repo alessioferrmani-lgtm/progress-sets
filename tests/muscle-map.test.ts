@@ -139,19 +139,15 @@ test("la sagoma è presente nei riepiloghi allenamento ma non nella Home", () =>
   assert.match(summary, /<MuscleSilhouette\s+active=\{data\.activeMuscles\}/);
 });
 
-test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini muscolari", () => {
-  const component = readFileSync(
-    new URL("../src/components/dashboard/MuscleSilhouette.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(component, /getImageData/);
-  assert.match(component, /floodRecolour/);
-  assert.match(component, /putImageData/);
-  assert.match(component, /h-auto w-full/);
-  assert.match(component, /masksRef/);
-  assert.match(component, /onSelect\(best\)/);
-  assert.doesNotMatch(component, /muscle-map\/\$\{group\}\.svg/);
-  assert.doesNotMatch(component, /<img/);
+test("la sagoma usa forme vettoriali e separa selezione e apertura", () => {
+  const component = readFileSync(new URL("../src/components/dashboard/MuscleSilhouette.tsx", import.meta.url), "utf8");
+  assert.match(component, /viewBox="0 0 418 554"/);
+  assert.match(component, /body-vector\.svg/);
+  assert.match(component, /MUSCLE_VECTOR_PATHS/);
+  assert.match(component, /onCategorySelect/);
+  assert.doesNotMatch(component, /<canvas|body-base\.png/);
+  const summary = readFileSync(new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url), "utf8");
+  assert.match(summary, /selectedMuscle === group/);
 });
 
 test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {

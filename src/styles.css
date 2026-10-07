@@ -348,3 +348,6 @@ html, body, body *, body *::before, body *::after {
 }
 .workout-screen { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
 .workout-screen-header { background: var(--background); isolation: isolate; }
+
+/* An opaque safe-area cover prevents content from entering iOS's status-bar fade. */
+.pryme-statusbar-cover { position: fixed; inset: 0 0 auto; height: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--background); z-index: 1000; pointer-events: none; }

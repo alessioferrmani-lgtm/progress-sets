@@ -569,6 +569,13 @@ function SummaryPage() {
           <MuscleSilhouette
             active={data.activeMuscles}
             selected={selectedMuscle}
+            onCategorySelect={(group) => {
+              if (selectedMuscle === group) setMuscleOpen(true);
+              else {
+                setSelectedMuscle(group);
+                setMuscleOpen(false);
+              }
+            }}
             onSelect={(group) => {
               setSelectedMuscle(group);
               setMuscleOpen(true);
