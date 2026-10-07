@@ -354,12 +354,12 @@ html, body, body *, body *::before, body *::after {
 
 @media (hover: none) and (pointer: coarse) {
   :root { --pryme-top-clearance: max(84px, calc(env(safe-area-inset-top, 0px) + 20px)); }
-  html:has(.pryme-app-shell), body:has(.pryme-app-shell) { height: 100%; overflow: hidden; }
+  html:has(.pryme-app-shell), body:has(.pryme-app-shell) { height: auto; min-height: 100%; overflow-y: auto; overflow-x: clip; }
   .pryme-statusbar-cover { height: var(--pryme-top-clearance); }
-  .pryme-app-shell { position: fixed; inset: 0; display: flex; flex-direction: column; height: auto; min-height: 0; padding-top: var(--pryme-top-clearance); overflow: hidden; }
-  .pryme-page-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .pryme-app-shell { position: relative; display: block; height: auto; min-height: 100svh; padding-top: var(--pryme-top-clearance); overflow: visible; }
+  .pryme-page-scroll { display: contents; }
   .pryme-page-scroll > :first-child { padding-top: 12px !important; }
-  .pryme-page-scroll .workout-screen { min-height: 100%; }
+  .pryme-page-scroll .workout-screen { min-height: calc(100svh - var(--pryme-top-clearance)); }
   [role="dialog"], [role="alertdialog"] { max-height: calc(100dvh - var(--pryme-top-clearance) - 16px); overflow-y: auto; }
 }
 
