@@ -296,3 +296,34 @@ html body #lovable-badge-cta {
     display: none;
   }
 }
+
+/* The training surface prioritizes recording; secondary content opens in sheets. */
+.workout-screen { min-height: 100dvh; gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.workout-top-shell { gap: 6px; }
+.workout-top-shell .workout-exercise-hero { padding: 10px 12px; border-radius: 18px; }
+.workout-screen-content { gap: 8px; }
+.workout-set-card { padding: 10px 12px; border-radius: 18px; }
+.workout-rest-meta { margin-bottom: 0; }
+.workout-set-picker { margin-top: 4px; }
+.workout-values { margin-top: 6px; gap: 8px; }
+.workout-value-card { padding: 6px; }
+.workout-value-control { margin-top: 2px; }
+.workout-value-input { padding-top: 4px; padding-bottom: 4px; }
+.workout-confirm { margin-top: 8px; }
+.workout-add-series { margin-top: 0; }
+.workout-recovery-card { flex-shrink: 0; }
+.workout-set-card > .workout-recovery-card { margin-top: 4px; }
+.workout-picker-list button { width: 100%; min-height: 44px; white-space: normal; text-align: left; }
+.set-stopwatch { margin-top: 6px; padding: 8px; }
+.set-stopwatch > p { display: none; }
+@media (min-height: 800px) { .workout-screen { gap: 12px; } .workout-values { margin-top: 12px; } .workout-value-card { padding: 12px 6px; } }
+@media (max-height: 720px) { .workout-top-shell .workout-exercise-hero { padding-top: 4px; padding-bottom: 6px; } .workout-exercise-hero > div:first-child { font-size: .8125rem; } .workout-exercise-hero > div:nth-last-child(3) { margin-top: 0; } .workout-exercise-hero h2 { font-size: 1.125rem; } }
+.workout-set-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; }
+.workout-set-card > * { grid-column: 1 / -1; }
+.workout-set-card > .workout-set-picker { grid-column: 1; grid-row: 3; }
+.workout-set-card > .workout-add-series { grid-column: 2; grid-row: 3; width: auto; min-height: 44px; margin: 0; padding: 4px; font-size: .8125rem; }
+.workout-set-card > .workout-set-picker { margin: 0; }
+.set-stopwatch { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; align-items: center; }
+.set-stopwatch > div:first-child > span { display: none; }
+.set-stopwatch > div:nth-child(2) { margin-top: 0; }
+.set-stopwatch output { font-size: 1.375rem; }

@@ -24,15 +24,17 @@ export type SetRow = {
   completed_at: string;
 };
 
-export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
+export async function fetchRecentSessions(days = 120, range?: { start: string; end: string }): Promise<SessionRow[]> {
   const since = subDays(new Date(), days).toISOString();
-  const { data, error } = await supabase
+  let query = supabase
     .from("workout_sessions")
     .select(
       "id,template_id,started_at,ended_at,calories_burned,avg_hr,rpe,template:workout_templates(name)",
     )
-    .gte("started_at", since)
+    .gte("started_at", range?.start ?? since)
     .order("started_at", { ascending: false });
+  if (range) query = query.lt("started_at", range.end);
+  const { data, error } = await query;
   if (error) throw error;
   let profile: Awaited<ReturnType<typeof fetchMyProfile>> = null;
   try {

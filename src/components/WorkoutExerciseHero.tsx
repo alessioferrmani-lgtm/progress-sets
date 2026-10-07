@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { BottomSheet } from "./BottomSheet";
 import { SkipForward } from "lucide-react";
 
 type WorkoutExerciseHeroProps = {
@@ -12,7 +14,7 @@ type WorkoutExerciseHeroProps = {
   rir?: string | null;
   alternative?: string | null;
   side?: "both" | "left" | "right";
-  superset?: Array<{name: string; label: string; active: boolean; onSelect: () => void}>;
+  superset?: Array<{ name: string; label: string; active: boolean; onSelect: () => void }>;
   onSkip: () => void;
 };
 
@@ -35,84 +37,78 @@ export function WorkoutExerciseHero({
   superset,
   onSkip,
 }: WorkoutExerciseHeroProps) {
-  const seriesProgress = Math.min(
-    100,
-    Math.max(0, (seriesPosition / Math.max(seriesCount, 1)) * 100),
-  );
-  const overallProgress = Math.min(
-    100,
-    Math.max(0, (completedSets / Math.max(totalSets, 1)) * 100),
-  );
-
+  const [infoOpen, setInfoOpen] = useState(false);
   return (
     <section
-      className="workout-exercise-hero relative overflow-hidden rounded-[28px] border border-separator/80 bg-gradient-to-br from-fill-secondary via-background to-fill p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)]"
-      data-testid="workout-exercise-hero"
+      className="workout-exercise-hero rounded-2xl border border-separator bg-fill-secondary p-3"
       aria-label={`Esercizio ${exercisePosition} di ${exerciseCount}: ${exerciseName}`}
     >
-      <div className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-accent/15 blur-3xl" />
-      <div className="workout-exercise-hero-top relative flex items-start justify-between gap-5">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-label-tertiary">
-            {superset ? "Superserie" : "Esercizio"} {exercisePosition} di {exerciseCount}
-          </p>
-          <h2 className="workout-exercise-hero-title mt-3 text-[2rem] font-bold leading-[1.05] tracking-tight text-label">
-            {superset ? "Giro " + seriesPosition + " di " + seriesCount : exerciseName}
-          </h2>
-          {superset && <div className="mt-3 space-y-2" aria-label="Sottoesercizi della superserie">{superset.map(child => <button key={child.label} type="button" onClick={child.onSelect} aria-pressed={child.active} className={"flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm " + (child.active ? "bg-accent/15 text-accent ring-1 ring-accent" : "bg-fill text-label-secondary")}><span className="font-bold">{child.label}</span><span>{child.name}</span></button>)}<p className="text-xs text-label-secondary">A e B senza pausa. Recupero a fine giro.</p></div>}
-          {(objective || alternative) && (
-            <details className="mt-2 text-sm text-label-secondary">
-              <summary className="cursor-pointer">Indicazioni esercizio</summary>
-              {objective && <p className="mt-2 leading-relaxed">{objective}</p>}
-              {alternative && <p className="mt-1 leading-relaxed">Alternativa: {alternative}</p>}
-            </details>
-          )}
-          <p className="workout-exercise-hero-series mt-3 text-sm font-medium text-label-secondary">
-            Serie <span className="text-accent">{seriesPosition}</span> di {seriesCount}
-            {side === "left" ? " · SX" : side === "right" ? " · DX" : ""}
-            {rir ? ` · RIR ${rir}` : ""}
-          </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            aria-label="Salta esercizio"
-            className="workout-exercise-hero-skip mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors active:bg-accent/10"
-          >
-            <SkipForward className="size-4" />
-            Salta esercizio
-          </button>
-        </div>
-
-        <div
-          className="workout-exercise-hero-ring relative flex size-28 shrink-0 items-center justify-center rounded-full p-1"
-          style={{
-            background: `conic-gradient(var(--accent) ${seriesProgress}%, rgba(255,255,255,0.12) 0)`,
-          }}
-          aria-label={`${seriesPosition} di ${seriesCount} serie`}
+      <div className="flex items-center justify-between gap-2 text-sm text-label-secondary">
+        <span>
+          Esercizio {exercisePosition}/{exerciseCount} · Serie {seriesPosition}/{seriesCount}
+          {side === "left" ? " · SX" : side === "right" ? " · DX" : ""}
+          {rir ? ` · RIR ${rir}` : ""}
+        </span>
+        <button
+          onClick={onSkip}
+          aria-label="Salta esercizio"
+          className="flex min-h-11 items-center gap-1 px-2 text-accent"
         >
-          <div className="flex size-full flex-col items-center justify-center rounded-full bg-background/95">
-            <span className="text-4xl font-bold leading-none tabular-nums text-accent">
-              {seriesPosition}
-            </span>
-            <span className="mt-1 text-xs font-medium text-label-secondary">di {seriesCount}</span>
-          </div>
-        </div>
+          <SkipForward className="size-4" />
+          Salta
+        </button>
+        {(objective || alternative || superset) && (
+          <button
+            onClick={() => setInfoOpen(true)}
+            aria-label="Indicazioni esercizio"
+            className="min-h-11 px-2 text-accent"
+          >
+            Info
+          </button>
+        )}
       </div>
-
-      <div className="workout-exercise-hero-progress relative mt-6">
-        <div className="flex items-center justify-between text-xs font-medium text-label-secondary">
-          <span>Progresso allenamento</span>
-          <span className="tabular-nums">
-            {completedSets}/{totalSets} serie
-          </span>
+      <h2 className="text-xl font-bold leading-tight text-label">{exerciseName}</h2>
+      {superset && (
+        <div className="mt-2 flex gap-2">
+          {superset.map((child) => (
+            <button
+              key={child.label}
+              onClick={child.onSelect}
+              aria-label={child.name}
+              aria-pressed={child.active}
+              className={
+                "min-h-11 flex-1 rounded-xl px-3 text-sm " +
+                (child.active ? "bg-accent text-accent-foreground" : "bg-fill text-label-secondary")
+              }
+            >
+              {child.label}
+              {child.active ? " · Attivo" : ""}
+            </button>
+          ))}
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-fill">
-          <div
-            className="h-full rounded-full bg-accent transition-[width] duration-300"
-            style={{ width: `${overallProgress}%` }}
-          />
-        </div>
+      )}
+      <div className="mt-1 h-1 rounded-full bg-fill">
+        <div
+          className="h-full rounded-full bg-accent"
+          style={{ width: `${Math.min(100, (completedSets / Math.max(1, totalSets)) * 100)}%` }}
+        />
       </div>
+      <BottomSheet open={infoOpen} onClose={() => setInfoOpen(false)} title={exerciseName}>
+        <div className="space-y-3 text-label">
+          {objective && <p>{objective}</p>}
+          {alternative && <p>Alternativa: {alternative}</p>}
+          {superset && (
+            <>
+              <p>A e B senza pausa. Recupero a fine giro.</p>
+              {superset.map((c) => (
+                <p key={c.label}>
+                  {c.label}: {c.name}
+                </p>
+              ))}
+            </>
+          )}
+        </div>
+      </BottomSheet>
     </section>
   );
 }

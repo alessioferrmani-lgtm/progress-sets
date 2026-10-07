@@ -1,3 +1,4 @@
+import { MonthCalendarSection } from "@/components/MonthCalendarSection";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -20,7 +21,6 @@ import {
   Trophy,
   ChevronRight,
   ArrowRight,
-  Calendar as CalendarIcon,
   History,
   UserCog,
   Scale,
@@ -31,10 +31,6 @@ import {
   subDays,
   format,
   isSameDay,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  getDay,
 } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -315,103 +311,6 @@ function RecentSessionsSection({
   );
 }
 
-function MonthCalendarSection({
-  sessions,
-  intervals,
-  tests,
-  races,
-}: {
-  sessions?: SessionRow[];
-  intervals?: import("@/lib/athletics-queries").IntervalSessionRow[];
-  tests?: import("@/lib/athletics-queries").TestRow[];
-  races?: import("@/lib/athletics-queries").RaceRow[];
-}) {
-  if (!sessions || !intervals || !tests || !races) return <Skeleton h={300} />;
-  const now = new Date();
-  const start = startOfMonth(now);
-  const end = endOfMonth(now);
-  const days = eachDayOfInterval({ start, end });
-  const leadingBlanks = (getDay(start) + 6) % 7; // Monday-first
-
-  const gymDays = new Set<string>();
-  const runDays = new Set<string>();
-  const raceDays = new Set<string>();
-  sessions.forEach((s) => {
-    const key = format(new Date(s.started_at), "yyyy-MM-dd");
-    gymDays.add(key);
-  });
-  intervals.forEach((session) => runDays.add(session.date));
-  tests.forEach((test) => runDays.add(test.date));
-  races.forEach((race) => {
-    runDays.add(race.date);
-    raceDays.add(race.date);
-  });
-
-  return (
-    <section className="ios-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-label-secondary" />
-          <span className="text-base font-semibold text-label">
-            {format(now, "MMMM yyyy", { locale: it })}
-          </span>
-        </div>
-        <div className="flex gap-2 text-[9px] font-medium text-label-secondary">
-          <span className="flex items-center gap-1">
-            <i className="size-2 rounded-full bg-success" /> Corsa
-          </span>
-          <span className="flex items-center gap-1">
-            <i className="size-2 rounded-full bg-accent" /> Palestra
-          </span>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center">
-        {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
-          <div key={i} className="text-[10px] font-semibold text-label-tertiary">
-            {d}
-          </div>
-        ))}
-        {Array.from({ length: leadingBlanks }).map((_, i) => (
-          <div key={"b" + i} />
-        ))}
-        {days.map((d) => {
-          const key = format(d, "yyyy-MM-dd");
-          const hasGym = gymDays.has(key);
-          const hasRun = runDays.has(key);
-          const hasRace = raceDays.has(key);
-          const isToday = isSameDay(d, new Date());
-          return (
-            <div key={key} className="flex flex-col items-center gap-0.5 py-1">
-              <span
-                className={
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs " +
-                  (hasGym && hasRun
-                    ? "bg-gradient-to-br from-success from-50% to-accent to-50% font-semibold text-white"
-                    : hasRun
-                      ? "bg-success font-semibold text-white"
-                      : hasGym
-                        ? "bg-accent font-semibold text-accent-foreground"
-                        : isToday
-                          ? "border border-accent text-accent"
-                          : "text-label")
-                }
-              >
-                {format(d, "d")}
-              </span>
-              {hasRace ? (
-                <span className="-mt-0.5 text-[10px] leading-none" aria-label="Gara">
-                  🔥
-                </span>
-              ) : (
-                (hasGym || hasRun) && <span className="size-1 rounded-full bg-label-tertiary" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 function ProfileBanner({
   profile,
