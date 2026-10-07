@@ -1,3 +1,4 @@
+import { EXERCISE_MUSCLE_LINKS } from "./exercise-muscle-links.ts";
 export type MuscleGroup =
   | "chest"
   | "back"
@@ -10,7 +11,13 @@ export type MuscleGroup =
   | "glutes"
   | "calves"
   | "tibialis"
-  | "forearms";
+  | "forearms"
+  | "obliques"
+  | "adductors"
+  | "abductors"
+  | "peroneals"
+  | "feet"
+  | "lowerBack";
 
 const ANKLE_PATTERN =
   /cavigli|ankle|plantar|plantare|dorsiflex|dorsiflession|inversione|eversione|ankle pump|ankle circle|alfabeto.*piede|tallone.?punta|towel scrunch|equilibrio su una gamba|pogo jump|ankling|ankle hop|short foot|toe yoga|jump rope/i;
@@ -19,116 +26,85 @@ const SINGLE_LEG_JUMP_PATTERN =
   /single.?leg.*(?:jump|hop|bound)|(?:monopodal|a una gamba).*(?:salto|hop|jump|bound)|hurdle hop monopodal/i;
 
 const RULES: Array<{ match: RegExp; groups: MuscleGroup[] }> = [
-  {
-    match: ANKLE_PATTERN,
-    groups: ["tibialis", "calves"],
-  },
-  { match: /dead bug|bird dog|side plank|hanging knee raise/i, groups: ["abs"] },
-  { match: /suitcase carry/i, groups: ["forearms", "abs"] },
-  { match: /snap down|step off.*stick|step down|step up/i, groups: ["quads", "glutes"] },
-  { match: /trap bar jump/i, groups: ["quads", "glutes"] },
-  { match: /push press/i, groups: ["shoulders", "triceps"] },
-  { match: /abduzione|abduction/i, groups: ["glutes"] },
-  { match: /flessione anca|hip flex/i, groups: ["quads"] },
-  { match: /^dip(?:\s|$)/i, groups: ["triceps", "chest"] },
-  {
-    match:
-      /single.?leg.*(?:calf|soleus)|single.?leg calf raise|soleus(?: raise)?|calf raise|polpacc/i,
-    groups: ["calves"],
-  },
-  {
-    match: SINGLE_LEG_JUMP_PATTERN,
-    groups: ["quads", "glutes", "calves", "tibialis"],
-  },
-  {
-    match:
-      /single.?leg.*(?:squat|split squat)|pistol squat|bulgarian split squat|split squat|single.?leg step/i,
-    groups: ["quads", "glutes", "hamstrings", "calves"],
-  },
-  {
-    match:
-      /single.?leg.*(?:romanian deadlift|deadlift|good morning)|single.?leg glute bridge|single.?leg hip thrust/i,
-    groups: ["hamstrings", "glutes"],
-  },
-  {
-    match:
-      /single.?arm.*(?:row|rematore)|one.?arm.*(?:row|rematore)|single.?arm.*carry|waiter carry a un braccio/i,
-    groups: ["back", "biceps", "forearms", "abs"],
-  },
-  {
-    match: /single.?arm.*(?:press|push)|one.?arm.*(?:press|push)/i,
-    groups: ["chest", "shoulders", "triceps"],
-  },
-  {
-    match: /wrist curl|reverse wrist curl|wrist roller|plate pinch|pinch grip/i,
-    groups: ["forearms"],
-  },
-  { match: /curl alla panca scott/i, groups: ["biceps"] },
-  { match: /rematore chest.?supported|chest.?supported row/i, groups: ["back", "biceps"] },
-  {
-    match: /iperestension|reverse hyper|back extension 45/i,
-    groups: ["back", "hamstrings", "glutes"],
-  },
-  { match: /pullover con manubrio/i, groups: ["back", "chest"] },
-  { match: /vogatore|rower/i, groups: ["back", "biceps", "quads", "hamstrings", "glutes"] },
-  { match: /rack pull/i, groups: ["back", "hamstrings", "glutes"] },
-  { match: /straight.?arm pulldown/i, groups: ["back"] },
-  {
-    match: /pallof|woodchop|hollow body|v.?up|toes to bar|rollout|copenhagen plank/i,
-    groups: ["abs"],
-  },
-  { match: /plank shoulder tap|bear crawl/i, groups: ["abs", "shoulders"] },
-  {
-    match: /crossover|floor press|svend press|hex press|landmine chest/i,
-    groups: ["chest", "triceps"],
-  },
-  { match: /cuban press|rear delt row|band pull.?apart|scaption|y raise/i, groups: ["shoulders"] },
-  { match: /external rotation/i, groups: ["shoulders"] },
-  { match: /pike push.?up|landmine shoulder press/i, groups: ["shoulders", "triceps"] },
-  {
-    match: /jm press|tate press|rolling dumbbell triceps|triceps extension machine/i,
-    groups: ["triceps"],
-  },
-  { match: /panca stretta|close.grip|dip tricip/i, groups: ["triceps", "chest"] },
-  {
-    match: /panca|bench|push[- ]?up|chest|pettoral|croci|fly|dip alle/i,
-    groups: ["chest", "triceps"],
-  },
-  { match: /squat|leg press|affond|lunge|hack/i, groups: ["quads", "glutes"] },
-  { match: /stacc|deadlift|good ?morning/i, groups: ["hamstrings", "glutes", "back"] },
-  { match: /leg curl|femoral/i, groups: ["hamstrings"] },
-  { match: /leg extension|quadric/i, groups: ["quads"] },
-  { match: /tibial|tibialis|shin raise|toe raise|stinco|stinchi/i, groups: ["tibialis"] },
-  { match: /polpacc|calf|calves/i, groups: ["calves"] },
-  {
-    match:
-      /trazion|pull ?up|chin ?up|lat ?machine|pulldown|pulley|rowing|row|rematore|rem\.|iperestension|pullover/i,
-    groups: ["back", "biceps"],
-  },
-  { match: /shoulder|spall|military|lento|overhead|arnold/i, groups: ["shoulders", "triceps"] },
-  {
-    match: /alzat|lateral raise|front raise|reverse fly|reverse pec|face pull|deltoid|scrollat/i,
-    groups: ["shoulders"],
-  },
-  { match: /curl|biceps|bicip/i, groups: ["biceps"] },
-  {
-    match: /push ?down|triceps|tricip|french press|skull|kickback|estension.*testa/i,
-    groups: ["triceps"],
-  },
-  { match: /crunch|plank|addom|ab wheel|sit ?up|leg raise/i, groups: ["abs"] },
-  { match: /hip thrust|glute|ponte/i, groups: ["glutes"] },
-  { match: /forearm|wrist|avambracc|farmer/i, groups: ["forearms"] },
-  { match: /adduttor/i, groups: ["quads"] },
-  { match: /abduttor/i, groups: ["glutes"] },
-  {
-    match: /corsa|sprint|tapis|cyclette|ellittica|skip|calciata|andatur|balz|box jump/i,
-    groups: ["quads", "hamstrings", "glutes", "calves"],
-  },
-  { match: /vogator/i, groups: ["back", "biceps", "quads"] },
-  {
-    match: /burpee|kettlebell swing|clean|snatch|thruster/i,
-    groups: ["shoulders", "back", "quads", "hamstrings", "glutes"],
-  },
+  { match: /copenhagen/i, groups: ["adductors", "obliques"] },
+  { match: /adductor|adduttor/i, groups: ["adductors"] },
+  { match: /side plank.*abdu|side plank star/i, groups: ["obliques", "abductors", "glutes"] },
+  { match: /side plank|pallof|anti rotation/i, groups: ["abs", "obliques"] },
+  { match: /suitcase|offset farmer|farmer carry asim/i, groups: ["forearms", "abs", "obliques"] },
+  { match: /woodchop|rotational|rotazioni|rotation|rainbow|russian|windshield|side throw/i, groups: ["obliques", "abs"] },
+  { match: /bird dog row|renegade row/i, groups: ["back", "biceps", "abs", "obliques", "lowerBack"] },
+  { match: /bird dog|quadrupedia.*estensione/i, groups: ["abs", "lowerBack", "glutes"] },
+  { match: /wrist|avambracc|plate pinch|pinch grip/i, groups: ["forearms"] },
+  { match: /farmer|carry|hold da seduto/i, groups: ["forearms", "abs", "obliques"] },
+  { match: /toe yoga|short foot|toe curl|towel scrunch|big toe/i, groups: ["feet"] },
+  { match: /eversion.*inversion|inversion.*eversion/i, groups: ["tibialis", "peroneals"] },
+  { match: /eversion/i, groups: ["peroneals"] },
+  { match: /inversion/i, groups: ["tibialis"] },
+  { match: /tibial|toe raise|shin raise|dorsifless|dorsiflex|camminata sui talloni/i, groups: ["tibialis"] },
+  { match: /plantarfless|plantar flex|flessione plantare|calf|soleus|soleo|polpacc|camminata sulle punte/i, groups: ["calves"] },
+  { match: /ankle|cavigli|tallone punta|equilibrio|bordo esterno/i, groups: ["tibialis", "peroneals", "calves", "feet"] },
+  { match: /hip abduction|hip abduct|abduzione|abduttor|clamshell|monster walk|lateral band walk|lateral.*slanci/i, groups: ["abductors", "glutes"] },
+  { match: /hip flex|flessor.*anca|flessione anca/i, groups: ["quads", "abs"] },
+  { match: /curl inverso|hammer curl|martello|zottman/i, groups: ["biceps", "forearms"] },
+  { match: /^(?!.*(?:leg curl|nordic)).*(?:curl|bicip|biceps)/i, groups: ["biceps"] },
+  { match: /reverse fly|reverse pec|alzate posterior|rear delt|face pull|band pull apart|y raise/i, groups: ["shoulders", "back"] },
+  { match: /scapular pull/i, groups: ["back"] },
+  { match: /scrollate|shrug/i, groups: ["back"] },
+  { match: /pike|military|lento avanti|shoulder press|arnold|landmine shoulder|overhead press/i, groups: ["shoulders", "triceps"] },
+  { match: /push press/i, groups: ["shoulders", "triceps", "quads", "glutes"] },
+  { match: /cuban|external rotation|scaption|alzat|aperture laterali/i, groups: ["shoulders"] },
+  { match: /(?:^| )croci(?: |$)|chest fly|crossover ai cavi|pector|svend/i, groups: ["chest"] },
+  { match: /leg raise|knee raise|garhammer/i, groups: ["abs", "quads"] },
+  { match: /panca stretta|close grip|dip tricip|jm press/i, groups: ["triceps", "chest", "shoulders"] },
+  { match: /tricep|tricip|french|pushdown|push down|skull|kickback|tate press|estensioni sopra/i, groups: ["triceps"] },
+  { match: /dip|panca|bench|chest press|floor press|hex press|landmine chest|push up|pushup/i, groups: ["chest", "triceps", "shoulders"] },
+  { match: /pullover|straight arm pulldown/i, groups: ["back", "chest"] },
+  { match: /curl inverso|hammer curl|martello|zottman/i, groups: ["biceps", "forearms"] },
+  { match: /leg curl|nordic|ischiocrur|femoral/i, groups: ["hamstrings"] },
+  { match: /curl|bicip|biceps/i, groups: ["biceps"] },
+  { match: /back extension|hyperextension|iperestension|reverse hyper|superman|swimmer/i, groups: ["lowerBack", "glutes", "hamstrings"] },
+  { match: /trap bar.*deadlift/i, groups: ["quads", "glutes", "hamstrings", "lowerBack", "back"] },
+  { match: /romanian|rumeno|rdl|good morning|hip hinge/i, groups: ["hamstrings", "glutes", "lowerBack"] },
+  { match: /stacco sumo|sumo deadlift/i, groups: ["quads", "glutes", "adductors", "lowerBack", "back"] },
+  { match: /stacc|deadlift|rack pull/i, groups: ["hamstrings", "glutes", "lowerBack", "back"] },
+  { match: /stretch.*glute|foam roller glute/i, groups: ["glutes"] },
+  { match: /hip thrust|glute bridge|ponte|gluteo|glutei/i, groups: ["glutes", "hamstrings"] },
+  { match: /leg extension|quadricip/i, groups: ["quads"] },
+  { match: /vogator|rower/i, groups: ["back", "biceps", "quads", "hamstrings", "glutes"] },
+  { match: /remator|rem |pulley|lat machine|pull up|trazion|chin up|pulldown|row/i, groups: ["back", "biceps"] },
+  { match: /spanish squat/i, groups: ["quads"] },
+  { match: /squat jump|jumping lunge|split squat jump|weighted jump squat|step up jump/i, groups: ["quads", "glutes", "calves"] },
+  { match: /squat|affond|lunge|pressa|leg press|step up|step down/i, groups: ["quads", "glutes"] },
+  { match: /burpee/i, groups: ["chest", "triceps", "shoulders", "quads", "glutes", "calves", "abs"] },
+  { match: /kettlebell swing/i, groups: ["glutes", "hamstrings", "lowerBack", "forearms"] },
+  { match: /clean|snatch|thruster/i, groups: ["quads", "glutes", "hamstrings", "back", "shoulders", "triceps"] },
+  { match: /chest pass|wall pass|shot put|scoop toss/i, groups: ["chest", "shoulders", "triceps"] },
+  { match: /medicine ball.*overhead|medicine ball slam|slam ball/i, groups: ["back", "shoulders", "abs", "obliques"] },
+  { match: /marcia con kettlebell sopra la testa/i, groups: ["shoulders", "abs", "obliques"] },
+  { match: /battle rope/i, groups: ["shoulders", "forearms", "abs"] },
+  { match: /rope climb/i, groups: ["back", "biceps", "forearms", "abs"] },
+  { match: /sled pull/i, groups: ["back", "forearms", "quads", "glutes", "calves"] },
+  { match: /sled push/i, groups: ["quads", "glutes", "calves", "abs"] },
+  { match: /turkish/i, groups: ["shoulders", "abs", "obliques", "glutes", "quads"] },
+  { match: /bear|inchworm|leopard|crab walk|shoulder tap|plank.*braccio/i, groups: ["abs", "obliques", "shoulders"] },
+  { match: /plank.*gamba/i, groups: ["abs", "obliques", "glutes"] },
+  { match: /plank/i, groups: ["abs", "obliques"] },
+  { match: /dead bug|crunch|sit up|situp|ab wheel|rollout|hollow|body saw|stir the pot|pelvic|heel tap|toe touch/i, groups: ["abs"] },
+  { match: /leg raise|knee raise|garhammer|flutter|scissor kick|l sit|toes to bar|v up|tuck up|jackknife|candlestick|mountain climber|ins and outs/i, groups: ["abs", "quads"] },
+  { match: /couch stretch/i, groups: ["quads"] },
+  { match: /pettoral/i, groups: ["chest"] },
+  { match: /gran dorsale|open book/i, groups: ["back"] },
+  { match: /foam roller fascia laterale/i, groups: ["abductors"] },
+  { match: /mobilita dell.?anca|world.?s greatest/i, groups: ["glutes", "adductors", "quads"] },
+  { match: /respirazione/i, groups: ["abs"] },
+  { match: /single leg cycle|high knees|leg swing frontale|fast leg|pawback|wall drill|wall switch|march|marcia tecnica|a skip|b skip|c skip/i, groups: ["quads", "glutes", "hamstrings", "calves"] },
+  { match: /leg swing laterale/i, groups: ["adductors", "abductors"] },
+  { match: /pogo|jump rope|ankling|bounce/i, groups: ["calves", "tibialis", "feet"] },
+  { match: /skater|lateral bound|lateral hop|lateral line|lateral hurdle/i, groups: ["quads", "glutes", "abductors", "calves"] },
+  { match: /snap down|step off|stick|hop|jump|bound|balz/i, groups: ["quads", "glutes", "hamstrings", "calves"] },
+  { match: /corsa|sprint|run|ripetut|fondo|jogging|skip|calciat|allung|stride|andatur|acceler|progressione|interval|intervalli|fartlek|billat|yasso|tempo|threshold|trial|cooper|camminata|hiking|backpedal|carioca|grapevine|dribbling|feet|agility|drill|shuffle|navetta|wicket|lean fall|falling|salita|test cronometrato|t test/i, groups: ["quads", "hamstrings", "glutes", "calves"] },
+  { match: /cross country|hill repeats|tapis/i, groups: ["quads", "hamstrings", "glutes", "calves"] },
+  { match: /cyclette|ellittica/i, groups: ["quads", "glutes", "hamstrings", "calves"] },
 ];
 
 const STORED_GROUPS: Record<string, MuscleGroup[]> = {
@@ -144,6 +120,12 @@ const STORED_GROUPS: Record<string, MuscleGroup[]> = {
   tibiali: ["tibialis"],
   "tibiali (stinchi)": ["tibialis"],
   avambracci: ["forearms"],
+  obliqui: ["obliques"],
+  adduttori: ["adductors"],
+  abduttori: ["abductors"],
+  peronieri: ["peroneals"],
+  piedi: ["feet"],
+  lombari: ["lowerBack"],
   caviglia: ["tibialis", "calves"],
   caviglie: ["tibialis", "calves"],
   gambe: ["quads", "hamstrings", "glutes", "calves"],
@@ -152,9 +134,16 @@ const STORED_GROUPS: Record<string, MuscleGroup[]> = {
   "full body": ["shoulders", "back", "quads", "hamstrings", "glutes"],
 };
 
+export function normalizeExerciseName(name: string): string {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
 export function musclesFor(exerciseName: string, storedGroup?: string | null): MuscleGroup[] {
+  const normalized = normalizeExerciseName(exerciseName);
+  const exact = EXERCISE_MUSCLE_LINKS[normalized];
+  if (exact) return [...exact];
   for (const r of RULES) {
-    if (r.match.test(exerciseName)) return r.groups;
+    if (r.match.test(normalized)) return [...r.groups];
   }
   return storedGroup ? (STORED_GROUPS[storedGroup.trim().toLocaleLowerCase("it")] ?? []) : [];
 }
@@ -180,6 +169,12 @@ export function storedMuscleGroupFor(exerciseName: string): string | null {
           calves: "Polpacci",
           tibialis: "Tibiali (stinchi)",
           forearms: "Avambracci",
+          obliques: "Core",
+          adductors: "Adduttori",
+          abductors: "Abduttori",
+          peroneals: "Caviglia",
+          feet: "Piedi",
+          lowerBack: "Lombari",
         } satisfies Record<MuscleGroup, string>
       )[primary]
     : null;
@@ -211,6 +206,12 @@ export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   biceps: "Bicipiti",
   triceps: "Tricipiti",
   forearms: "Avambracci",
+  obliques: "Obliqui",
+  adductors: "Adduttori",
+  abductors: "Abduttori dell’anca",
+  peroneals: "Peronieri",
+  feet: "Muscoli del piede",
+  lowerBack: "Lombari",
   abs: "Addominali",
   quads: "Quadricipiti",
   hamstrings: "Femorali",
