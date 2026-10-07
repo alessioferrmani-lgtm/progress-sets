@@ -136,7 +136,7 @@ test("la sagoma è presente nei riepiloghi allenamento ma non nella Home", () =>
     "utf8",
   );
   assert.doesNotMatch(home, /MuscleSilhouette|MuscleSection/);
-  assert.match(summary, /<MuscleSilhouette active=\{data\.activeMuscles\}/);
+  assert.match(summary, /<MuscleSilhouette\s+active=\{data\.activeMuscles\}/);
 });
 
 test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini muscolari", () => {
@@ -147,8 +147,9 @@ test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini m
   assert.match(component, /getImageData/);
   assert.match(component, /floodRecolour/);
   assert.match(component, /putImageData/);
-  assert.match(component, /softenActiveEdges/);
-  assert.match(component, /imageRendering: "auto"/);
+  assert.match(component, /h-auto w-full/);
+  assert.match(component, /masksRef/);
+  assert.match(component, /onSelect\(best\)/);
   assert.doesNotMatch(component, /muscle-map\/\$\{group\}\.svg/);
   assert.doesNotMatch(component, /<img/);
 });
@@ -160,8 +161,9 @@ test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
   );
   assert.match(home, /Kcal bruciate oggi/);
   assert.doesNotMatch(home, /Calorie bruciate · 7 giorni/);
-  assert.match(home, /raceDays\.add\(race\.date\)/);
-  assert.match(home, /🔥/);
+  const calendar = readFileSync(new URL("../src/components/MonthCalendarSection.tsx", import.meta.url), "utf8");
+  assert.match(calendar, /races.*filter/);
+  assert.match(calendar, /🔥/);
 });
 
 test("l'esportazione JSON legge direttamente tutti i dati e si può copiare", () => {

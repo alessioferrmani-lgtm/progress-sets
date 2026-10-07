@@ -1,12 +1,16 @@
-import { useEffect, useRef } from "react";
-import type { MuscleGroup } from "@/lib/muscle-map";
+import { useEffect, useRef, useState } from "react";
+import { MUSCLE_LABELS, type MuscleGroup } from "@/lib/muscle-map";
 
-type Props = { active: Set<MuscleGroup> };
+type Props = {
+  active: Set<MuscleGroup>;
+  selected?: MuscleGroup | null;
+  onSelect?: (group: MuscleGroup) => void;
+};
 type Point = readonly [number, number];
 
 const WIDTH = 418;
 const HEIGHT = 554;
-const ACTIVE_RGB = [255, 86, 0] as const;
+const ACTIVE_RGB = [255, 69, 58] as const;
 
 // Each seed is inside a muscle area of the original body-base.png. Flood filling
 // recolours the base pixels themselves, so the coloured shape can never drift
@@ -123,67 +127,127 @@ function floodRecolour(
   }
 }
 
-// Blend only the grey anti-aliased pixels touching a selected muscle. The
-// anatomical outlines and neighbouring areas remain unchanged.
-function softenActiveEdges(data: Uint8ClampedArray, original: Uint8ClampedArray, mask: Uint8Array) {
-  const neighbours = [-WIDTH - 1, -WIDTH, -WIDTH + 1, -1, 1, WIDTH - 1, WIDTH, WIDTH + 1];
-  for (let pixel = WIDTH + 1; pixel < WIDTH * (HEIGHT - 1) - 1; pixel++) {
-    if (mask[pixel]) continue;
-    const offset = pixel * 4;
-    const r = original[offset];
-    const g = original[offset + 1];
-    const b = original[offset + 2];
-    if (r < 38 || r > 112 || Math.max(Math.abs(r - g), Math.abs(r - b)) > 10) continue;
-    const touching = neighbours.reduce((sum, delta) => sum + mask[pixel + delta], 0);
-    if (!touching) continue;
-    const blend = Math.min(0.58, 0.16 + touching * 0.07);
-    data[offset] = Math.round(r + (ACTIVE_RGB[0] - r) * blend);
-    data[offset + 1] = Math.round(g + (ACTIVE_RGB[1] - g) * blend);
-    data[offset + 2] = Math.round(b + (ACTIVE_RGB[2] - b) * blend);
-  }
-}
-
-export function MuscleSilhouette({ active }: Props) {
+export function MuscleSilhouette({ active, selected, onSelect }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const masksRef = useRef<Partial<Record<MuscleGroup, Uint8Array>>>({});
+  const [failed, setFailed] = useState(false);
   const activeKey = [...active].sort().join(",");
-
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    if (!context) return;
+    const context = canvas?.getContext("2d", { willReadFrequently: true });
+    if (!canvas || !context) return;
     let cancelled = false;
     const image = new Image();
-    image.src = "/muscle-map/body-base.png";
     image.onload = () => {
       if (cancelled) return;
-      context.clearRect(0, 0, WIDTH, HEIGHT);
       context.drawImage(image, 0, 0, WIDTH, HEIGHT);
       const pixels = context.getImageData(0, 0, WIDTH, HEIGHT);
       const original = new Uint8ClampedArray(pixels.data);
-      const activeMask = new Uint8Array(WIDTH * HEIGHT);
-      (activeKey ? (activeKey.split(",") as MuscleGroup[]) : []).forEach((group) => {
-        MUSCLE_SEEDS[group].forEach(([x, y]) => floodRecolour(pixels.data, activeMask, x, y));
-      });
-      softenActiveEdges(pixels.data, original, activeMask);
+      const masks: Partial<Record<MuscleGroup, Uint8Array>> = {};
+      for (const group of Object.keys(MUSCLE_SEEDS) as MuscleGroup[]) {
+        const copy = new Uint8ClampedArray(original);
+        const mask = new Uint8Array(WIDTH * HEIGHT);
+        for (const [x, y] of MUSCLE_SEEDS[group]) floodRecolour(copy, mask, x, y);
+        masks[group] = mask;
+        const colour =
+          group === selected ? [255, 190, 60] : active.has(group) ? ACTIVE_RGB : [100, 105, 115];
+        for (let pixel = 0; pixel < mask.length; pixel++)
+          if (mask[pixel]) {
+            const offset = pixel * 4;
+            pixels.data[offset] = colour[0];
+            pixels.data[offset + 1] = colour[1];
+            pixels.data[offset + 2] = colour[2];
+          }
+      }
+      masksRef.current = masks;
       context.putImageData(pixels, 0, 0);
     };
+    image.onerror = () => {
+      if (!cancelled) setFailed(true);
+    };
+    image.src = "/muscle-map/body-base.png";
     return () => {
       cancelled = true;
     };
-  }, [activeKey]);
-
+  }, [activeKey, selected]);
+  const pick = (clientX: number, clientY: number) => {
+    if (!onSelect || !canvasRef.current) return;
+    const bounds = canvasRef.current.getBoundingClientRect();
+    const x = Math.floor(((clientX - bounds.left) * WIDTH) / bounds.width);
+    const y = Math.floor(((clientY - bounds.top) * HEIGHT) / bounds.height);
+    if (x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT) return;
+    let best: MuscleGroup | undefined;
+    let distance = Infinity;
+    // A small tolerance around an outline makes anatomical areas easier to tap.
+    for (const group of Object.keys(MUSCLE_SEEDS) as MuscleGroup[]) {
+      const mask = masksRef.current[group];
+      if (!mask) continue;
+      for (let dy = -10; dy <= 10; dy++)
+        for (let dx = -10; dx <= 10; dx++) {
+          const nx = x + dx,
+            ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= WIDTH || ny >= HEIGHT) continue;
+          const d = dx * dx + dy * dy;
+          if (mask[ny * WIDTH + nx] && d < distance) {
+            best = group;
+            distance = d;
+          }
+        }
+    }
+    if (best) onSelect(best);
+  };
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-[#20201e] px-2 py-3">
-      <canvas
-        ref={canvasRef}
-        width={WIDTH}
-        height={HEIGHT}
-        role="img"
-        aria-label="Sagoma anatomica con i muscoli allenati colorati"
-        className="mx-auto block h-[18rem] max-w-full object-contain"
-        style={{ imageRendering: "auto" }}
-      />
+    <div className="rounded-2xl bg-[#20201e] p-3">
+      <div className="mb-2 grid grid-cols-2 text-center text-sm text-label-secondary">
+        <span>Davanti</span>
+        <span>Dietro</span>
+      </div>
+      {!failed && (
+        <canvas
+          ref={canvasRef}
+          width={WIDTH}
+          height={HEIGHT}
+          role="img"
+          aria-label="Mappa muscolare: rosso allenato, grigio non coinvolto, giallo selezionato"
+          onClick={(event) => pick(event.clientX, event.clientY)}
+          className="mx-auto block h-auto w-full max-w-[418px]"
+          style={{ aspectRatio: `${WIDTH}/${HEIGHT}`, cursor: onSelect ? "pointer" : "default" }}
+        />
+      )}
+      <div className="mt-3 flex flex-wrap justify-center gap-3 text-sm text-label-secondary">
+        <span>
+          <i className="inline-block size-2 rounded-full bg-accent" /> Allenati
+        </span>
+        <span>
+          <i className="inline-block size-2 rounded-full bg-[#646973]" /> Non coinvolti
+        </span>
+        {selected && (
+          <span>
+            <i className="inline-block size-2 rounded-full bg-[#ffbe3c]" /> Selezionato
+          </span>
+        )}
+      </div>
+      {onSelect && (
+        <div
+          className="mt-3 flex flex-wrap justify-center gap-2"
+          aria-label="Gruppi muscolari allenati"
+        >
+          {[...active].map((group) => (
+            <button
+              key={group}
+              type="button"
+              onClick={() => onSelect(group)}
+              aria-pressed={selected === group}
+              className={
+                "min-h-11 rounded-full border px-3 text-sm font-semibold " +
+                (selected === group ? "border-warning text-warning" : "border-separator text-label")
+              }
+            >
+              {MUSCLE_LABELS[group]}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

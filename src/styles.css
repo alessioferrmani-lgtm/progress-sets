@@ -339,3 +339,12 @@ html body #lovable-badge-cta {
 [role="dialog"], [role="alertdialog"] { background-color: var(--surface); color: var(--label); -webkit-backdrop-filter: none; backdrop-filter: none; filter: none; }
 [role="dialog"] .text-label-secondary, [role="alertdialog"] .text-label-secondary { color: #c4c6cc; }
 [role="dialog"] .text-label-tertiary, [role="alertdialog"] .text-label-tertiary { color: #a9acb4; }
+
+/* iOS must not composite any app content through a blurred layer. */
+html, body, body *, body *::before, body *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+.workout-screen { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.workout-screen-header { background: var(--background); isolation: isolate; }

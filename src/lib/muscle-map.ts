@@ -203,3 +203,18 @@ export function musclesForDay(
   });
   return active;
 }
+
+export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
+  chest: "Pettorali",
+  back: "Dorsali e schiena",
+  shoulders: "Spalle",
+  biceps: "Bicipiti",
+  triceps: "Tricipiti",
+  forearms: "Avambracci",
+  abs: "Addominali",
+  quads: "Quadricipiti",
+  hamstrings: "Femorali",
+  glutes: "Glutei",
+  calves: "Polpacci",
+  tibialis: "Tibiali",
+};

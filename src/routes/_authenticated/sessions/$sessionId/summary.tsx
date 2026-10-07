@@ -1,3 +1,4 @@
+import { BottomSheet } from "@/components/BottomSheet";
 import { measurementUnit, setLabel, type Measurement, type SetSide } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ import { toast } from "sonner";
 import { StrengthComparison } from "@/components/StrengthComparison";
 import { MuscleSilhouette } from "@/components/dashboard/MuscleSilhouette";
 import { supabase } from "@/integrations/supabase/client";
-import { musclesFor, type MuscleGroup } from "@/lib/muscle-map";
+import { musclesFor, MUSCLE_LABELS, type MuscleGroup } from "@/lib/muscle-map";
 import { buildZeppFit, zeppFilename } from "@/lib/zepp-export";
 
 export const Route = createFileRoute("/_authenticated/sessions/$sessionId/summary")({
@@ -76,6 +77,8 @@ function SummaryPage() {
   const { sessionId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
+  const [muscleOpen, setMuscleOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [draftDurationMin, setDraftDurationMin] = useState("");
@@ -294,11 +297,22 @@ function SummaryPage() {
           : null;
         if (!Number.isFinite(weightKg) || weightKg < 0)
           throw new Error(`Carico non valido nella serie ${set.setNumber}`);
-        if (!Number.isFinite(value) || value <= 0 || ((set.repsType === "count" || set.repsType === "unspecified") && !Number.isInteger(value)))
+        if (
+          !Number.isFinite(value) ||
+          value <= 0 ||
+          ((set.repsType === "count" || set.repsType === "unspecified") && !Number.isInteger(value))
+        )
           throw new Error(`Ripetizioni non valide nella serie ${set.setNumber}`);
         if (restTakenSec !== null && (!Number.isInteger(restTakenSec) || restTakenSec < 0))
           throw new Error(`Recupero non valido nella serie ${set.setNumber}`);
-        return { id: set.id, weightKg, reps, restTakenSec, durationSec: set.repsType === "time" ? value : null, distanceM: set.repsType === "distance" ? value : null };
+        return {
+          id: set.id,
+          weightKg,
+          reps,
+          restTakenSec,
+          durationSec: set.repsType === "time" ? value : null,
+          distanceM: set.repsType === "distance" ? value : null,
+        };
       });
 
       for (const update of updates) {
@@ -361,7 +375,13 @@ function SummaryPage() {
             set.id,
             {
               weightKg: String(set.weightKg),
-              reps: String(set.repsType === "time" ? set.durationSec ?? 0 : set.repsType === "distance" ? set.distanceM ?? 0 : set.reps),
+              reps: String(
+                set.repsType === "time"
+                  ? (set.durationSec ?? 0)
+                  : set.repsType === "distance"
+                    ? (set.distanceM ?? 0)
+                    : set.reps,
+              ),
               restTakenSec: set.restTakenSec == null ? "" : String(set.restTakenSec),
             },
           ]),
@@ -375,7 +395,8 @@ function SummaryPage() {
     if (!summary.data) return;
     const sets = summary.data.exercises.flatMap((exercise) =>
       exercise.sets.map((set) => ({
-        exerciseName: exercise.name + (set.side === "left" ? " · SX" : set.side === "right" ? " · DX" : ""),
+        exerciseName:
+          exercise.name + (set.side === "left" ? " · SX" : set.side === "right" ? " · DX" : ""),
         setNumber: set.setNumber,
         weightKg: set.weightKg,
         reps: set.reps,
@@ -471,7 +492,11 @@ function SummaryPage() {
   return (
     <>
       <div className="mx-auto max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-[calc(env(safe-area-inset-top)+12px)]">
-        <StrengthComparison sessionId={sessionId} startedAt={data.startedAt} sets={data.exercises.flatMap(e=>e.sets)} />
+        <StrengthComparison
+          sessionId={sessionId}
+          startedAt={data.startedAt}
+          sets={data.exercises.flatMap((e) => e.sets)}
+        />
         <header className="flex items-center gap-3">
           <button
             type="button"
@@ -541,9 +566,71 @@ function SummaryPage() {
               label="Sollevati totali"
             />
           </div>
-          <MuscleSilhouette active={data.activeMuscles} />
+          <MuscleSilhouette
+            active={data.activeMuscles}
+            selected={selectedMuscle}
+            onSelect={(group) => {
+              setSelectedMuscle(group);
+              setMuscleOpen(true);
+            }}
+          />
+          <BottomSheet
+            open={muscleOpen}
+            onClose={() => setMuscleOpen(false)}
+            title={selectedMuscle ? MUSCLE_LABELS[selectedMuscle] : "Muscoli allenati"}
+          >
+            <p className="mb-3 text-sm text-label-secondary">
+              Esercizi registrati che coinvolgono questo gruppo muscolare.
+            </p>
+            <div className="space-y-3">
+              {data.exercises
+                .filter(
+                  (exercise) =>
+                    selectedMuscle &&
+                    exercise.sets.some((set) =>
+                      musclesFor(set.exerciseName, set.exerciseMuscleGroup).includes(
+                        selectedMuscle,
+                      ),
+                    ),
+                )
+                .map((exercise) => (
+                  <div key={exercise.id} className="rounded-2xl bg-fill p-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMuscleOpen(false);
+                        requestAnimationFrame(() =>
+                          document
+                            .getElementById(`exercise-${exercise.id}`)
+                            ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                        );
+                      }}
+                      className="min-h-11 text-left text-base font-semibold text-accent"
+                    >
+                      {exercise.name} · Apri esercizio
+                    </button>
+                    {exercise.sets.map((set) => (
+                      <p key={set.id} className="mt-2 text-sm text-label">
+                        Serie {setLabel({ set_number: set.setNumber, side: set.side })}:{" "}
+                        {set.repsType === "time"
+                          ? set.durationSec
+                          : set.repsType === "distance"
+                            ? set.distanceM
+                            : set.reps}{" "}
+                        {measurementUnit(set.repsType)} · {set.weightKg} kg
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              {selectedMuscle && !data.activeMuscles.has(selectedMuscle) && (
+                <p className="text-label">
+                  Nessun esercizio registrato per questo gruppo in questo allenamento.
+                </p>
+              )}
+            </div>
+          </BottomSheet>
           <p className="px-2 pb-1 pt-3 text-center text-xs font-medium text-label-secondary">
-            Muscoli allenati in questa sessione
+            Tocca un muscolo per vedere gli esercizi
           </p>
         </section>
 
@@ -580,7 +667,11 @@ function SummaryPage() {
           ) : (
             <div className="space-y-3">
               {data.exercises.map((exercise) => (
-                <article key={exercise.id} className="ios-card overflow-hidden">
+                <article
+                  key={exercise.id}
+                  id={`exercise-${exercise.id}`}
+                  className="ios-card scroll-mt-5 overflow-hidden"
+                >
                   <div className="flex items-center justify-between border-b border-separator px-4 py-3">
                     <h3 className="text-base font-semibold text-label">{exercise.name}</h3>
                     <span className="rounded-full bg-fill px-2.5 py-1 text-xs font-medium text-label-secondary">
@@ -596,7 +687,7 @@ function SummaryPage() {
                         {isEditing ? (
                           <div className="grid grid-cols-[42px_1fr_1fr_1fr] items-end gap-2">
                             <span className="pb-2.5 text-sm font-semibold text-label-secondary">
-                              {setLabel({set_number:set.setNumber,side:set.side})}
+                              {setLabel({ set_number: set.setNumber, side: set.side })}
                             </span>
                             <label className="text-[10px] font-semibold uppercase text-label-tertiary">
                               Kg
@@ -659,11 +750,16 @@ function SummaryPage() {
                         ) : (
                           <div className="grid grid-cols-[76px_1fr] items-center gap-3">
                             <span className="text-sm font-semibold text-label-secondary">
-                              Serie {setLabel({set_number:set.setNumber,side:set.side})}
+                              Serie {setLabel({ set_number: set.setNumber, side: set.side })}
                             </span>
                             <div>
                               <div className="text-sm font-semibold tabular-nums text-label">
-                                {set.repsType === "time" ? set.durationSec : set.repsType === "distance" ? set.distanceM : set.reps} {measurementUnit(set.repsType)} · {set.weightKg} kg
+                                {set.repsType === "time"
+                                  ? set.durationSec
+                                  : set.repsType === "distance"
+                                    ? set.distanceM
+                                    : set.reps}{" "}
+                                {measurementUnit(set.repsType)} · {set.weightKg} kg
                               </div>
                               <div className="mt-0.5 text-xs text-label-tertiary">
                                 Recupero:{" "}
