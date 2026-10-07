@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthedLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const detailWithoutTabs = pathname.includes("/sessions/") || /\/workouts\/.*\/(?:edit|new)\/?$/.test(pathname);
   const immersiveWorkout = /^\/workouts\/(?:free|[^/]+\/run)\/?$/.test(pathname);
 
   return (
@@ -29,7 +30,7 @@ function AuthedLayout() {
       className={
         immersiveWorkout
           ? "pryme-app-shell pryme-app-immersive min-h-screen bg-background"
-          : "pryme-app-shell min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]"
+          : `pryme-app-shell ${detailWithoutTabs ? "pryme-app-detail" : "pryme-app-tabs"} min-h-screen bg-background`
       }
     >
       <div className="pryme-page-scroll"><Outlet /></div>

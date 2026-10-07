@@ -365,6 +365,8 @@ html, body, body *, body *::before, body *::after {
 
 @media (hover: none) and (pointer: coarse) {
   .pryme-app-shell { padding-bottom: 0; }
-  .pryme-page-scroll { padding-bottom: calc(env(safe-area-inset-bottom) + 72px); }
-  .pryme-app-immersive .pryme-page-scroll { padding-bottom: 0; }
+  .pryme-page-scroll { padding-bottom: 0; }
+  .pryme-page-scroll > :first-child { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+  .pryme-app-tabs .pryme-page-scroll > :first-child { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); }
+  .pryme-app-immersive .pryme-page-scroll > :first-child { padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
 }
