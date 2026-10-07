@@ -547,6 +547,20 @@ function SummaryPage() {
         )}
 
         <section className="ios-card mt-5 overflow-hidden p-3" aria-label="Riepilogo principale">
+          <div className="grid grid-cols-2 gap-2 pb-3">
+            <HeroMetric
+              icon={<Flame className="size-5 text-warning" />}
+              value={data.calories == null ? "—" : String(Math.round(data.calories))}
+              unit="kcal"
+              label={data.calories == null ? "Non calcolate" : "Consumate"}
+            />
+            <HeroMetric
+              icon={<Dumbbell className="size-5 text-accent" />}
+              value={formatVolume(data.totalVolumeKg)}
+              unit="kg"
+              label="Sollevati totali"
+            />
+          </div>
           <MuscleSilhouette
             active={data.activeMuscles}
             selected={selectedMuscle}
@@ -620,27 +634,7 @@ function SummaryPage() {
           <p className="px-2 pb-1 pt-3 text-center text-xs font-medium text-label-secondary">
             Tocca un muscolo per vedere gli esercizi
           </p>
-          <div className="grid grid-cols-2 gap-2 pt-3">
-            <HeroMetric
-              icon={<Flame className="size-5 text-warning" />}
-              value={data.calories == null ? "—" : String(Math.round(data.calories))}
-              unit="kcal"
-              label={data.calories == null ? "Non calcolate" : "Consumate"}
-            />
-            <HeroMetric
-              icon={<Dumbbell className="size-5 text-accent" />}
-              value={formatVolume(data.totalVolumeKg)}
-              unit="kg"
-              label="Sollevati totali"
-            />
-          </div>
         </section>
-
-        <StrengthComparison
-          sessionId={sessionId}
-          startedAt={data.startedAt}
-          sets={data.exercises.flatMap((e) => e.sets)}
-        />
 
         <section className="mt-5 grid grid-cols-2 gap-3">
           <MetricCard
@@ -832,6 +826,12 @@ function SummaryPage() {
             </p>
           )}
         </section>
+
+        <StrengthComparison
+          sessionId={sessionId}
+          startedAt={data.startedAt}
+          sets={data.exercises.flatMap((e) => e.sets)}
+        />
 
         <div className="mt-8 space-y-3">
           <button
