@@ -24,3 +24,9 @@ test('programma vuoto e preferenze errate non inventano sedute',()=>{
  assert.deepEqual(parseWeekPlan(null),Array(7).fill(null));
  assert.deepEqual(parseDayPlan({kind:'rest'}),{kind:'rest'});
 });
+
+test('riconosce più ripetizioni a parità di carico senza confrontare carichi diversi',()=>{
+ const gain=strengthInsight([set('now',30,10),set('old',30,8)],new Set(['now','old']));
+ assert.equal(gain?.mode,'reps');assert.equal(gain?.delta,2);
+ assert.equal(strengthInsight([set('now',30,10),set('old',32,8)],new Set(['now','old'])),null);
+});

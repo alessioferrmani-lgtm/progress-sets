@@ -3,13 +3,21 @@ export function strengthInsight(sets: InsightSet[], completedIds: Set<string>) {
   const ordered = sets.filter(s => completedIds.has(s.session_id) && (s.reps_type ?? 'count') === 'count' && s.reps > 0 && s.weight_kg > 0).sort((a,b)=>b.completed_at.localeCompare(a.completed_at));
   const latest = ordered[0]?.session_id;
   if (!latest) return null;
-  const improvements: Array<{ name: string; sessionId: string; previousDate: string; previous: number; current: number; reps: number; delta: number }> = [];
+  const improvements: Array<{ name: string; sessionId: string; previousDate: string; previous: number; current: number; reps: number; delta: number; mode: "load"|"reps"; weight:number }> = [];
   for (const current of ordered.filter(s=>s.session_id===latest)) {
     const history = ordered.filter(s=>s.session_id!==latest && s.completed_at < current.completed_at && s.exercise_id===current.exercise_id && s.reps===current.reps && (s.side??'both')===(current.side??'both'));
     const previousId=history[0]?.session_id;
     if (!previousId) continue;
     const previous=Math.max(...history.filter(s=>s.session_id===previousId).map(s=>s.weight_kg));
-    if(current.weight_kg>previous) improvements.push({name:current.exercise_name,sessionId:latest,previousDate:history[0].completed_at,previous,current:current.weight_kg,reps:current.reps,delta:current.weight_kg-previous});
+    if(current.weight_kg>previous) improvements.push({name:current.exercise_name,sessionId:latest,previousDate:history[0].completed_at,previous,current:current.weight_kg,reps:current.reps,delta:current.weight_kg-previous,mode:"load",weight:current.weight_kg});
+  }
+  if(!improvements.length) for(const current of ordered.filter(s=>s.session_id===latest)) {
+    const history=ordered.filter(s=>s.session_id!==latest&&s.completed_at<current.completed_at&&s.exercise_id===current.exercise_id&&(s.side??'both')===(current.side??'both'));
+    const previousId=history[0]?.session_id;
+    const comparable=history.filter(s=>s.session_id===previousId&&s.weight_kg===current.weight_kg);
+    if(!comparable.length)continue;
+    const previous=Math.max(...comparable.map(s=>s.reps));
+    if(current.reps>previous)improvements.push({name:current.exercise_name,sessionId:latest,previousDate:comparable[0].completed_at,previous,current:current.reps,reps:current.reps,delta:current.reps-previous,mode:'reps',weight:current.weight_kg});
   }
   return improvements.sort((a,b)=>b.delta-a.delta)[0] ?? null;
 }
