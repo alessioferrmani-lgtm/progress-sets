@@ -351,3 +351,14 @@ html, body, body *, body *::before, body *::after {
 
 /* An opaque safe-area cover prevents content from entering iOS's status-bar fade. */
 .pryme-statusbar-cover { position: fixed; inset: 0 0 auto; height: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--background); z-index: 1000; pointer-events: none; }
+
+@media (hover: none) and (pointer: coarse) {
+  :root { --pryme-top-clearance: max(84px, calc(env(safe-area-inset-top, 0px) + 20px)); }
+  html:has(.pryme-app-shell), body:has(.pryme-app-shell) { height: 100%; overflow: hidden; }
+  .pryme-statusbar-cover { height: var(--pryme-top-clearance); }
+  .pryme-app-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 0; padding-top: var(--pryme-top-clearance); overflow: hidden; }
+  .pryme-page-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .pryme-page-scroll > :first-child { padding-top: 12px !important; }
+  .pryme-page-scroll .workout-screen { min-height: 100%; }
+  [role="dialog"], [role="alertdialog"] { max-height: calc(100dvh - var(--pryme-top-clearance) - 16px); overflow-y: auto; }
+}

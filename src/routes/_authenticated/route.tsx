@@ -28,11 +28,11 @@ function AuthedLayout() {
     <div
       className={
         immersiveWorkout
-          ? "min-h-screen bg-background"
-          : "min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]"
+          ? "pryme-app-shell min-h-screen bg-background"
+          : "pryme-app-shell min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+72px)]"
       }
     >
-      <Outlet />
+      <div className="pryme-page-scroll"><Outlet /></div>
       <SitesAgentTools />
       <RestTimerBar />
       <BottomTabBar />
