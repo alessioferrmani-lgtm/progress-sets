@@ -252,3 +252,16 @@ test("Skopje: importa nel profilo corretto una sola volta, mantiene i parziali e
   await importRequestedRace(db);
   assert.equal((await query("races", {}, owner)).data.length, 0);
 });
+
+test("Home: programma e stato giornaliero persistono per account e rifiutano dati errati",async()=>{
+ const {api}=setup();await api('auth');await api('auth',undefined,'bob');
+ const value={energy:3,fatigue:1,discomfort:'Caviglia'};
+ assert.equal((await api('preferences',{key:'home-check-2026-10-07',value})).status,200);
+ assert.deepEqual((await (await api('preferences?key=home-check-2026-10-07')).json()).data,value);
+ assert.equal((await (await api('preferences?key=home-check-2026-10-07',undefined,'bob')).json()).data,null);
+ assert.equal((await api('preferences',{key:'home-check-2026-10-07',value:{...value,energy:9}})).status,400);
+ const week=Array(7).fill({kind:'rest'});
+ assert.equal((await api('preferences',{key:'home-week-plan',value:week})).status,200);
+ assert.deepEqual((await (await api('preferences?key=home-week-plan')).json()).data,week);
+ assert.equal((await api('preferences',{key:'home-week-plan',value:[]})).status,400);
+});

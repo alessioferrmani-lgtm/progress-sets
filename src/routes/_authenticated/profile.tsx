@@ -230,6 +230,7 @@ function ProfilePage() {
 
       <ul className="ios-list mt-6">
         <li>
+          <Link to="/profile/progress" className="ios-list-row"><span className="text-sm font-medium text-label">Progressi e record</span><ChevronRight className="size-4 text-label-tertiary"/></Link>
           <Link to="/profile/import" className="ios-list-row">
             <span className="min-w-0 flex-1 text-sm text-label">Importa dati dalla vecchia app</span>
             <ChevronRight className="h-4 w-4 text-label-tertiary" />

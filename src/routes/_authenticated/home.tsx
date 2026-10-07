@@ -1,3 +1,4 @@
+import { HomeExperience } from "@/components/HomeExperience";
 import { BottomSheet } from "@/components/BottomSheet";
 import { MonthCalendarSection } from "@/components/MonthCalendarSection";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -36,10 +37,6 @@ function HomePage() {
     queryKey: ["dash", "sets", user.id],
     queryFn: () => fetchRecentSets(120),
   });
-  const prsQ = useQuery({
-    queryKey: ["dash", "prs", user.id],
-    queryFn: () => fetchAllTimePRs(),
-  });
   const profileQ = useQuery({
     queryKey: ["profile", user.id],
     queryFn: fetchMyProfile,
@@ -72,31 +69,17 @@ function HomePage() {
       <div className="space-y-4">
         <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
 
-        <div className="grid grid-cols-2 gap-3">
-          <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />
-          <CaloriesCard
-            profileComplete={isProfileComplete(profileQ.data ?? null)}
-            sessions={sessionsQ.data}
-            tests={testsQ.data}
-            races={racesQ.data}
-            loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
-          />
-        </div>
-
-        <MonthCalendarSection
-          sessions={sessionsQ.data}
-          intervals={intervalsQ.data}
-          tests={testsQ.data}
-          races={racesQ.data}
-        />
-
-        <VolumeSection
-          sessions={sessionsQ.data}
-          sets={setsQ.data}
-          loading={sessionsQ.isLoading || setsQ.isLoading}
-        />
-
-        <PRsSection prs={prsQ.data} sets={setsQ.data} loading={prsQ.isLoading || setsQ.isLoading} />
+        <HomeExperience userId={user.id} sessions={sessionsQ.data??[]} sets={setsQ.data??[]} intervals={intervalsQ.data??[]} tests={testsQ.data??[]} races={racesQ.data??[]}
+          loading={sessionsQ.isLoading||setsQ.isLoading||intervalsQ.isLoading||testsQ.isLoading||racesQ.isLoading} unavailable={sessionsQ.isError||setsQ.isError||intervalsQ.isError||testsQ.isError||racesQ.isError}
+          calendar={<MonthCalendarSection sessions={sessionsQ.data} intervals={intervalsQ.data} tests={testsQ.data} races={racesQ.data}/>}/>
+        <details className="ios-card p-4">
+          <summary className="min-h-11 cursor-pointer text-sm font-semibold text-label-secondary">Peso e calorie di oggi</summary>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id}/>
+            <CaloriesCard profileComplete={isProfileComplete(profileQ.data??null)} sessions={sessionsQ.data} tests={testsQ.data} races={racesQ.data} loading={sessionsQ.isLoading||testsQ.isLoading||racesQ.isLoading}/>
+          </div>
+        </details>
+        <Link to="/profile/progress" className="ios-card flex min-h-14 items-center justify-between p-4 text-sm font-semibold text-accent">Apri tutti i progressi<History className="size-5"/></Link>
 
         <RecentSessionsSection
           sessions={sessionsQ.data}
@@ -121,7 +104,7 @@ function Skeleton({ h = 80 }: { h?: number }) {
   return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: h }} />;
 }
 
-function VolumeSection({
+export function VolumeSection({
   sessions,
   sets,
   loading,
@@ -139,7 +122,7 @@ function VolumeSection({
   return <WeeklyVolumeChart weeks={weeks} />;
 }
 
-function PRsSection({
+export function PRsSection({
   prs,
   sets,
   loading,

@@ -13,7 +13,7 @@ export function readIdentity(request:Request) {
   return {id,email,user_metadata:{full_name:name||email.split("@")[0]},app_metadata:{provider:"chatgpt"}};
 }
 function preferenceKey(key:unknown):string {
-  if(typeof key!=="string"||!(key==="running-routines"||key==="warmup-drills"||/^warmup-\d{4}-\d{2}-\d{2}$/.test(key)))throw new QueryError("Preferenza non valida");
+  if(typeof key!=="string"||!(key==="home-week-plan"||/^home-(?:day|check)-\d{4}-\d{2}-\d{2}$/.test(key)||key==="running-routines"||key==="warmup-drills"||/^warmup-\d{4}-\d{2}-\d{2}$/.test(key)))throw new QueryError("Preferenza non valida");
   return key;
 }
 export async function handleApi(request:Request,env:Env) {
@@ -59,7 +59,13 @@ export async function handleApi(request:Request,env:Env) {
     if(path==="/api/sites/import")return json({data:await importProgress(db,user.id,body),error:null});
     if(path==="/api/sites/query")return json(await executeQuery(db,user.id,body));
     if(path==="/api/sites/preferences") {
-      const key=preferenceKey(body?.key);const value=JSON.stringify(body.value);
+      const key=preferenceKey(body?.key);
+      if(key==='home-week-plan'&&(!Array.isArray(body.value)||body.value.length!==7))throw new QueryError('Scegli i sette giorni della settimana');
+      if(key.startsWith('home-check-')){
+        const v=body.value;
+        if(!v||![1,2,3].includes(v.energy)||![1,2,3].includes(v.fatigue)||typeof v.discomfort!=='string'||v.discomfort.length>300)throw new QueryError('Controlla energia, stanchezza e fastidi');
+      }
+      const value=JSON.stringify(body.value);
       if(value===undefined||value.length>100_000)throw new QueryError("Routine troppo grande");
       await db.prepare("INSERT INTO preferences (id,user_id,key,value) VALUES (?,?,?,?) ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')").bind(crypto.randomUUID(),user.id,key,value).run();
       return json({data:body.value,error:null});
