@@ -18,7 +18,7 @@ export function MuscleSilhouette({ active, selected, onSelect, onCategorySelect 
         className="mx-auto block h-auto w-full max-w-[418px]"
         aria-label="Mappa muscolare: rosso allenato, grigio non coinvolto, giallo selezionato"
       >
-        <image href="/muscle-map/body-vector.svg" width="418" height="554" />
+        <image href="/muscle-map/body-anatomy-v2.svg" width="418" height="554" />
         {(Object.keys(MUSCLE_VECTOR_PATHS) as MuscleGroup[]).map((group) => (
           <g
             key={group}
