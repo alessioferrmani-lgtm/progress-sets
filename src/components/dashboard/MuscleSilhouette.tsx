@@ -23,7 +23,7 @@ export function MuscleSilhouette({ active, selected, onSelect, onCategorySelect 
           <g
             key={group}
             style={{
-              color: group === selected ? "#ffbe3c" : active.has(group) ? "#ff453a" : "#646973",
+              color: group === selected ? "#ffe600" : active.has(group) ? "#ff5a45" : "#646973",
               cursor: onSelect ? "pointer" : "default",
             }}
             onClick={() => onSelect?.(group)}
@@ -44,14 +44,14 @@ export function MuscleSilhouette({ active, selected, onSelect, onCategorySelect 
       </svg>
       <div className="mt-3 flex flex-wrap justify-center gap-3 text-sm text-label-secondary">
         <span>
-          <i className="inline-block size-2 rounded-full bg-accent" /> Allenati
+          <i className="inline-block size-2 rounded-full bg-[#ff5a45]" /> Allenati
         </span>
         <span>
           <i className="inline-block size-2 rounded-full bg-[#646973]" /> Non coinvolti
         </span>
         {selected && (
           <span>
-            <i className="inline-block size-2 rounded-full bg-[#ffbe3c]" /> Selezionato
+            <i className="inline-block size-2 rounded-full bg-[#ffe600]" /> Selezionato
           </span>
         )}
       </div>
@@ -68,7 +68,7 @@ export function MuscleSilhouette({ active, selected, onSelect, onCategorySelect 
               aria-pressed={selected === group}
               className={
                 "min-h-11 rounded-full border px-3 text-sm font-semibold " +
-                (selected === group ? "border-warning text-warning" : "border-separator text-label")
+                (selected === group ? "border-[#ffe600] text-[#ffe600]" : "border-separator text-label")
               }
             >
               {MUSCLE_LABELS[group]}
