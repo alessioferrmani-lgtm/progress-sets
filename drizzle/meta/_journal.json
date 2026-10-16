@@ -29,6 +29,20 @@
       "when": 1790832537632,
       "tag": "0003_eager_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791275534496,
+      "tag": "0004_faulty_darkhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792187975585,
+      "tag": "0005_huge_mister_fear",
+      "breakpoints": true
     }
   ]
 }

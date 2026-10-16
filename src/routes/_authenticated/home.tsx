@@ -1,3 +1,6 @@
+import { HomeExperience } from "@/components/HomeExperience";
+import { BottomSheet } from "@/components/BottomSheet";
+import { MonthCalendarSection } from "@/components/MonthCalendarSection";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -15,27 +18,9 @@ import { fetchMyProfile, upsertMyProfile } from "@/lib/profile-queries";
 import { isProfileComplete } from "@/lib/calories";
 import { formatVolumeKg } from "@/lib/dashboard-format";
 import { fetchAllTests, fetchIntervalSessions, fetchRaces } from "@/lib/athletics-queries";
-import {
-  Flame,
-  Trophy,
-  ChevronRight,
-  ArrowRight,
-  Calendar as CalendarIcon,
-  History,
-  UserCog,
-  Scale,
-  X,
-} from "lucide-react";
+import { Flame, Trophy, ChevronRight, ArrowRight, History, UserCog, Scale, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  subDays,
-  format,
-  isSameDay,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  getDay,
-} from "date-fns";
+import { subDays, format, isSameDay } from "date-fns";
 import { it } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -51,10 +36,6 @@ function HomePage() {
   const setsQ = useQuery({
     queryKey: ["dash", "sets", user.id],
     queryFn: () => fetchRecentSets(120),
-  });
-  const prsQ = useQuery({
-    queryKey: ["dash", "prs", user.id],
-    queryFn: () => fetchAllTimePRs(),
   });
   const profileQ = useQuery({
     queryKey: ["profile", user.id],
@@ -88,31 +69,17 @@ function HomePage() {
       <div className="space-y-4">
         <ProfileBanner profile={profileQ.data} loading={profileQ.isLoading} />
 
-        <div className="grid grid-cols-2 gap-3">
-          <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id} />
-          <CaloriesCard
-            profileComplete={isProfileComplete(profileQ.data ?? null)}
-            sessions={sessionsQ.data}
-            tests={testsQ.data}
-            races={racesQ.data}
-            loading={sessionsQ.isLoading || testsQ.isLoading || racesQ.isLoading}
-          />
-        </div>
-
-        <MonthCalendarSection
-          sessions={sessionsQ.data}
-          intervals={intervalsQ.data}
-          tests={testsQ.data}
-          races={racesQ.data}
-        />
-
-        <VolumeSection
-          sessions={sessionsQ.data}
-          sets={setsQ.data}
-          loading={sessionsQ.isLoading || setsQ.isLoading}
-        />
-
-        <PRsSection prs={prsQ.data} sets={setsQ.data} loading={prsQ.isLoading || setsQ.isLoading} />
+        <HomeExperience userId={user.id} sessions={sessionsQ.data??[]} sets={setsQ.data??[]} intervals={intervalsQ.data??[]} tests={testsQ.data??[]} races={racesQ.data??[]}
+          loading={sessionsQ.isLoading||setsQ.isLoading||intervalsQ.isLoading||testsQ.isLoading||racesQ.isLoading} unavailable={sessionsQ.isError||setsQ.isError||intervalsQ.isError||testsQ.isError||racesQ.isError}
+          calendar={<MonthCalendarSection sessions={sessionsQ.data} intervals={intervalsQ.data} tests={testsQ.data} races={racesQ.data}/>}/>
+        <details className="ios-card p-4">
+          <summary className="min-h-11 cursor-pointer text-sm font-semibold text-label-secondary">Peso e calorie di oggi</summary>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <WeightReminder profile={profileQ.data} loading={profileQ.isLoading} userId={user.id}/>
+            <CaloriesCard profileComplete={isProfileComplete(profileQ.data??null)} sessions={sessionsQ.data} tests={testsQ.data} races={racesQ.data} loading={sessionsQ.isLoading||testsQ.isLoading||racesQ.isLoading}/>
+          </div>
+        </details>
+        <Link to="/profile/progress" className="ios-card flex min-h-14 items-center justify-between p-4 text-sm font-semibold text-accent">Apri tutti i progressi<History className="size-5"/></Link>
 
         <RecentSessionsSection
           sessions={sessionsQ.data}
@@ -137,7 +104,7 @@ function Skeleton({ h = 80 }: { h?: number }) {
   return <div className="ios-card animate-pulse bg-fill-secondary" style={{ height: h }} />;
 }
 
-function VolumeSection({
+export function VolumeSection({
   sessions,
   sets,
   loading,
@@ -155,7 +122,7 @@ function VolumeSection({
   return <WeeklyVolumeChart weeks={weeks} />;
 }
 
-function PRsSection({
+export function PRsSection({
   prs,
   sets,
   loading,
@@ -315,104 +282,6 @@ function RecentSessionsSection({
   );
 }
 
-function MonthCalendarSection({
-  sessions,
-  intervals,
-  tests,
-  races,
-}: {
-  sessions?: SessionRow[];
-  intervals?: import("@/lib/athletics-queries").IntervalSessionRow[];
-  tests?: import("@/lib/athletics-queries").TestRow[];
-  races?: import("@/lib/athletics-queries").RaceRow[];
-}) {
-  if (!sessions || !intervals || !tests || !races) return <Skeleton h={300} />;
-  const now = new Date();
-  const start = startOfMonth(now);
-  const end = endOfMonth(now);
-  const days = eachDayOfInterval({ start, end });
-  const leadingBlanks = (getDay(start) + 6) % 7; // Monday-first
-
-  const gymDays = new Set<string>();
-  const runDays = new Set<string>();
-  const raceDays = new Set<string>();
-  sessions.forEach((s) => {
-    const key = format(new Date(s.started_at), "yyyy-MM-dd");
-    gymDays.add(key);
-  });
-  intervals.forEach((session) => runDays.add(session.date));
-  tests.forEach((test) => runDays.add(test.date));
-  races.forEach((race) => {
-    runDays.add(race.date);
-    raceDays.add(race.date);
-  });
-
-  return (
-    <section className="ios-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-label-secondary" />
-          <span className="text-base font-semibold text-label">
-            {format(now, "MMMM yyyy", { locale: it })}
-          </span>
-        </div>
-        <div className="flex gap-2 text-[9px] font-medium text-label-secondary">
-          <span className="flex items-center gap-1">
-            <i className="size-2 rounded-full bg-success" /> Corsa
-          </span>
-          <span className="flex items-center gap-1">
-            <i className="size-2 rounded-full bg-accent" /> Palestra
-          </span>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center">
-        {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
-          <div key={i} className="text-[10px] font-semibold text-label-tertiary">
-            {d}
-          </div>
-        ))}
-        {Array.from({ length: leadingBlanks }).map((_, i) => (
-          <div key={"b" + i} />
-        ))}
-        {days.map((d) => {
-          const key = format(d, "yyyy-MM-dd");
-          const hasGym = gymDays.has(key);
-          const hasRun = runDays.has(key);
-          const hasRace = raceDays.has(key);
-          const isToday = isSameDay(d, new Date());
-          return (
-            <div key={key} className="flex flex-col items-center gap-0.5 py-1">
-              <span
-                className={
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs " +
-                  (hasGym && hasRun
-                    ? "bg-gradient-to-br from-success from-50% to-accent to-50% font-semibold text-white"
-                    : hasRun
-                      ? "bg-success font-semibold text-white"
-                      : hasGym
-                        ? "bg-accent font-semibold text-accent-foreground"
-                        : isToday
-                          ? "border border-accent text-accent"
-                          : "text-label")
-                }
-              >
-                {format(d, "d")}
-              </span>
-              {hasRace ? (
-                <span className="-mt-0.5 text-[10px] leading-none" aria-label="Gara">
-                  🔥
-                </span>
-              ) : (
-                (hasGym || hasRun) && <span className="size-1 rounded-full bg-label-tertiary" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function ProfileBanner({
   profile,
   loading,
@@ -506,54 +375,30 @@ function WeightReminder({
         </div>
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end bg-black/50"
-          onClick={() => setOpen(false)}
+      <BottomSheet open={open} onClose={() => setOpen(false)} title="Aggiorna peso">
+        {oldWeight && (
+          <p className="mb-3 text-sm text-label-secondary">Peso precedente: {oldWeight} kg</p>
+        )}
+        <label className="mt-5 block text-xs font-semibold uppercase text-label-secondary">
+          Nuovo peso (kg)
+          <input
+            autoFocus
+            inputMode="decimal"
+            value={weight}
+            onChange={(event) => setWeight(event.target.value)}
+            className="mt-2 w-full rounded-xl bg-fill px-4 py-3 text-2xl font-semibold text-label outline-none ring-accent focus:ring-2"
+            placeholder="75,0"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={updateWeight.isPending}
+          onClick={saveWeight}
+          className="mt-5 w-full rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground disabled:opacity-50"
         >
-          <div
-            className="w-full rounded-t-[28px] bg-background px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-fill" />
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-label">Aggiorna peso</h2>
-                {oldWeight && (
-                  <p className="text-sm text-label-secondary">Peso precedente: {oldWeight} kg</p>
-                )}
-              </div>
-              <button
-                type="button"
-                aria-label="Chiudi"
-                onClick={() => setOpen(false)}
-                className="flex size-8 items-center justify-center rounded-full bg-fill text-label-secondary"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <label className="mt-5 block text-xs font-semibold uppercase text-label-secondary">
-              Nuovo peso (kg)
-              <input
-                autoFocus
-                inputMode="decimal"
-                value={weight}
-                onChange={(event) => setWeight(event.target.value)}
-                className="mt-2 w-full rounded-xl bg-fill px-4 py-3 text-2xl font-semibold text-label outline-none ring-accent focus:ring-2"
-                placeholder="75,0"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={updateWeight.isPending}
-              onClick={saveWeight}
-              className="mt-5 w-full rounded-full bg-accent py-3 text-base font-semibold text-accent-foreground disabled:opacity-50"
-            >
-              {updateWeight.isPending ? "Salvataggio…" : "Salva nuovo peso"}
-            </button>
-          </div>
-        </div>
-      )}
+          {updateWeight.isPending ? "Salvataggio…" : "Salva nuovo peso"}
+        </button>
+      </BottomSheet>
     </>
   );
 }

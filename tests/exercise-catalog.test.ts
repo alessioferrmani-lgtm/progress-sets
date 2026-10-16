@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
-import { musclesFor, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
+import { EXERCISE_MUSCLE_LINKS } from "../src/lib/exercise-muscle-links.ts";
+import { musclesFor, storedMuscleGroupFor, normalizeExerciseName } from "../src/lib/muscle-map.ts";
 import { isAthleticsExercise, isGymExercise } from "../src/lib/exercise-categories.ts";
 import { RUNNING_DRILLS, runningDrillImageFile } from "../src/lib/running-drills.ts";
 
@@ -44,53 +45,34 @@ test("il catalogo aggiunge esercizi a tutte le zone richieste", () => {
   assert.deepEqual(unlinked, []);
 });
 
-test("i collegamenti ambigui e la caviglia usano le zone corrette", () => {
-  assert.deepEqual(musclesFor("Curl alla panca Scott", "Bicipiti"), ["biceps"]);
-  assert.deepEqual(musclesFor("Wrist curl", "Avambracci"), ["forearms"]);
-  assert.deepEqual(musclesFor("Reverse wrist curl", "Avambracci"), ["forearms"]);
-  assert.deepEqual(musclesFor("Circonduzioni caviglia", "Caviglia"), ["tibialis", "calves"]);
-  assert.deepEqual(musclesFor("Dorsiflessione con elastico", "Caviglia"), ["tibialis", "calves"]);
-  assert.equal(storedMuscleGroupFor("Dorsiflessione con elastico"), "Caviglia");
-  assert.deepEqual(musclesFor("Pallof press", "Core"), ["abs"]);
-  assert.deepEqual(musclesFor("Rear delt row", "Spalle"), ["shoulders"]);
-  assert.deepEqual(musclesFor("Rematore chest-supported", "Schiena"), ["back", "biceps"]);
-  assert.deepEqual(musclesFor("Iperestensioni", "Schiena"), ["back", "hamstrings", "glutes"]);
-  assert.deepEqual(musclesFor("Vogatore", "Cardio"), [
-    "back",
-    "biceps",
-    "quads",
-    "hamstrings",
-    "glutes",
-  ]);
-});
-
-test("le varianti unilaterali attivano i muscoli corretti", () => {
-  assert.deepEqual(musclesFor("Single-Leg Squat", "Gambe"), [
-    "quads",
-    "glutes",
-    "hamstrings",
-    "calves",
-  ]);
-  assert.deepEqual(musclesFor("Pistol Squat", "Gambe"), [
-    "quads",
-    "glutes",
-    "hamstrings",
-    "calves",
-  ]);
-  assert.deepEqual(musclesFor("Single-Leg Romanian Deadlift", "Gambe"), ["hamstrings", "glutes"]);
-  assert.deepEqual(musclesFor("Single-Leg Calf Raise", "Polpacci"), ["calves"]);
-  assert.deepEqual(musclesFor("Single-Arm Farmer Carry", "Core"), [
-    "back",
-    "biceps",
-    "forearms",
-    "abs",
-  ]);
-  assert.deepEqual(musclesFor("Single-Leg Box Jump", "Atletica"), [
-    "quads",
-    "glutes",
-    "calves",
-    "tibialis",
-  ]);
+test("gli isolamenti e le varianti ambigue attivano soltanto le zone previste", () => {
+  const expectations: Array<[string, string[]]> = [
+    ["Curl alla panca Scott", ["biceps"]],
+    ["Wrist curl", ["forearms"]],
+    ["Reverse wrist curl", ["forearms"]],
+    ["Dorsiflessione con elastico", ["tibialis"]],
+    ["Eversione caviglia con elastico", ["peroneals"]],
+    ["Inversione caviglia con elastico", ["tibialis"]],
+    ["Pallof press", ["abs", "obliques"]],
+    ["Rear delt row", ["shoulders", "back"]],
+    ["Rematore chest-supported", ["back", "biceps"]],
+    ["Iperestensioni", ["lowerBack", "glutes", "hamstrings"]],
+    ["Vogatore", ["back", "biceps", "quads", "hamstrings", "glutes"]],
+    ["Single-Leg Squat", ["quads", "glutes"]],
+    ["Pistol Squat", ["quads", "glutes"]],
+    ["Single-Leg Romanian Deadlift", ["hamstrings", "glutes", "lowerBack"]],
+    ["Single-Leg Calf Raise", ["calves"]],
+    ["Single-Arm Farmer Carry", ["forearms", "abs", "obliques"]],
+    ["Single-Leg Box Jump", ["quads", "glutes", "hamstrings", "calves"]],
+    ["Croci con manubri", ["chest"]],
+    ["Copenhagen plank", ["adductors", "obliques"]],
+    ["Bird Dog Row", ["back", "biceps", "abs", "obliques", "lowerBack"]],
+    ["Short Foot", ["feet"]],
+    ["Corsa incrociata", ["quads", "hamstrings", "glutes", "calves"]],
+    ["Leg Raise su panca", ["abs", "quads"]],
+    ["Garhammer Raise", ["abs", "quads"]],
+  ];
+  for (const [name, expected] of expectations) assert.deepEqual(musclesFor(name, "Gambe"), expected, name);
 });
 
 test("l'editor manuale offre una ricerca filtrabile", () => {
@@ -137,10 +119,11 @@ test("gli esercizi di corsa restano in Atletica e non nel picker palestra", () =
   assert.match(recategorization, /'single-leg squat'/);
 });
 
-test("la sagoma dispone di semi separati per tibiali e polpacci", () => {
-  const silhouette = readFileSync("src/components/dashboard/MuscleSilhouette.tsx", "utf8");
-  assert.match(silhouette, /calves:\s*\[/);
-  assert.match(silhouette, /tibialis:\s*\[/);
+test("ogni collegamento ha una zona anatomica selezionabile", () => {
+  const links = readFileSync("src/lib/exercise-muscle-links.ts", "utf8");
+  const paths = readFileSync("src/lib/muscle-vector-paths.ts", "utf8");
+  const linkedGroups = [...new Set([...links.matchAll(/"(chest|back|shoulders|biceps|triceps|abs|quads|hamstrings|glutes|calves|tibialis|forearms|obliques|adductors|abductors|peroneals|feet|lowerBack)"/g)].map(m => m[1]))];
+  for (const group of linkedGroups) assert.ok(paths.includes(`"${group}":`), `zona mancante: ${group}`);
 });
 
 test("Atletica espone il catalogo completo delle andature e la routine personalizzata", () => {
@@ -216,4 +199,14 @@ test("Atletica espone il catalogo completo delle andature e la routine personali
   assert.match(homeReminder, /CONFIG_STORAGE_KEY/);
   assert.match(homeReminder, /Salva routine/);
   assert.match(homeReminder, /writePreference/);
+});
+
+test("il catalogo usa collegamenti espliciti, indipendenti dai vecchi gruppi generici", () => {
+  const catalog = JSON.parse(readFileSync("sites/catalog-data.json", "utf8"));
+  for (const exercise of catalog) {
+    const key = normalizeExerciseName(exercise.name);
+    assert.ok(EXERCISE_MUSCLE_LINKS[key], `associazione esplicita mancante: ${exercise.name}`);
+    assert.deepEqual(musclesFor(exercise.name, "Gambe"), EXERCISE_MUSCLE_LINKS[key]);
+  }
+  assert.ok(Object.keys(EXERCISE_MUSCLE_LINKS).length >= 614);
 });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Minus, Plus } from "lucide-react";
+import { BottomSheet } from "./BottomSheet";
 import { Switch } from "@/components/ui/switch";
 import {
   elapsedClock,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/set-measurement";
 
 export function WorkoutSetControls({
+  exerciseName = "",
   rows,
   index,
   onSelect,
@@ -18,6 +20,7 @@ export function WorkoutSetControls({
   onConfigure,
   anotherClockRunning = false,
 }: {
+  exerciseName?: string;
   rows: WorkoutRow[];
   index: number;
   onSelect: (index: number) => void;
@@ -26,6 +29,7 @@ export function WorkoutSetControls({
   onConfigure: (unilateral: boolean, type: Measurement) => void;
   anotherClockRunning?: boolean;
 }) {
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const row = rows[index] ?? rows[0];
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -38,6 +42,11 @@ export function WorkoutSetControls({
     };
   }, []);
   if (!row) return null;
+  const sideLabel = /gamba|piede|polpacc|squat|affond|bulgar|leg |hip|stacco|rdl|step|pogo/i.test(
+    exerciseName,
+  )
+    ? "Monopodalico"
+    : "Unilaterale";
   const unilateral = rows[0]?.side !== undefined && rows[0].side !== "both";
   const type = row.reps_type ?? "count";
   const locked = rows.some((r) => r.completed || r.clock?.startedAt != null);
@@ -46,11 +55,30 @@ export function WorkoutSetControls({
   const time = `${Math.floor(milliseconds / 60000)}:${String(Math.floor(milliseconds / 1000) % 60).padStart(2, "0")}.${Math.floor((milliseconds % 1000) / 100)}`;
   return (
     <>
-      <details className="workout-options rounded-xl bg-fill-secondary px-3 py-2 text-sm text-label-secondary">
-        <summary className="cursor-pointer">
-          {unilateral ? "Monopodalico / unilaterale · SX e DX" : "Bilaterale"} ·{" "}
-          {type === "time" ? "A tempo" : type === "distance" ? "Distanza" : "Ripetizioni"}
-        </summary>
+      <div className="flex items-center justify-between text-sm text-label-secondary">
+        <span>
+          {unilateral
+            ? `${sideLabel} · SX/DX`
+            : type === "time"
+              ? "A tempo"
+              : type === "distance"
+                ? "Distanza"
+                : "Ripetizioni"}
+        </span>
+        <button
+          type="button"
+          onClick={() => setOptionsOpen(true)}
+          className="min-h-11 px-2 text-accent"
+          aria-label="Impostazioni esercizio"
+        >
+          Impostazioni
+        </button>
+      </div>
+      <BottomSheet
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        title="Impostazioni esercizio"
+      >
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <label className="flex items-center gap-2">
             SX / DX separati
@@ -58,7 +86,7 @@ export function WorkoutSetControls({
               checked={unilateral}
               disabled={locked}
               onCheckedChange={(value) => onConfigure(value, type)}
-              aria-label="Monopodalico / unilaterale"
+              aria-label="Serie separate per lato"
             />
           </label>
           <label className="flex items-center gap-2">
@@ -86,7 +114,7 @@ export function WorkoutSetControls({
             Ogni serie ha un lato SX e uno DX. Inserisci il carico usato sul singolo lato.
           </p>
         )}
-      </details>
+      </BottomSheet>
       <div
         className="workout-set-picker mt-3 flex gap-2 overflow-x-auto pb-1"
         aria-label="Serie dell’esercizio"

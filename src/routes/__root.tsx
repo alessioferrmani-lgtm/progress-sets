@@ -59,7 +59,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "theme-color", content: "#08090C" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black" },
       { name: "apple-mobile-web-app-title", content: "PRYME" },
       { name: "mobile-web-app-capable", content: "yes" },
       { title: "PRYME" },
@@ -183,6 +183,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeManager />
       <AuthInvalidator />
+      <div className="pryme-statusbar-cover" aria-hidden="true" />
       <Outlet />
       <Toaster position="top-center" />
     </QueryClientProvider>

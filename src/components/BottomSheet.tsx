@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export function BottomSheet({
   open,
@@ -12,14 +13,27 @@ export function BottomSheet({
   title: string;
   children: ReactNode;
 }) {
-  if (!open) return null;
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  if (!open || !mounted) return null;
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end bg-black/40"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60"
       onClick={onClose}
     >
       <div
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-background p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="pryme-modal-panel max-h-[calc(100dvh-env(safe-area-inset-top)-16px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-fill" />
@@ -35,6 +49,7 @@ export function BottomSheet({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

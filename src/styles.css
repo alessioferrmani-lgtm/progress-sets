@@ -141,8 +141,9 @@ html body #lovable-badge-cta {
 }
 
 @utility ios-blur {
-  background-color: color-mix(in oklab, var(--color-surface) 78%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
+  background-color: var(--color-surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 @utility ios-list {
@@ -283,8 +284,9 @@ html body #lovable-badge-cta {
 }
 
 @utility ios-tabbar {
-  background-color: color-mix(in oklab, var(--color-surface) 72%, transparent);
-  backdrop-filter: saturate(180%) blur(24px);
+  background-color: var(--color-surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border-top: 0.5px solid var(--color-separator);
 }
 
@@ -295,4 +297,76 @@ html body #lovable-badge-cta {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* The training surface prioritizes recording; secondary content opens in sheets. */
+.workout-screen { min-height: 100dvh; gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.workout-top-shell { gap: 6px; }
+.workout-top-shell .workout-exercise-hero { padding: 10px 12px; border-radius: 18px; }
+.workout-screen-content { gap: 8px; }
+.workout-set-card { padding: 10px 12px; border-radius: 18px; }
+.workout-rest-meta { margin-bottom: 0; }
+.workout-set-picker { margin-top: 4px; }
+.workout-values { margin-top: 6px; gap: 8px; }
+.workout-value-card { padding: 6px; }
+.workout-value-control { margin-top: 2px; }
+.workout-value-input { padding-top: 4px; padding-bottom: 4px; }
+.workout-confirm { margin-top: 8px; }
+.workout-add-series { margin-top: 0; }
+.workout-recovery-card { flex-shrink: 0; }
+.workout-set-card > .workout-recovery-card { margin-top: 4px; }
+.workout-picker-list button { width: 100%; min-height: 44px; white-space: normal; text-align: left; }
+.set-stopwatch { margin-top: 6px; padding: 8px; }
+.set-stopwatch > p { display: none; }
+@media (min-height: 800px) { .workout-screen { gap: 12px; } .workout-values { margin-top: 12px; } .workout-value-card { padding: 12px 6px; } }
+@media (max-height: 720px) { .workout-top-shell .workout-exercise-hero { padding-top: 4px; padding-bottom: 6px; } .workout-exercise-hero > div:first-child { font-size: .8125rem; } .workout-exercise-hero > div:nth-last-child(3) { margin-top: 0; } .workout-exercise-hero h2 { font-size: 1.125rem; } }
+.workout-set-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; }
+.workout-set-card > * { grid-column: 1 / -1; }
+.workout-set-card > .workout-set-picker { grid-column: 1; grid-row: 3; }
+.workout-set-card > .workout-add-series { grid-column: 2; grid-row: 3; width: auto; min-height: 44px; margin: 0; padding: 4px; font-size: .8125rem; }
+.workout-set-card > .workout-set-picker { margin: 0; }
+.set-stopwatch { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; align-items: center; }
+.set-stopwatch > div:first-child > span { display: none; }
+.set-stopwatch > div:nth-child(2) { margin-top: 0; }
+.set-stopwatch output { font-size: 1.375rem; }
+
+/* Keep iOS text sharp and modal surfaces separate from the page beneath. */
+.workout-screen-header { position: relative; top: auto; z-index: auto; filter: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.pryme-modal-panel { background: var(--surface); color: var(--label); isolation: isolate; }
+.pryme-modal-panel .text-label-secondary { color: #c4c6cc; }
+.pryme-modal-panel .text-label-tertiary { color: #a9acb4; }
+.pryme-modal-panel input, .pryme-modal-panel select, .pryme-modal-panel textarea { font-size: 16px; }
+[role="dialog"], [role="alertdialog"] { background-color: var(--surface); color: var(--label); -webkit-backdrop-filter: none; backdrop-filter: none; filter: none; }
+[role="dialog"] .text-label-secondary, [role="alertdialog"] .text-label-secondary { color: #c4c6cc; }
+[role="dialog"] .text-label-tertiary, [role="alertdialog"] .text-label-tertiary { color: #a9acb4; }
+
+/* iOS must not composite any app content through a blurred layer. */
+html, body, body *, body *::before, body *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+.workout-screen { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.workout-screen-header { background: var(--background); isolation: isolate; }
+
+/* An opaque safe-area cover prevents content from entering iOS's status-bar fade. */
+.pryme-statusbar-cover { position: fixed; inset: 0 0 auto; height: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--background); z-index: 1000; pointer-events: none; }
+
+@media (hover: none) and (pointer: coarse) {
+  :root { --pryme-top-clearance: max(84px, calc(env(safe-area-inset-top, 0px) + 20px)); }
+  html:has(.pryme-app-shell), body:has(.pryme-app-shell) { height: auto; min-height: 100%; overflow-y: auto; overflow-x: clip; }
+  .pryme-statusbar-cover { height: var(--pryme-top-clearance); }
+  .pryme-app-shell { position: relative; display: block; height: auto; min-height: 100svh; padding-top: var(--pryme-top-clearance); overflow: visible; }
+  .pryme-page-scroll { display: contents; }
+  .pryme-page-scroll > :first-child { padding-top: 12px !important; }
+  .pryme-page-scroll .workout-screen { min-height: calc(100svh - var(--pryme-top-clearance)); }
+  [role="dialog"], [role="alertdialog"] { max-height: calc(100dvh - var(--pryme-top-clearance) - 16px); overflow-y: auto; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .pryme-app-shell { padding-bottom: 0; }
+  .pryme-page-scroll { padding-bottom: 0; }
+  .pryme-page-scroll > :first-child { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+  .pryme-app-tabs .pryme-page-scroll > :first-child { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); }
+  .pryme-app-immersive .pryme-page-scroll > :first-child { padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
 }

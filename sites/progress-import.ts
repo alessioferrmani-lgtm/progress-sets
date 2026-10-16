@@ -53,7 +53,15 @@ export async function importProgress(db: DatabaseBinding, uid: string, input: un
   for (const row of sourceSets) {
     const key = JSON.stringify([row.session_id, row.exercise_id, row.set_number]);
     const previous = setsByKey.get(key);
-    if (previous && (row.weight_kg !== previous.weight_kg || row.reps !== previous.reps || (row.side ?? "both") !== (previous.side ?? "both") || (row.reps_type ?? "count") !== (previous.reps_type ?? "count") || (row.duration_sec ?? null) !== (previous.duration_sec ?? null) || (row.distance_m ?? null) !== (previous.distance_m ?? null)))
+    if (
+      previous &&
+      (row.weight_kg !== previous.weight_kg ||
+        row.reps !== previous.reps ||
+        (row.side ?? "both") !== (previous.side ?? "both") ||
+        (row.reps_type ?? "count") !== (previous.reps_type ?? "count") ||
+        (row.duration_sec ?? null) !== (previous.duration_sec ?? null) ||
+        (row.distance_m ?? null) !== (previous.distance_m ?? null))
+    )
       fail(
         "Ci sono serie duplicate con carichi o ripetizioni diversi: serve controllarle prima di importare",
       );
@@ -141,7 +149,7 @@ export async function importProgress(db: DatabaseBinding, uid: string, input: un
     tests: ["test_type_id", "date"],
     races: ["name", "date", "distance_m", "time_sec"],
     interval_sessions: ["date"],
-    interval_reps: ["session_id", "rep_number", "distance_m", "time_sec"],
+    interval_reps: ["session_id", "rep_number", "distance_m"],
     weight_logs: ["weight_kg", "logged_at"],
   };
   // All references must be present in this backup, never IDs supplied for another account.

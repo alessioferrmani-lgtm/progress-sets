@@ -7,6 +7,7 @@ export type SessionRow = {
   id: string;
   template_id: string | null;
   template_name: string | null;
+  rpe?: number | null;
   started_at: string;
   ended_at: string | null;
   calories_burned: number | null;
@@ -17,6 +18,8 @@ export type SetRow = {
   session_id: string;
   exercise_id: string;
   exercise_name: string;
+  side?: string;
+  reps_type?: string;
   exercise_muscle_group: string | null;
   set_number: number;
   weight_kg: number;
@@ -24,15 +27,17 @@ export type SetRow = {
   completed_at: string;
 };
 
-export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
+export async function fetchRecentSessions(days = 120, range?: { start: string; end: string }): Promise<SessionRow[]> {
   const since = subDays(new Date(), days).toISOString();
-  const { data, error } = await supabase
+  let query = supabase
     .from("workout_sessions")
     .select(
       "id,template_id,started_at,ended_at,calories_burned,avg_hr,rpe,template:workout_templates(name)",
     )
-    .gte("started_at", since)
+    .gte("started_at", range?.start ?? since)
     .order("started_at", { ascending: false });
+  if (range) query = query.lt("started_at", range.end);
+  const { data, error } = await query;
   if (error) throw error;
   let profile: Awaited<ReturnType<typeof fetchMyProfile>> = null;
   try {
@@ -67,6 +72,7 @@ export async function fetchRecentSessions(days = 120): Promise<SessionRow[]> {
       id: row.id,
       template_id: row.template_id,
       template_name: row.template?.name ?? null,
+      rpe: row.rpe,
       started_at: row.started_at,
       ended_at: row.ended_at,
       calories_burned: estimatedCalories ?? storedCalories,
@@ -82,7 +88,7 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
   const { data, error } = await supabase
     .from("logged_sets")
     .select(
-      "id,session_id,exercise_id,set_number,weight_kg,reps,completed_at,exercise:exercises(name,muscle_group),workout_sessions!inner(user_id)",
+      "id,session_id,exercise_id,set_number,weight_kg,reps,side,reps_type,completed_at,exercise:exercises(name,muscle_group),workout_sessions!inner(user_id)",
     )
     .eq("workout_sessions.user_id", userId)
     .gte("completed_at", since)
@@ -93,6 +99,8 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
       id: string;
       session_id: string;
       exercise_id: string;
+      side: string | null;
+      reps_type: string | null;
       set_number: number;
       weight_kg: number | string;
       reps: number;
@@ -105,6 +113,8 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
       exercise_id: row.exercise_id,
       exercise_name: row.exercise?.name ?? "Esercizio",
       exercise_muscle_group: row.exercise?.muscle_group ?? null,
+      side: row.side ?? "both",
+      reps_type: row.reps_type ?? "count",
       set_number: row.set_number,
       weight_kg: Number(row.weight_kg),
       reps: row.reps,
@@ -116,6 +126,8 @@ export async function fetchRecentSets(days = 120): Promise<SetRow[]> {
 export type PR = {
   exercise_id: string;
   exercise_name: string;
+  side?: string;
+  reps_type?: string;
   weight_kg: number;
   date: string;
   previous_weight_kg: number | null;
@@ -138,6 +150,8 @@ export async function fetchAllTimePRs(): Promise<PR[]> {
 
   type Bucket = {
     exercise_name: string;
+  side?: string;
+  reps_type?: string;
     max: number;
     date: string;
     previous_max: number | null;

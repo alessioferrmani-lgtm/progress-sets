@@ -12,6 +12,8 @@ import { Flag, Flame, Plus, Trophy, ChevronRight, Trash2, X } from "lucide-react
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { QuickRaceSheet } from "@/components/QuickRaceSheet";
+import { RaceDetail, clock } from "@/components/RaceDetail";
+import type { RaceRow } from "@/lib/athletics-queries";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/athletics/races")({
@@ -22,6 +24,7 @@ function RacesPage() {
   const qc = useQueryClient();
   const racesQ = useQuery({ queryKey: ["races"], queryFn: fetchRaces });
   const perfQ = useQuery({ queryKey: ["performance_log"], queryFn: fetchPerformanceLog });
+  const [selectedRace, setSelectedRace] = useState<RaceRow | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetDistance, setSheetDistance] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -137,7 +140,7 @@ function RacesPage() {
         <ul className="ios-list">
           {(racesQ.data ?? []).map((r) => (
             <li key={r.id} className="ios-list-row">
-              <div className="min-w-0 flex-1">
+              <button type="button" onClick={() => setSelectedRace(r)} aria-label={`Dettagli ${r.name}`} className="min-w-0 flex-1 text-left">
                 <div className="truncate text-sm font-semibold text-label">{r.name}</div>
                 <div className="mt-0.5 text-xs text-label-secondary">
                   {format(new Date(r.date), "d MMM yyyy", { locale: it })}
@@ -146,10 +149,11 @@ function RacesPage() {
                   {formatDistance(r.distance_m)} in {formatTime(r.time_sec)}
                   {r.placement ? ` · ${r.placement}°` : ""}
                 </div>
+                <div className="mt-1 text-sm font-semibold text-accent">{clock(r.time_sec / (r.distance_m / 1000))}/km · Vedi parziali</div>
                 {r.notes && (
                   <div className="mt-1 text-xs text-label-tertiary line-clamp-2">{r.notes}</div>
                 )}
-              </div>
+              </button>
               {r.calories_burned != null && (
                 <div className="flex items-center gap-1 text-xs font-medium text-warning">
                   <Flame className="h-3 w-3" />
@@ -170,6 +174,7 @@ function RacesPage() {
         </ul>
       )}
 
+      <RaceDetail race={selectedRace} onClose={() => setSelectedRace(null)} />
       <QuickRaceSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}

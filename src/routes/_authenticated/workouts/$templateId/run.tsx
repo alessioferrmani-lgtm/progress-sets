@@ -1,3 +1,4 @@
+import { WorkoutExercisePicker } from "@/components/WorkoutExercisePicker";
 import { WorkoutSetControls } from "@/components/WorkoutSetControls";
 import { addWorkoutSet, configureRows, restoreWorkoutRows, recordedMeasurement, targetValue, type WorkoutRow } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -348,7 +349,7 @@ function RunPage() {
     <div className="workout-screen mx-auto flex w-full max-w-md flex-col">
       <section className="workout-top-shell shrink-0">
         {/* Header */}
-        <div className="workout-screen-header ios-blur sticky top-0 z-10 flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <div className="workout-screen-header relative flex shrink-0 items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+10px)]">
           <button
             onClick={cancel}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-fill text-label"
@@ -374,7 +375,7 @@ function RunPage() {
         </div>
 
         {/* Exercise tabs */}
-        <div className="workout-screen-tabs scrollbar-none flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
+        <WorkoutExercisePicker>
           {blocks.map((block, blockIndex) => {
             const i = block[0]; const ex = exercises[i];
             const list = block.flatMap(index => rowsByExercise[exercises[index].id] ?? []);
@@ -396,7 +397,7 @@ function RunPage() {
               </button>
             );
           })}
-        </div>
+        </WorkoutExercisePicker>
 
         {activeEx && activeRow && (
           <WorkoutExerciseHero
@@ -442,7 +443,7 @@ function RunPage() {
                   {!isCount && activeEx.reps_display ? <span>{activeEx.reps_display}</span> : null}
                 </div>
 
-                <WorkoutSetControls rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
+                <WorkoutSetControls exerciseName={activeEx.exercise.name} rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
                   anotherClockRunning={Object.values(rowsByExercise).flat().some(row => row !== activeRow && row.clock?.startedAt != null)}
                   onField={(field,value) => setRowsByExercise(current => ({...current,[activeEx.id]: updateSetFieldAndPropagate(current[activeEx.id] ?? [],activeSetIdx,field,value)}))}
                   onPatch={patch => setRowsByExercise(current => ({...current,[activeEx.id]: current[activeEx.id].map((row,i) => i === activeSetIdx ? {...row,...patch} : row)}))}

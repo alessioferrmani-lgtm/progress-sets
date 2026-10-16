@@ -1,3 +1,4 @@
+import { WorkoutExercisePicker } from "@/components/WorkoutExercisePicker";
 import { WorkoutSetControls } from "@/components/WorkoutSetControls";
 import { addWorkoutSet, configureRows, restoreWorkoutRows, recordedMeasurement, type WorkoutRow } from "@/lib/set-measurement";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -405,7 +406,7 @@ function FreeWorkoutPage() {
         )}
 
         {selectedIds.length > 0 && (
-          <div className="workout-screen-tabs scrollbar-none mt-4 flex shrink-0 gap-2 overflow-x-auto pb-1">
+          <WorkoutExercisePicker>
             {selectedIds.map((id, index) => {
               const exercise = exerciseById.get(id);
               const done = (rowsByExercise[id] ?? []).filter((row) => row.completed).length;
@@ -427,7 +428,7 @@ function FreeWorkoutPage() {
                 </button>
               );
             })}
-          </div>
+          </WorkoutExercisePicker>
         )}
 
         {activeExercise && activeRow && (
@@ -488,7 +489,7 @@ function FreeWorkoutPage() {
 
             </div>
 
-            <WorkoutSetControls rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
+            <WorkoutSetControls exerciseName={activeExercise.name} rows={rows} index={activeSetIdx} onSelect={setActiveSetIdx}
               anotherClockRunning={Object.values(rowsByExercise).flat().some(row => row !== activeRow && row.clock?.startedAt != null)}
               onField={updateRow}
               onPatch={patch => setRowsByExercise(current => ({...current,[activeExerciseId!]: current[activeExerciseId!].map((row,i) => i === activeSetIdx ? {...row,...patch} : row)}))}

@@ -75,3 +75,9 @@ test("selezione MET corsa gestisce input non validi", () => {
   assert.equal(metForRun(Number.NaN, 300), 8.3);
   assert.equal(metForRun(1000, 240), 11.5);
 });
+
+ test("corsa e ripetute usano la distanza senza sottostimare gli sprint", () => {
+  assert.equal(computeCaloriesForRace(profile,{distance_m:10000,time_sec:3000}),700);
+  assert.equal(computeCaloriesForRace(profile,{distance_m:10000,time_sec:2400}),700);
+  assert.equal(computeCaloriesForRace(profile,{distance_m:900,time_sec:114}),63);
+});

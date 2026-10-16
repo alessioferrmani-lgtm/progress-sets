@@ -4,11 +4,11 @@ import { readFileSync } from "node:fs";
 import { musclesFor, musclesForDay, storedMuscleGroupFor } from "../src/lib/muscle-map.ts";
 
 test("collega gli esercizi principali ai muscoli specifici", () => {
-  assert.deepEqual(musclesFor("Panca piana con bilanciere", "Petto"), ["chest", "triceps"]);
-  assert.deepEqual(musclesFor("Panca stretta", "Tricipiti"), ["triceps", "chest"]);
+  assert.deepEqual(musclesFor("Panca piana con bilanciere", "Petto"), ["chest", "triceps", "shoulders"]);
+  assert.deepEqual(musclesFor("Panca stretta", "Tricipiti"), ["triceps", "chest", "shoulders"]);
   assert.deepEqual(musclesFor("Pulley basso", "Schiena"), ["back", "biceps"]);
   assert.deepEqual(musclesFor("Leg curl sdraiato", "Gambe"), ["hamstrings"]);
-  assert.deepEqual(musclesFor("Hip thrust", "Glutei"), ["glutes"]);
+  assert.deepEqual(musclesFor("Hip thrust", "Glutei"), ["glutes", "hamstrings"]);
   assert.deepEqual(musclesFor("Tibialis raise", "Tibiali (stinchi)"), ["tibialis"]);
 });
 
@@ -108,7 +108,7 @@ test("la sagoma contiene soltanto i muscoli del giorno selezionato", () => {
     },
     { completed_at: "2026-07-16T08:00:00", exercise_name: "Squat", exercise_muscle_group: "Gambe" },
   ];
-  assert.deepEqual([...musclesForDay(sets, "2026-07-17")], ["chest", "triceps"]);
+  assert.deepEqual([...musclesForDay(sets, "2026-07-17")], ["chest", "triceps", "shoulders"]);
   assert.deepEqual([...musclesForDay(sets, "2026-07-16")], ["quads", "glutes"]);
 });
 
@@ -136,21 +136,18 @@ test("la sagoma è presente nei riepiloghi allenamento ma non nella Home", () =>
     "utf8",
   );
   assert.doesNotMatch(home, /MuscleSilhouette|MuscleSection/);
-  assert.match(summary, /<MuscleSilhouette active=\{data\.activeMuscles\}/);
+  assert.match(summary, /<MuscleSilhouette\s+active=\{data\.activeMuscles\}/);
 });
 
-test("la sagoma colora direttamente l'immagine base senza sovrapporre immagini muscolari", () => {
-  const component = readFileSync(
-    new URL("../src/components/dashboard/MuscleSilhouette.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(component, /getImageData/);
-  assert.match(component, /floodRecolour/);
-  assert.match(component, /putImageData/);
-  assert.match(component, /softenActiveEdges/);
-  assert.match(component, /imageRendering: "auto"/);
-  assert.doesNotMatch(component, /muscle-map\/\$\{group\}\.svg/);
-  assert.doesNotMatch(component, /<img/);
+test("la sagoma usa forme vettoriali e separa selezione e apertura", () => {
+  const component = readFileSync(new URL("../src/components/dashboard/MuscleSilhouette.tsx", import.meta.url), "utf8");
+  assert.match(component, /viewBox="0 0 418 554"/);
+  assert.match(component, /body-reference-v3\.svg/);
+  assert.match(component, /MUSCLE_VECTOR_PATHS/);
+  assert.match(component, /onCategorySelect/);
+  assert.doesNotMatch(component, /<canvas|body-base\.png/);
+  const summary = readFileSync(new URL("../src/routes/_authenticated/sessions/$sessionId/summary.tsx", import.meta.url), "utf8");
+  assert.match(summary, /selectedMuscle === group/);
 });
 
 test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
@@ -160,8 +157,9 @@ test("Home usa calorie giornaliere e segnala le gare con il fuoco", () => {
   );
   assert.match(home, /Kcal bruciate oggi/);
   assert.doesNotMatch(home, /Calorie bruciate · 7 giorni/);
-  assert.match(home, /raceDays\.add\(race\.date\)/);
-  assert.match(home, /🔥/);
+  const calendar = readFileSync(new URL("../src/components/MonthCalendarSection.tsx", import.meta.url), "utf8");
+  assert.match(calendar, /races.*filter/);
+  assert.match(calendar, /🔥/);
 });
 
 test("l'esportazione JSON legge direttamente tutti i dati e si può copiare", () => {
@@ -277,5 +275,5 @@ test("Atletica azzera i riepiloghi a mezzanotte e permette di eliminare le ripet
   assert.match(athletics, /from\("interval_sessions"\)/);
   assert.match(athletics, /\.delete\(\)/);
   assert.match(athletics, /from\("performance_log"\)/);
-  assert.match(athletics, /Sessione di ripetute eliminata/);
+  assert.match(athletics, /Allenamento eliminato/);
 });
