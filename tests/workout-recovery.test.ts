@@ -12,8 +12,13 @@ test("la chiusura non riavvia il bootstrap e non riscrive la bozza", () => {
   for (const source of [run, free]) {
     assert.match(source, /enabled: !isFinishing/);
     assert.match(source, /if \(finishingRef\.current\) return/);
-    const finish = source.slice(source.indexOf("const finish = async"), source.indexOf("const cancel ="));
-    assert.ok(finish.indexOf("finishingRef.current = true") < finish.indexOf("await finishActiveWorkout"));
+    const finish = source.slice(
+      source.indexOf("const finish = async"),
+      source.indexOf("const cancel ="),
+    );
+    assert.ok(
+      finish.indexOf("finishingRef.current = true") < finish.indexOf("await finishActiveWorkout"),
+    );
     assert.ok(finish.indexOf("await navigate") < finish.indexOf("queryClient.removeQueries"));
     assert.ok(finish.indexOf("await navigate") >= 0);
   }
@@ -117,7 +122,7 @@ test("la schermata allenamento usa l'hero iOS dark della proposta 2", () => {
   assert.match(run, /<WorkoutExerciseHero/);
   assert.match(free, /<WorkoutExerciseHero/);
   assert.match(hero, /data-testid="workout-exercise-hero"/);
-  assert.match(hero, /conic-gradient/);
+  assert.match(hero, /completedSets \/ Math.max\(1, totalSets\)/);
   assert.match(hero, /aria-label="Salta esercizio"/);
 });
 
@@ -152,4 +157,11 @@ test("il pulsante Salta esercizio compare una sola volta nell'area attiva", () =
   assert.match(free, /workout-top-shell/);
   assert.doesNotMatch(run, /workout-skip-button/);
   assert.doesNotMatch(free, /SkipForward/);
+});
+test("recupero inattivo mostra quattro trattini con separatore", () => {
+  assert.match(readFileSync("src/components/WorkoutRecoveryCard.tsx", "utf8"), /--:--/);
+  assert.match(
+    readFileSync("src/components/WorkoutRecoveryCard.tsx", "utf8"),
+    /running && remaining > 0/,
+  );
 });

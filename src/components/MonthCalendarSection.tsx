@@ -257,13 +257,22 @@ export function MonthCalendarSection({
               <>
                 <p className="text-xl font-semibold">
                   {formatDistance(detail.interval_reps.reduce((n, r) => n + r.distance_m, 0))} ·{" "}
-                  {formatTime(detail.interval_reps.reduce((n, r) => n + r.time_sec, 0))}
+                  {detail.interval_reps.every((r) => r.time_sec != null)
+                    ? formatTime(detail.interval_reps.reduce((n, r) => n + (r.time_sec ?? 0), 0))
+                    : "Tempi non rilevati"}
                 </p>
+                {detail.duration_sec != null && (
+                  <p>Durata totale: {formatTime(detail.duration_sec)}</p>
+                )}
                 {detail.interval_reps.map((r) => (
                   <div key={r.id} className="rounded-xl bg-fill p-3">
                     {detail.signature === CONTINUOUS_RUN ? "Corsa" : "Ripetuta " + r.rep_number}:{" "}
-                    {formatDistance(r.distance_m)} · {formatTime(r.time_sec)} ·{" "}
-                    {runPace(r.distance_m, r.time_sec)}/km
+                    {formatDistance(r.distance_m)} ·{" "}
+                    {r.time_sec == null ? "Non cronometrata" : formatTime(r.time_sec)}
+                    {r.time_sec != null && <> · {runPace(r.distance_m, r.time_sec)}/km</>}
+                    {r.rest_mode === "distance" && <p>Recupero {r.rest_distance_m} m di passo</p>}
+                    {r.rest_mode === "free" && <p>Recupero libero</p>}
+                    {r.notes && <p>{r.notes}</p>}
                     {r.rest_sec != null && (
                       <p className="text-sm text-label-secondary">Recupero {r.rest_sec}s</p>
                     )}

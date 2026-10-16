@@ -16,9 +16,9 @@ export function WorkoutRecoveryCard() {
         <div>
           <p className="text-sm text-label-secondary">Recupero</p>
           <output className="text-2xl font-bold tabular-nums text-warning">
-            {running
-              ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`
-              : "—"}
+            {running && remaining > 0
+              ? `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`
+              : "--:--"}
           </output>
         </div>
         <div className="flex gap-1">
@@ -28,7 +28,7 @@ export function WorkoutRecoveryCard() {
             aria-label="Diminuisci recupero di 15 secondi"
             className="min-h-11 rounded-xl bg-fill px-3 text-sm disabled:opacity-40"
           >
-            −15s
+            −15 s
           </button>
           <button
             disabled={!running}
@@ -36,7 +36,7 @@ export function WorkoutRecoveryCard() {
             aria-label="Aumenta recupero di 15 secondi"
             className="min-h-11 rounded-xl bg-fill px-3 text-sm disabled:opacity-40"
           >
-            +15s
+            +15 s
           </button>
           <button
             disabled={!running}

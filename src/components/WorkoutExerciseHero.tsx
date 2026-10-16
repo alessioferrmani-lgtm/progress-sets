@@ -40,6 +40,7 @@ export function WorkoutExerciseHero({
   const [infoOpen, setInfoOpen] = useState(false);
   return (
     <section
+      data-testid="workout-exercise-hero"
       className="workout-exercise-hero rounded-2xl border border-separator bg-fill-secondary p-3"
       aria-label={`Esercizio ${exercisePosition} di ${exerciseCount}: ${exerciseName}`}
     >

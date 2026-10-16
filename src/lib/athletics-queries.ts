@@ -60,11 +60,15 @@ export type IntervalRepRow = {
   id: string;
   rep_number: number;
   distance_m: number;
-  time_sec: number;
+  time_sec: number | null;
   rest_sec: number | null;
+  rest_mode?: string | null;
+  rest_distance_m?: number | null;
+  notes?: string | null;
 };
 
 export type IntervalSessionRow = {
+  duration_sec?: number | null;
   id: string;
   date: string;
   signature: string | null;
@@ -78,7 +82,7 @@ export async function fetchIntervalSessions(): Promise<IntervalSessionRow[]> {
   const { data, error } = await supabase
     .from("interval_sessions")
     .select(
-      "id,date,signature,notes,calories_burned,created_at,interval_reps(id,rep_number,distance_m,time_sec,rest_sec)",
+      "id,date,signature,notes,duration_sec,calories_burned,created_at,interval_reps(id,rep_number,distance_m,time_sec,rest_sec,rest_mode,rest_distance_m,notes)",
     )
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -86,12 +90,22 @@ export async function fetchIntervalSessions(): Promise<IntervalSessionRow[]> {
   const profile = await fetchMyProfile().catch(() => null);
   return (data ?? []).map((session) => ({
     ...session,
-    calories_burned: session.calories_burned == null && profile ? computeCaloriesForRace(profile, {distance_m:(session.interval_reps??[]).reduce((n,r)=>n+Number(r.distance_m),0),time_sec:(session.interval_reps??[]).reduce((n,r)=>n+Number(r.time_sec),0)}) : session.calories_burned == null ? null : Number(session.calories_burned),
+    calories_burned:
+      session.calories_burned == null &&
+      profile &&
+      session.interval_reps.every((r) => r.time_sec != null)
+        ? computeCaloriesForRace(profile, {
+            distance_m: (session.interval_reps ?? []).reduce((n, r) => n + Number(r.distance_m), 0),
+            time_sec: (session.interval_reps ?? []).reduce((n, r) => n + Number(r.time_sec), 0),
+          })
+        : session.calories_burned == null
+          ? null
+          : Number(session.calories_burned),
     interval_reps: [...(session.interval_reps ?? [])]
       .map((rep) => ({
         ...rep,
         distance_m: Number(rep.distance_m),
-        time_sec: Number(rep.time_sec),
+        time_sec: rep.time_sec == null ? null : Number(rep.time_sec),
       }))
       .sort((a, b) => a.rep_number - b.rep_number),
   })) as IntervalSessionRow[];
