@@ -1,3 +1,4 @@
+import { intervalTitle } from "@/lib/interval-kind";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -150,7 +151,7 @@ function AthleticsOverview() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-label">
-                    {session.signature || "Sessione ripetute"}
+                    {intervalTitle(session)}
                   </div>
                   <div className="mt-0.5 text-xs text-label-secondary">
                     {format(new Date(`${session.date}T12:00:00`), "d MMM yyyy", { locale: it })}
@@ -180,6 +181,7 @@ function AthleticsOverview() {
                     ))}
                   </details>
                   <RunComparison session={session} all={sessions} />
+                  {session.signature !== CONTINUOUS_RUN && <Link to="/workouts/intervals/new" search={{ edit: session.id }} className="mt-2 inline-block py-2 text-sm text-accent">Modifica sessione</Link>}
                 </div>
                 {session.duration_sec != null && (
                   <span className="text-xs text-label-secondary">

@@ -631,14 +631,66 @@ test("Sites: la migrazione ripetute conserva prove e prestazioni precedenti", ()
   const files = readdirSync("drizzle")
     .filter((f) => f.endsWith(".sql"))
     .sort();
-  for (const f of files.filter((f) => !f.startsWith("0005_")))
-    db.exec(readFileSync("drizzle/" + f, "utf8"));
+  for (const f of files.filter((f) => f < "0005_")) db.exec(readFileSync("drizzle/" + f, "utf8"));
   db.exec(
     "INSERT INTO interval_sessions(id,user_id,date) VALUES('s','a','2026-10-15'); INSERT INTO interval_reps(id,user_id,session_id,rep_number,distance_m,time_sec) VALUES('r','a','s',1,400,65)",
   );
-  for (const f of files.filter((f) => f.startsWith("0005_")))
-    db.exec(readFileSync("drizzle/" + f, "utf8"));
+  for (const f of files.filter((f) => f >= "0005_")) db.exec(readFileSync("drizzle/" + f, "utf8"));
   assert.equal(db.prepare("SELECT time_sec FROM interval_reps").get().time_sec, 65);
   assert.equal(db.prepare("SELECT count(*) AS n FROM performance_log").get().n, 1);
   db.close();
+});
+test("Sites: salite create, modificate atomicamente e isolate per profilo", async () => {
+  const { insert, api, query, sqlite } = setup();
+  const session = (
+    await insert("interval_sessions", {
+      date: "2026-10-22",
+      interval_kind: "hill_short",
+      signature: "2x80",
+    })
+  ).data;
+  const rep = {
+    distance_m: 80,
+    time_sec: 15,
+    rest_sec: null,
+    rest_mode: "free",
+    rest_distance_m: null,
+    notes: null,
+  };
+  await insert("interval_reps", { ...rep, session_id: session.id, rep_number: 1 });
+  assert.equal((await query("performance_log")).data.length, 0);
+  const body = {
+    id: session.id,
+    session: { date: "2026-10-22", interval_kind: "hill_long", signature: "2x300" },
+    reps: [
+      { ...rep, distance_m: 300, time_sec: null },
+      { ...rep, distance_m: 300, time_sec: 70 },
+    ],
+  };
+  assert.equal((await api("interval-session", body, "bob")).status, 404);
+  assert.equal((await api("interval-session", body)).status, 200);
+  assert.equal((await query("interval_sessions")).data[0].interval_kind, "hill_long");
+  assert.equal((await query("interval_reps")).data.length, 2);
+  assert.equal((await query("performance_log")).data.length, 0);
+  const invalid = { ...body, reps: [{ ...rep, distance_m: -1 }] };
+  assert.equal((await api("interval-session", invalid)).status, 400);
+  assert.equal((await query("interval_reps")).data.length, 2);
+  sqlite.exec(
+    "CREATE TRIGGER reject_hill_rep BEFORE INSERT ON interval_reps WHEN NEW.distance_m=999 BEGIN SELECT RAISE(ABORT,'test rollback'); END",
+  );
+  const failed = {
+    ...body,
+    session: { ...body.session, signature: "1x999" },
+    reps: [{ ...rep, distance_m: 999 }],
+  };
+  assert.equal((await api("interval-session", failed)).status, 503);
+  assert.equal((await query("interval_sessions")).data[0].signature, "2x300");
+  assert.equal((await query("interval_reps")).data.length, 2);
+  const flat = { ...body, session: { ...body.session, interval_kind: "standard" } };
+  assert.equal((await api("interval-session", flat)).status, 200);
+  assert.equal((await query("performance_log")).data.length, 1);
+  await assert.rejects(
+    insert("interval_sessions", { date: "2026-10-22", interval_kind: "invalid" }),
+  );
+  sqlite.close();
 });

@@ -98,6 +98,7 @@ export type Database = {
           date: string;
           id: string;
           notes: string | null;
+          interval_kind: string | null;
           signature: string | null;
           duration_sec?: number | null;
           updated_at: string;
@@ -109,6 +110,7 @@ export type Database = {
           date?: string;
           id?: string;
           notes?: string | null;
+          interval_kind?: string | null;
           signature?: string | null;
           duration_sec?: number | null;
           updated_at?: string;
@@ -120,6 +122,7 @@ export type Database = {
           date?: string;
           id?: string;
           notes?: string | null;
+          interval_kind?: string | null;
           signature?: string | null;
           duration_sec?: number | null;
           updated_at?: string;

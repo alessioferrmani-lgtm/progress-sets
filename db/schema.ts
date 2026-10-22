@@ -229,6 +229,7 @@ export const intervalSessions = sqliteTable(
     user_id: owner(),
     date: date(),
     signature: text("signature"),
+    interval_kind: text("interval_kind"),
     notes: text("notes"),
     duration_sec: real("duration_sec"),
     calories_burned: real("calories_burned"),
