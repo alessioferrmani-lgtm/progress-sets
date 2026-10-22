@@ -170,6 +170,7 @@ export function validateRow(table: TableName, raw: unknown, uid: string, update 
     )
       bad(`Valore non valido: ${field}`);
   const enums: Record<string, string[]> = {
+    interval_kind: ["standard", "hill_short", "hill_long"],
     side: ["both", "left", "right"],
     sex: ["M", "F", "O"],
     activity_level: ["sedentary", "light", "moderate", "high", "athlete"],

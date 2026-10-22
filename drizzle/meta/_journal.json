@@ -43,6 +43,13 @@
       "when": 1792187975585,
       "tag": "0005_huge_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792699616817,
+      "tag": "0006_absurd_trauma",
+      "breakpoints": true
     }
   ]
 }

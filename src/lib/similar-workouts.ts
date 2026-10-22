@@ -1,3 +1,4 @@
+import { intervalKind } from "./interval-kind.ts";
 import { CONTINUOUS_RUN } from "./continuous-run.ts";
 export type RunMeta = {
   effort: string;
@@ -19,6 +20,7 @@ export function packRunNotes(meta: RunMeta, notes: string) {
   return "@PRYME_RUN:" + JSON.stringify(meta) + "\n" + notes;
 }
 type Session = {
+  interval_kind?: string | null;
   id: string;
   date: string;
   created_at: string;
@@ -51,6 +53,7 @@ export function similarRuns<T extends Session>(current: T, all: T[]): T[] {
       )
         return false;
       if ((s.signature === CONTINUOUS_RUN) !== continuous) return false;
+      if (intervalKind(s.interval_kind) !== intervalKind(current.interval_kind)) return false;
       if (continuous) {
         const d = s.interval_reps.reduce((n, r) => n + r.distance_m, 0);
         return (

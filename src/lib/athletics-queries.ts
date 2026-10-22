@@ -68,6 +68,7 @@ export type IntervalRepRow = {
 };
 
 export type IntervalSessionRow = {
+  interval_kind?: string | null;
   duration_sec?: number | null;
   id: string;
   date: string;
@@ -82,7 +83,7 @@ export async function fetchIntervalSessions(): Promise<IntervalSessionRow[]> {
   const { data, error } = await supabase
     .from("interval_sessions")
     .select(
-      "id,date,signature,notes,duration_sec,calories_burned,created_at,interval_reps(id,rep_number,distance_m,time_sec,rest_sec,rest_mode,rest_distance_m,notes)",
+      "id,date,signature,interval_kind,notes,duration_sec,calories_burned,created_at,interval_reps(id,rep_number,distance_m,time_sec,rest_sec,rest_mode,rest_distance_m,notes)",
     )
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });

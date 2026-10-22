@@ -1,3 +1,4 @@
+import { updateInterval } from "./interval-save.ts";
 import { database, type DatabaseBinding } from "./database.ts";
 import { executeQuery, QueryError } from "./query-engine.ts";
 import { ensureCatalog } from "./catalog.ts";
@@ -56,6 +57,7 @@ export async function handleApi(request:Request,env:Env) {
       await env.PROFILE_PHOTOS.put(key,bytes,{httpMetadata:{contentType:"image/jpeg"}});
       return json({data:true,error:null});
     }
+    if(path==="/api/sites/interval-session")return json({data:await updateInterval(db,user.id,body),error:null});
     if(path==="/api/sites/import")return json({data:await importProgress(db,user.id,body),error:null});
     if(path==="/api/sites/query")return json(await executeQuery(db,user.id,body));
     if(path==="/api/sites/preferences") {

@@ -1,3 +1,4 @@
+import { intervalTitle } from "@/lib/interval-kind";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -186,7 +187,7 @@ export function MonthCalendarSection({
               }}
               className="block w-full rounded-2xl bg-fill p-4 text-left"
             >
-              <strong>{s.signature === CONTINUOUS_RUN ? "Corsa continua" : "Ripetute"}</strong>
+              <strong>{s.signature === CONTINUOUS_RUN ? "Corsa continua" : intervalTitle(s)}</strong>
               <p className="text-sm text-label-secondary">
                 {formatDistance(s.interval_reps.reduce((n, r) => n + r.distance_m, 0))} · Apri
                 attività
@@ -246,7 +247,7 @@ export function MonthCalendarSection({
           detail && "interval_reps" in detail
             ? detail.signature === CONTINUOUS_RUN
               ? "Corsa continua"
-              : "Ripetute"
+              : intervalTitle(detail)
             : "Test atletico"
         }
       >

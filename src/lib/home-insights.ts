@@ -1,3 +1,4 @@
+import { intervalKind } from "./interval-kind.ts";
 export type InsightSet = {
   session_id: string;
   exercise_id: string;
@@ -102,6 +103,7 @@ export function parseWeekPlan(value: unknown): Array<DayPlan | null> {
 }
 
 export type InsightInterval = {
+  interval_kind?: string | null;
   id: string;
   date: string;
   interval_reps: Array<{ distance_m: number; time_sec: number | null; rest_sec: number | null }>;
@@ -125,6 +127,7 @@ export function runningInsight(sessions: InsightInterval[]) {
       (s) =>
         s.date < latest.date &&
         signature(s) === signature(latest) &&
+        intervalKind(s.interval_kind) === intervalKind(latest.interval_kind) &&
         s.interval_reps.every((r) => r.time_sec != null && r.time_sec > 0),
     );
   if (!previous) return null;
